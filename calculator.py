@@ -1,154 +1,100 @@
-{
-  "cells": [
-    {
-      "cell_type": "markdown",
-      "metadata": {
-        "id": "view-in-github",
-        "colab_type": "text"
-      },
-      "source": [
-        "<a href=\"https://colab.research.google.com/github/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/blob/main/calculator_py_(New_Engine).ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": [
-        "import pandas as pd\n",
-        "import numpy as np\n",
-        "\n",
-        "def calculate_5yr_tco(config, user_inputs):\n",
-        "    \"\"\"\n",
-        "    Calculates the 5-year Total Cost of Ownership (TCO) for a given energy mix scenario.\n",
-        "    주어진 에너지 믹스 시나리오에 대한 5년 총소유비용(TCO)을 계산합니다.\n",
-        "    \"\"\"\n",
-        "\n",
-        "    # Unpack user inputs\n",
-        "    # 사용자 입력값 분해\n",
-        "    demand_profile = user_inputs['demand_profile']\n",
-        "    energy_mix = user_inputs['energy_mix']\n",
-        "    econ_assumptions = user_inputs['econ_assumptions']\n",
-        "\n",
-        "    # Get technology parameters from config\n",
-        "    # 설정 파일에서 기술 파라미터 가져오기\n",
-        "    tech_params = config['transition_phase']['energy_sources']\n",
-        "    grid_params = config['initial_phase']['energy_sources']['grid']\n",
-        "\n",
-        "    results = []\n",
-        "    total_capex_pv = 0\n",
-        "    total_opex_pv = 0\n",
-        "\n",
-        "    for year in range(1, config['simulation_period_years'] + 1):\n",
-        "        annual_demand_kwh = demand_profile.loc[demand_profile['Year'] == year, 'Demand_MWh'].iloc[0] * 1000\n",
-        "        peak_demand_kw = demand_profile.loc[demand_profile['Year'] == year, 'Peak_Demand_MW'].iloc[0] * 1000\n",
-        "\n",
-        "        # --- 1. Calculate Annual CAPEX ---\n",
-        "        # --- 1. 연간 CAPEX 계산 ---\n",
-        "        annual_capex = 0\n",
-        "\n",
-        "        # Initial investment in Year 1\n",
-        "        # 1년차 초기 투자\n",
-        "        if year == 1:\n",
-        "            for source, mix in energy_mix.items():\n",
-        "                if source != 'grid' and mix > 0:\n",
-        "                    capacity_kw = peak_demand_kw * (mix / 100)\n",
-        "                    annual_capex += capacity_kw * tech_params[source]['capex_per_kw']\n",
-        "\n",
-        "        # Fuel cell stack replacement (example: in Year 4)\n",
-        "        # 연료전지 스택 교체 (예시: 4년차)\n",
-        "        if year == 4 and energy_mix.get('hydrogen_SOFC', 0) > 0:\n",
-        "            fc_capacity_kw = peak_demand_kw * (energy_mix['hydrogen_SOFC'] / 100)\n",
-        "            # Assuming replacement cost is 40% of initial CAPEX\n",
-        "            # 교체 비용이 초기 CAPEX의 40%라고 가정\n",
-        "            annual_capex += (fc_capacity_kw * tech_params['hydrogen']['SOFC']['capex_per_kw']) * 0.4\n",
-        "\n",
-        "        # --- 2. Calculate Annual OPEX ---\n",
-        "        # --- 2. 연간 OPEX 계산 ---\n",
-        "        annual_opex = 0\n",
-        "        total_energy_generated = 0\n",
-        "\n",
-        "        # Grid cost\n",
-        "        # 그리드 비용\n",
-        "        grid_kwh = annual_demand_kwh * (energy_mix.get('grid', 0) / 100)\n",
-        "        grid_price = grid_params['price_per_kwh'] * ((1 + econ_assumptions['grid_escalation']) ** (year - 1))\n",
-        "        annual_opex += grid_kwh * grid_price\n",
-        "        total_energy_generated += grid_kwh\n",
-        "\n",
-        "        # Solar & Wind OPEX (simple O&M)\n",
-        "        # 태양광 & 풍력 OPEX (단순 유지보수)\n",
-        "        for source in ['solar', 'wind']:\n",
-        "            if energy_mix.get(source, 0) > 0:\n",
-        "                capacity_kw = peak_demand_kw * (energy_mix[source] / 100)\n",
-        "                # Assuming O&M is 1.5% of initial CAPEX\n",
-        "                # O&M이 초기 CAPEX의 1.5%라고 가정\n",
-        "                annual_opex += (capacity_kw * tech_params[source]['capex_per_kw']) * 0.015\n",
-        "\n",
-        "                # Energy generation based on capacity factor\n",
-        "                # 가동률 기반 에너지 생산\n",
-        "                energy_kwh = capacity_kw * 8760 * tech_params[source]['capacity_factor']\n",
-        "                total_energy_generated += energy_kwh\n",
-        "\n",
-        "        # Hydrogen SOFC OPEX (Fuel Cost)\n",
-        "        # 수소 연료전지 OPEX (연료비)\n",
-        "        if energy_mix.get('hydrogen_SOFC', 0) > 0:\n",
-        "            fc_kwh_generated = annual_demand_kwh * (energy_mix['hydrogen_SOFC'] / 100)\n",
-        "            fuel_cost = econ_assumptions['h2_fuel_cost'] * ((1 + econ_assumptions['fuel_escalation']) ** (year - 1))\n",
-        "            annual_opex += fc_kwh_generated * fuel_cost\n",
-        "            total_energy_generated += fc_kwh_generated\n",
-        "\n",
-        "        # Carbon Tax (if applicable)\n",
-        "        # 탄소세 (적용 시)\n",
-        "        if econ_assumptions['carbon_tax_year'] and year >= econ_assumptions['carbon_tax_year']:\n",
-        "            grid_emissions = grid_kwh * grid_params['carbon_emission_factor'] # in kg\n",
-        "            annual_opex += (grid_emissions / 1000) * econ_assumptions['carbon_tax_price'] # tax per ton\n",
-        "\n",
-        "        # --- 3. Store results and calculate PV ---\n",
-        "        # --- 3. 결과 저장 및 현재가치(PV) 계산 ---\n",
-        "        discount_factor = 1 / ((1 + econ_assumptions['discount_rate']) ** year)\n",
-        "        capex_pv = annual_capex * discount_factor\n",
-        "        opex_pv = annual_opex * discount_factor\n",
-        "\n",
-        "        total_capex_pv += capex_pv\n",
-        "        total_opex_pv += opex_pv\n",
-        "\n",
-        "        results.append({\n",
-        "            'Year': year,\n",
-        "            'Annual CAPEX': annual_capex,\n",
-        "            'Annual OPEX': annual_opex,\n",
-        "            'Total Annual Cost': annual_capex + annual_opex,\n",
-        "            'CAPEX (PV)': capex_pv,\n",
-        "            'OPEX (PV)': opex_pv,\n",
-        "            'Total Cost (PV)': capex_pv + opex_pv,\n",
-        "            'LCOE ($/MWh)': ((annual_capex + annual_opex) / total_energy_generated) * 1000 if total_energy_generated > 0 else 0\n",
-        "        })\n",
-        "\n",
-        "    tco_5yr = total_capex_pv + total_opex_pv\n",
-        "\n",
-        "    summary = {\n",
-        "        '5_Year_TCO': tco_5yr,\n",
-        "        'Total_CAPEX_PV': total_capex_pv,\n",
-        "        'Total_OPEX_PV': total_opex_pv,\n",
-        "        'LCOE_Avg_5yr': (tco_5yr / (demand_profile['Demand_MWh'].sum() * 1000)) * 1000 if demand_profile['Demand_MWh'].sum() > 0 else 0\n",
-        "    }\n",
-        "\n",
-        "    return pd.DataFrame(results), summary"
-      ],
-      "outputs": [],
-      "execution_count": null,
-      "metadata": {
-        "id": "WDpoPCg3Lz97"
-      }
+import pandas as pd
+import numpy as np
+
+def calculate_5yr_tco(config, user_inputs):
+    """
+    Calculates the 5-year Total Cost of Ownership (TCO) for a given energy mix scenario.
+    """
+    
+    # Unpack user inputs
+    demand_profile = user_inputs['demand_profile']
+    energy_mix = user_inputs['energy_mix']
+    econ_assumptions = user_inputs['econ_assumptions']
+    
+    # Get technology parameters from config
+    tech_params = config['energy_sources']
+
+    results = []
+    total_capex_pv = 0
+    total_opex_pv = 0
+
+    for year in range(1, config['simulation_period_years'] + 1):
+        annual_demand_kwh = demand_profile.loc[demand_profile['Year'] == year, 'Demand_MWh'].iloc[0] * 1000
+        peak_demand_kw = demand_profile.loc[demand_profile['Year'] == year, 'Peak_Demand_MW'].iloc[0] * 1000
+
+        # --- 1. Calculate Annual CAPEX ---
+        annual_capex = 0
+        
+        # Initial investment in Year 1
+        if year == 1:
+            for source, mix in energy_mix.items():
+                if source != 'grid' and mix > 0:
+                    capacity_kw = peak_demand_kw * (mix / 100)
+                    annual_capex += capacity_kw * tech_params[source]['capex_per_kw']
+        
+        # Fuel cell stack replacement
+        fc_params = tech_params['hydrogen_SOFC']
+        if year == fc_params['stack_lifetime_years'] + 1 and energy_mix.get('hydrogen_SOFC', 0) > 0:
+            fc_capacity_kw = peak_demand_kw * (energy_mix['hydrogen_SOFC'] / 100)
+            annual_capex += (fc_capacity_kw * fc_params['capex_per_kw']) * fc_params['stack_replacement_cost_rate']
+
+        # --- 2. Calculate Annual OPEX ---
+        annual_opex = 0
+        total_energy_generated = 0
+        total_emissions_kg = 0
+        
+        # Grid cost & emissions
+        grid_kwh = annual_demand_kwh * (energy_mix.get('grid', 0) / 100)
+        grid_price = tech_params['grid']['price_per_kwh'] * ((1 + econ_assumptions['grid_escalation']) ** (year - 1))
+        annual_opex += grid_kwh * grid_price
+        total_energy_generated += grid_kwh
+        total_emissions_kg += grid_kwh * tech_params['grid']['carbon_emission_factor']
+        
+        # Solar & Wind OPEX and generation
+        for source in ['solar', 'wind']:
+            if energy_mix.get(source, 0) > 0:
+                capacity_kw = peak_demand_kw * (energy_mix[source] / 100)
+                annual_opex += (capacity_kw * tech_params[source]['capex_per_kw']) * tech_params[source]['opex_rate']
+                energy_kwh = capacity_kw * 8760 * tech_params[source]['capacity_factor']
+                total_energy_generated += energy_kwh
+
+        # Hydrogen SOFC OPEX and generation
+        if energy_mix.get('hydrogen_SOFC', 0) > 0:
+            fc_kwh_generated = annual_demand_kwh * (energy_mix['hydrogen_SOFC'] / 100)
+            fuel_cost = econ_assumptions['h2_fuel_cost'] * ((1 + econ_assumptions['fuel_escalation']) ** (year - 1))
+            annual_opex += fc_kwh_generated * fuel_cost
+            total_energy_generated += fc_kwh_generated
+
+        # Carbon Tax
+        if econ_assumptions['carbon_tax_year'] and year >= econ_assumptions['carbon_tax_year']:
+            annual_opex += (total_emissions_kg / 1000) * econ_assumptions['carbon_tax_price']
+
+        # --- 3. Store results and calculate PV ---
+        discount_factor = 1 / ((1 + econ_assumptions['discount_rate']) ** year)
+        capex_pv = annual_capex * discount_factor
+        opex_pv = annual_opex * discount_factor
+        
+        total_capex_pv += capex_pv
+        total_opex_pv += opex_pv
+
+        results.append({
+            'Year': year,
+            'Annual CAPEX': annual_capex,
+            'Annual OPEX': annual_opex,
+            'Total Annual Cost': annual_capex + annual_opex,
+            'CAPEX (PV)': capex_pv,
+            'OPEX (PV)': opex_pv,
+            'Total Cost (PV)': capex_pv + opex_pv,
+            'LCOE ($/MWh)': ((annual_capex + annual_opex) / total_energy_generated) * 1000 if total_energy_generated > 0 else 0
+        })
+
+    tco_5yr = total_capex_pv + total_opex_pv
+    
+    summary = {
+        '5_Year_TCO': tco_5yr,
+        'Total_CAPEX_PV': total_capex_pv,
+        'Total_OPEX_PV': total_opex_pv,
+        'LCOE_Avg_5yr': (tco_5yr / (demand_profile['Demand_MWh'].sum() * 1000)) * 1000 if demand_profile['Demand_MWh'].sum() > 0 else 0
     }
-  ],
-  "metadata": {
-    "colab": {
-      "provenance": [],
-      "include_colab_link": true
-    },
-    "kernelspec": {
-      "display_name": "Python 3",
-      "name": "python3"
-    }
-  },
-  "nbformat": 4,
-  "nbformat_minor": 0
-}
+
+    return pd.DataFrame(results), summary
