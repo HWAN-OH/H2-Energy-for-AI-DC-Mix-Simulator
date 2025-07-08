@@ -69,7 +69,7 @@ st.sidebar.header("3. Carbon Tax Scenario")
 carbon_tax_year = st.sidebar.select_slider("Carbon Tax Intro Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "None" if x is None else f"Year {x}")
 carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
 
-# --- Calculation ---
+# --- Calculation & Display ---
 if st.button("🚀 Run Analysis", use_container_width=True):
     user_inputs = {
         'demand_profile': demand_profile,
@@ -84,7 +84,6 @@ if st.button("🚀 Run Analysis", use_container_width=True):
     with st.spinner("Calculating... Please wait."):
         df_results, summary = calculate_5yr_tco(config, user_inputs)
 
-    # --- Display Results ---
     st.markdown("---")
     st.header("Comprehensive Analysis (5-Year TCO)")
 
@@ -117,17 +116,15 @@ if st.button("🚀 Run Analysis", use_container_width=True):
 
         with tab3:
             st.subheader("Input Data Used for This Simulation")
-            
             st.markdown("#### Demand Profile (`demand_profile.csv`)")
             st.dataframe(demand_profile, use_container_width=True)
             
-            # --- FIX: Use st.expander and st.yaml for better UX ---
+            # --- FIX: Reverted to st.json() for maximum compatibility ---
             st.markdown("#### Configuration (`config.yml`)")
             with st.expander("Click to view full configuration parameters"):
-                st.yaml(config)
+                st.json(config)
             # --- END OF FIX ---
     else:
         st.warning("Could not calculate results. Please check your configuration and input files.")
 else:
     st.info("Please configure your scenario in the sidebar and click 'Run Analysis'.")
-
