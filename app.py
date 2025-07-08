@@ -12,8 +12,6 @@ st.set_page_config(page_title="AI DC Energy Strategy Simulator", page_icon="💡
 def load_data():
     try:
         demand_df = pd.read_csv('demand_profile.csv')
-        # Standardize column names to prevent errors
-        # 오류 방지를 위해 열 이름을 표준화합니다.
         demand_df.columns = [col.strip().lower() for col in demand_df.columns]
         required_cols = ['year', 'demand_mwh', 'peak_demand_mw']
         if not all(col in demand_df.columns for col in required_cols):
@@ -112,19 +110,24 @@ if st.button("🚀 Run Analysis", use_container_width=True):
             st.subheader("5-Year Detailed Cost Breakdown (in USD)")
             if not df_results.empty:
                 display_df = df_results.copy()
+                display_df = display_df.set_index('year')
                 formatters = {col: '{:,.0f}' for col in display_df.columns if 'lcoe' not in col}
                 formatters['lcoe ($/mwh)'] = '{:,.2f}'
                 st.dataframe(display_df.style.format(formatters), use_container_width=True)
 
         with tab3:
-            st.subheader("Input Data")
-            st.markdown("`demand_profile.csv`")
+            st.subheader("Input Data Used for This Simulation")
+            
+            st.markdown("#### Demand Profile (`demand_profile.csv`)")
             st.dataframe(demand_profile, use_container_width=True)
-            st.markdown("`config.yml`")
-            st.json(config)
+            
+            # --- FIX: Use st.expander and st.yaml for better UX ---
+            st.markdown("#### Configuration (`config.yml`)")
+            with st.expander("Click to view full configuration parameters"):
+                st.yaml(config)
+            # --- END OF FIX ---
     else:
         st.warning("Could not calculate results. Please check your configuration and input files.")
 else:
     st.info("Please configure your scenario in the sidebar and click 'Run Analysis'.")
-
 
