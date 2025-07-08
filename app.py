@@ -14,8 +14,18 @@ st.set_page_config(
 # --- Load Data and Config ---
 @st.cache_data
 def load_data():
+    """
+    Loads and standardizes demand profile and configuration files.
+    """
     try:
         demand_df = pd.read_csv('demand_profile.csv')
+        # --- FIX: Standardize column names ---
+        demand_df.columns = demand_df.columns.str.strip().str.lower()
+        # Check for required standardized columns
+        required_cols = ['year', 'demand_mwh', 'peak_demand_mw']
+        if not all(col in demand_df.columns for col in required_cols):
+            st.error(f"Error: 'demand_profile.csv' must contain columns like: {', '.join(required_cols)}")
+            return None, None
     except FileNotFoundError:
         st.error("Error: 'demand_profile.csv' not found. Please ensure the file is in your GitHub repository.")
         return None, None
@@ -85,7 +95,6 @@ df_results, summary = calculate_5yr_tco(config, user_inputs)
 st.markdown("---")
 st.header("Comprehensive Analysis (5-Year TCO)")
 
-# --- FIX: Add a check to ensure summary is not empty ---
 if summary:
     col1, col2, col3 = st.columns(3)
     col1.metric("5-Year Total Cost (TCO)", f"${summary.get('5_Year_TCO', 0):,.0f}")
@@ -97,9 +106,9 @@ if summary:
     with tab1:
         st.subheader("Annual Cost Composition (Present Value)")
         if not df_results.empty:
-            fig = px.bar(df_results, x='Year', y=['CAPEX (PV)', 'OPEX (PV)'],
+            fig = px.bar(df_results, x='year', y=['capex (pv)', 'opex (pv)'],
                          title="Annual Cost Trend (CAPEX vs OPEX)",
-                         labels={'value': 'Cost (USD)', 'variable': 'Cost Type'},
+                         labels={'value': 'Cost (USD)', 'variable': 'Cost Type', 'year': 'Year'},
                          template='plotly_white')
             fig.update_layout(barmode='stack', yaxis_title='Cost (USD)', xaxis_title='Year')
             st.plotly_chart(fig, use_container_width=True)
@@ -107,12 +116,7 @@ if summary:
     with tab2:
         st.subheader("5-Year Detailed Cost Breakdown (in USD)")
         if not df_results.empty:
-            st.dataframe(df_results.style.format({
-                "Annual CAPEX": "{:,.0f}", "Annual OPEX": "{:,.0f}",
-                "Total Annual Cost": "{:,.0f}", "CAPEX (PV)": "{:,.0f}",
-                "OPEX (PV)": "{:,.0f}", "Total Cost (PV)": "{:,.0f}",
-                "LCOE ($/MWh)": "{:,.2f}"
-            }), use_container_width=True)
+            st.dataframe(df_results.style.format(formatter="{:,.0f}", subset=pd.IndexSlice[:, df_results.columns != 'LCOE ($/MWh)']).format({"LCOE ($/MWh)": "{:,.2f}"}), use_container_width=True)
 
     with tab3:
         st.subheader("Input Data")
