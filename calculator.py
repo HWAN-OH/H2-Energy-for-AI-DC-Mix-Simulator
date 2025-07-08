@@ -11,32 +11,47 @@ def calculate_5yr_tco(config, user_inputs):
     energy_mix = user_inputs['energy_mix']
     econ_assumptions = user_inputs['econ_assumptions']
     
-    # Get technology parameters from config
-    tech_params = config['energy_sources']
+    # --- FIX: Access parameters from the correct nested structure ---
+    tech_params = config['transition_phase']['energy_sources']
+    grid_params = config['initial_phase']['energy_sources']['grid']
 
     results = []
     total_capex_pv = 0
     total_opex_pv = 0
 
     for year in range(1, config['simulation_period_years'] + 1):
-        annual_demand_kwh = demand_profile.loc[demand_profile['Year'] == year, 'Demand_MWh'].iloc[0] * 1000
-        peak_demand_kw = demand_profile.loc[demand_profile['Year'] == year, 'Peak_Demand_MW'].iloc[0] * 1000
+        # Ensure 'Year' column exists and is accessed correctly
+        if 'Year' not in demand_profile.columns:
+            st.error("Demand profile CSV must contain a 'Year' column.")
+            return pd.DataFrame(), {}
+            
+        demand_row = demand_profile[demand_profile['Year'] == year]
+        if demand_row.empty:
+            continue # Skip if no data for this year
+            
+        annual_demand_kwh = demand_row['Demand_MWh'].iloc[0] * 1000
+        peak_demand_kw = demand_row['Peak_Demand_MW'].iloc[0] * 1000
 
         # --- 1. Calculate Annual CAPEX ---
         annual_capex = 0
         
-        # Initial investment in Year 1
         if year == 1:
             for source, mix in energy_mix.items():
                 if source != 'grid' and mix > 0:
                     capacity_kw = peak_demand_kw * (mix / 100)
-                    annual_capex += capacity_kw * tech_params[source]['capex_per_kw']
+                    if source == 'hydrogen_SOFC':
+                        annual_capex += capacity_kw * tech_params['hydrogen']['SOFC']['capex_per_kw']
+                    else:
+                        annual_capex += capacity_kw * tech_params[source]['capex_per_kw']
         
         # Fuel cell stack replacement
-        fc_params = tech_params['hydrogen_SOFC']
-        if year == fc_params['stack_lifetime_years'] + 1 and energy_mix.get('hydrogen_SOFC', 0) > 0:
+        fc_params = tech_params['hydrogen']['SOFC']
+        # Assuming a fixed lifetime for stack, e.g., 3 years. Let's use a placeholder if not in config.
+        stack_lifetime = fc_params.get('stack_lifetime_years', 3) 
+        if year == stack_lifetime + 1 and energy_mix.get('hydrogen_SOFC', 0) > 0:
             fc_capacity_kw = peak_demand_kw * (energy_mix['hydrogen_SOFC'] / 100)
-            annual_capex += (fc_capacity_kw * fc_params['capex_per_kw']) * fc_params['stack_replacement_cost_rate']
+            replacement_rate = fc_params.get('stack_replacement_cost_rate', 0.4)
+            annual_capex += (fc_capacity_kw * fc_params['capex_per_kw']) * replacement_rate
 
         # --- 2. Calculate Annual OPEX ---
         annual_opex = 0
@@ -45,16 +60,18 @@ def calculate_5yr_tco(config, user_inputs):
         
         # Grid cost & emissions
         grid_kwh = annual_demand_kwh * (energy_mix.get('grid', 0) / 100)
-        grid_price = tech_params['grid']['price_per_kwh'] * ((1 + econ_assumptions['grid_escalation']) ** (year - 1))
+        grid_price = grid_params['price_per_kwh'] * ((1 + econ_assumptions['grid_escalation']) ** (year - 1))
         annual_opex += grid_kwh * grid_price
         total_energy_generated += grid_kwh
-        total_emissions_kg += grid_kwh * tech_params['grid']['carbon_emission_factor']
+        total_emissions_kg += grid_kwh * grid_params['carbon_emission_factor']
         
         # Solar & Wind OPEX and generation
         for source in ['solar', 'wind']:
             if energy_mix.get(source, 0) > 0:
                 capacity_kw = peak_demand_kw * (energy_mix[source] / 100)
-                annual_opex += (capacity_kw * tech_params[source]['capex_per_kw']) * tech_params[source]['opex_rate']
+                # Using a placeholder for opex_rate if not in config
+                opex_rate = tech_params[source].get('opex_rate', 0.015)
+                annual_opex += (capacity_kw * tech_params[source]['capex_per_kw']) * opex_rate
                 energy_kwh = capacity_kw * 8760 * tech_params[source]['capacity_factor']
                 total_energy_generated += energy_kwh
 
@@ -78,21 +95,16 @@ def calculate_5yr_tco(config, user_inputs):
         total_opex_pv += opex_pv
 
         results.append({
-            'Year': year,
-            'Annual CAPEX': annual_capex,
-            'Annual OPEX': annual_opex,
-            'Total Annual Cost': annual_capex + annual_opex,
-            'CAPEX (PV)': capex_pv,
-            'OPEX (PV)': opex_pv,
-            'Total Cost (PV)': capex_pv + opex_pv,
+            'Year': year, 'Annual CAPEX': annual_capex, 'Annual OPEX': annual_opex,
+            'Total Annual Cost': annual_capex + annual_opex, 'CAPEX (PV)': capex_pv,
+            'OPEX (PV)': opex_pv, 'Total Cost (PV)': capex_pv + opex_pv,
             'LCOE ($/MWh)': ((annual_capex + annual_opex) / total_energy_generated) * 1000 if total_energy_generated > 0 else 0
         })
 
     tco_5yr = total_capex_pv + total_opex_pv
     
     summary = {
-        '5_Year_TCO': tco_5yr,
-        'Total_CAPEX_PV': total_capex_pv,
+        '5_Year_TCO': tco_5yr, 'Total_CAPEX_PV': total_capex_pv,
         'Total_OPEX_PV': total_opex_pv,
         'LCOE_Avg_5yr': (tco_5yr / (demand_profile['Demand_MWh'].sum() * 1000)) * 1000 if demand_profile['Demand_MWh'].sum() > 0 else 0
     }
