@@ -5,14 +5,17 @@ import yaml
 from calculator import calculate_5yr_tco
 
 # --- Page Configuration ---
-st.set_page_config(page_title="AI DC Energy Strategy Simulator", page_icon="💡", layout="wide")
+st.set_page_config(
+    page_title="AI Data Center Energy Strategy Simulator",
+    page_icon="💡",
+    layout="wide"
+)
 
 # --- Load Data and Config ---
 @st.cache_data
 def load_data():
     try:
         demand_df = pd.read_csv('demand_profile.csv')
-        # Standardize column names to prevent errors
         demand_df.columns = [col.strip().lower() for col in demand_df.columns]
         required_cols = ['year', 'demand_mwh', 'peak_demand_mw']
         if not all(col in demand_df.columns for col in required_cols):
@@ -41,7 +44,7 @@ if config is None or demand_profile is None:
 
 # --- UI ---
 st.title("💡 AI Data Center Energy Strategy Simulator")
-st.markdown("Design an optimal energy portfolio and analyze the 5-year Total Cost of Ownership (TCO).")
+st.markdown("Design your optimal energy portfolio and analyze the 5-year Total Cost of Ownership (TCO).")
 
 # --- Sidebar ---
 st.sidebar.title("📊 Scenario Configuration")
@@ -70,55 +73,60 @@ st.sidebar.header("3. Carbon Tax Scenario")
 carbon_tax_year = st.sidebar.select_slider("Carbon Tax Intro Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "None" if x is None else f"Year {x}")
 carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
 
-# --- Calculation ---
-user_inputs = {
-    'demand_profile': demand_profile,
-    'energy_mix': energy_mix,
-    'econ_assumptions': {
-        'discount_rate': discount_rate, 'grid_escalation': grid_escalation,
-        'h2_fuel_cost': h2_fuel_cost, 'fuel_escalation': fuel_escalation,
-        'carbon_tax_year': carbon_tax_year, 'carbon_tax_price': carbon_tax_price
+# --- FIX: Add a Run Button to trigger calculation ---
+if st.button("🚀 Run Analysis", use_container_width=True):
+
+    user_inputs = {
+        'demand_profile': demand_profile,
+        'energy_mix': energy_mix,
+        'econ_assumptions': {
+            'discount_rate': discount_rate, 'grid_escalation': grid_escalation,
+            'h2_fuel_cost': h2_fuel_cost, 'fuel_escalation': fuel_escalation,
+            'carbon_tax_year': carbon_tax_year, 'carbon_tax_price': carbon_tax_price
+        }
     }
-}
 
-df_results, summary = calculate_5yr_tco(config, user_inputs)
+    with st.spinner("Calculating... Please wait."):
+        df_results, summary = calculate_5yr_tco(config, user_inputs)
 
-# --- Display Results ---
-st.markdown("---")
-st.header("Comprehensive Analysis (5-Year TCO)")
+    st.markdown("---")
+    st.header("Comprehensive Analysis (5-Year TCO)")
 
-if summary:
-    col1, col2, col3 = st.columns(3)
-    col1.metric("5-Year Total Cost (TCO)", f"${summary.get('5_Year_TCO', 0):,.0f}")
-    col2.metric("5-Year Avg. LCOE", f"${summary.get('LCOE_Avg_5yr', 0):.2f} / MWh")
-    col3.metric("Total CAPEX (PV)", f"${summary.get('Total_CAPEX_PV', 0):,.0f}")
+    if summary:
+        col1, col2, col3 = st.columns(3)
+        col1.metric("5-Year Total Cost (TCO)", f"${summary.get('5_Year_TCO', 0):,.0f}")
+        col2.metric("5-Year Avg. LCOE", f"${summary.get('LCOE_Avg_5yr', 0):.2f} / MWh")
+        col3.metric("Total CAPEX (PV)", f"${summary.get('Total_CAPEX_PV', 0):,.0f}")
 
-    tab1, tab2, tab3 = st.tabs(["📈 Cost Trend Analysis", "💰 Detailed Cost Breakdown", "📄 Raw Data"])
+        tab1, tab2, tab3 = st.tabs(["📈 Cost Trend Analysis", "💰 Detailed Cost Breakdown", "📄 Raw Data"])
 
-    with tab1:
-        st.subheader("Annual Cost Composition (Present Value)")
-        if not df_results.empty:
-            fig = px.bar(df_results, x='year', y=['capex (pv)', 'opex (pv)'],
-                         title="Annual Cost Trend (CAPEX vs OPEX)",
-                         labels={'value': 'Cost (USD)', 'variable': 'Cost Type', 'year': 'Year'},
-                         template='plotly_white')
-            fig.update_layout(barmode='stack', yaxis_title='Cost (USD)', xaxis_title='Year')
-            st.plotly_chart(fig, use_container_width=True)
+        with tab1:
+            st.subheader("Annual Cost Composition (Present Value)")
+            if not df_results.empty:
+                fig = px.bar(df_results, x='year', y=['capex (pv)', 'opex (pv)'],
+                             title="Annual Cost Trend (CAPEX vs OPEX)",
+                             labels={'value': 'Cost (USD)', 'variable': 'Cost Type', 'year': 'Year'},
+                             template='plotly_white')
+                fig.update_layout(barmode='stack', yaxis_title='Cost (USD)', xaxis_title='Year')
+                st.plotly_chart(fig, use_container_width=True)
 
-    with tab2:
-        st.subheader("5-Year Detailed Cost Breakdown (in USD)")
-        if not df_results.empty:
-            display_df = df_results.copy()
-            formatters = {col: '{:,.0f}' for col in display_df.columns if 'lcoe' not in col}
-            formatters['lcoe ($/mwh)'] = '{:,.2f}'
-            st.dataframe(display_df.style.format(formatters), use_container_width=True)
+        with tab2:
+            st.subheader("5-Year Detailed Cost Breakdown (in USD)")
+            if not df_results.empty:
+                display_df = df_results.copy()
+                formatters = {col: '{:,.0f}' for col in display_df.columns if 'lcoe' not in col}
+                formatters['lcoe ($/mwh)'] = '{:,.2f}'
+                st.dataframe(display_df.style.format(formatters), use_container_width=True)
 
-    with tab3:
-        st.subheader("Input Data")
-        st.markdown("`demand_profile.csv`")
-        st.dataframe(demand_profile, use_container_width=True)
-        st.markdown("`config.yml`")
-        st.json(config)
+        with tab3:
+            st.subheader("Input Data")
+            st.markdown("`demand_profile.csv`")
+            st.dataframe(demand_profile, use_container_width=True)
+            st.markdown("`config.yml`")
+            st.json(config)
+    else:
+        st.warning("Could not calculate results. Please check your configuration and input files.")
+
 else:
-    st.warning("Could not calculate results. Please check your configuration and input files.")
+    st.info("Please configure your scenario in the sidebar and click 'Run Analysis'.")
 
