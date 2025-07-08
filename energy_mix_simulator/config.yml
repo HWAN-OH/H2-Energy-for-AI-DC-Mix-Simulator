@@ -1,16 +1,43 @@
-import yaml
+# 시뮬레이션 전체 기간 (년)
+simulation_period_years: 5
 
-def load_config(path='config.yml'):
-    """
-    Loads the configuration from a YAML file.
-    YAML 파일을 로드하여 설정을 불러옵니다.
-    """
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        st.error(f"Error: The configuration file '{path}' was not found.")
-        return None
-    except Exception as e:
-        st.error(f"Error loading or parsing the configuration file: {e}")
-        return None
+# ===============================================
+# 에너지원별 기술 및 비용 파라미터
+# - 이 값들은 시뮬레이션의 기본 가정치로 사용됩니다.
+# - app.py의 사이드바에서 일부 값들을 동적으로 변경할 수 있습니다.
+# ===============================================
+
+energy_sources:
+  # 그리드 (전력망)
+  grid:
+    price_per_kwh: 0.12            # 초기 kWh당 구매 단가 ($)
+    carbon_emission_factor: 0.45   # 탄소 배출 계수 (kg/kWh)
+
+  # 태양광
+  solar:
+    capex_per_kw: 1000             # 초기 투자비 ($/kW)
+    opex_rate: 0.015               # 연간 유지보수비 비율 (CAPEX 대비)
+    capacity_factor: 0.18          # 연평균 이용률 (%) - 한국 기준
+    degradation_rate: 0.005        # 연간 효율 저하율 (%)
+
+  # 풍력
+  wind:
+    capex_per_kw: 1500             # 초기 투자비 ($/kW)
+    opex_rate: 0.02                # 연간 유지보수비 비율 (CAPEX 대비)
+    capacity_factor: 0.30          # 연평균 이용률 (%) - 해상풍력 기준
+
+  # 수소 연료전지 (SOFC)
+  hydrogen_SOFC:
+    capex_per_kw: 2800             # 초기 투자비 ($/kW)
+    opex_rate: 0.02                # 연간 유지보수비 비율 (CAPEX 대비)
+    efficiency: 0.60               # 발전 효율 (%)
+    stack_lifetime_years: 3        # 스택 교체 주기 (년)
+    stack_replacement_cost_rate: 0.4 # 스택 교체 비용 (초기 CAPEX 대비 %)
+    carbon_emission_factor: 0.0    # 탄소 배출 없음
+
+  # ESS (에너지 저장 장치) - 향후 확장용
+  ESS:
+    capex_per_kwh: 350             # 초기 투자비 ($/kWh)
+    opex_rate: 0.01                # 연간 유지보수비 비율 (CAPEX 대비)
+    round_trip_efficiency: 0.85    # 충방전 효율 (%)
+
