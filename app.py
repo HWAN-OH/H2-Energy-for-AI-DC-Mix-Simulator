@@ -13,19 +13,29 @@ st.set_page_config(
 
 # --- Load Data and Config ---
 @st.cache_data
-def load_data():
+def load_data(load_factor):
     """
-    Loads and standardizes demand profile and configuration files.
+    Loads and standardizes demand profile. 
+    If peak demand is missing, it estimates it using the provided load factor.
     """
     try:
         demand_df = pd.read_csv('demand_profile.csv')
-        # --- FIX: Standardize column names ---
+        # Standardize column names
         demand_df.columns = demand_df.columns.str.strip().str.lower()
-        # Check for required standardized columns
-        required_cols = ['year', 'demand_mwh', 'peak_demand_mw']
-        if not all(col in demand_df.columns for col in required_cols):
-            st.error(f"Error: 'demand_profile.csv' must contain columns like: {', '.join(required_cols)}")
+        
+        # Check for required base columns
+        if 'year' not in demand_df.columns or 'annual_demand_mwh' not in demand_df.columns:
+            st.error("Error: 'demand_profile.csv' must contain 'year' and 'annual_demand_mwh' columns.")
             return None, None
+
+        # --- FIX: Intelligent Estimation of Peak Demand ---
+        if 'peak_demand_mw' not in demand_df.columns:
+            st.info("'peak_demand_mw' column not found. Estimating from annual demand and load factor.")
+            # Calculate average demand in MW
+            demand_df['average_demand_mw'] = demand_df['annual_demand_mwh'] / 8760
+            # Estimate peak demand
+            demand_df['peak_demand_mw'] = demand_df['average_demand_mw'] / (load_factor / 100)
+        
     except FileNotFoundError:
         st.error("Error: 'demand_profile.csv' not found. Please ensure the file is in your GitHub repository.")
         return None, None
@@ -42,18 +52,26 @@ def load_data():
         
     return demand_df, config
 
-demand_profile, config = load_data()
-
-if config is None or demand_profile is None:
-    st.stop()
-
 # --- UI ---
 st.title("💡 AI Data Center Energy Strategy Simulator")
 st.markdown("Design your optimal energy portfolio and analyze the 5-year Total Cost of Ownership (TCO) considering various future scenarios.")
 
 # --- Sidebar for User Inputs ---
 st.sidebar.title("📊 Scenario Configuration")
-st.sidebar.header("1. Energy Mix Design (%)")
+
+st.sidebar.header("1. Data Center Load Profile")
+load_factor = st.sidebar.slider(
+    "Assumed Load Factor (%)", 50.0, 100.0, 90.0, 0.5,
+    help="The ratio of average load to peak load. Used to estimate Peak Demand if it's not in your CSV file."
+)
+
+# Load data after getting the load_factor from the user
+demand_profile, config = load_data(load_factor)
+
+if config is None or demand_profile is None:
+    st.stop()
+
+st.sidebar.header("2. Energy Mix Design (%)")
 st.sidebar.info("Adjust the share of each power source. The total must be 100%.")
 
 grid_mix = st.sidebar.slider("Grid", 0, 100, 60)
@@ -68,13 +86,13 @@ if total_mix != 100:
 
 energy_mix = {'grid': grid_mix, 'solar': solar_mix, 'wind': wind_mix, 'hydrogen_SOFC': h2_sofc_mix}
 
-st.sidebar.header("2. Economic Assumptions")
+st.sidebar.header("3. Economic Assumptions")
 discount_rate = st.sidebar.slider("Discount Rate (%)", 3.0, 15.0, 8.0, 0.1) / 100
 grid_escalation = st.sidebar.slider("Annual Grid Price Escalation (%)", 0.0, 10.0, 3.0, 0.1) / 100
 h2_fuel_cost = st.sidebar.number_input("Initial H2 Fuel Cost ($/kWh)", 0.05, 0.30, 0.12, 0.01)
 fuel_escalation = st.sidebar.slider("Annual Fuel Cost Escalation (%)", -5.0, 10.0, 0.0, 0.5) / 100
 
-st.sidebar.header("3. Carbon Tax Scenario")
+st.sidebar.header("4. Carbon Tax Scenario")
 carbon_tax_year = st.sidebar.select_slider("Carbon Tax Introduction Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "Not Introduced" if x is None else f"Year {x}")
 carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
 
@@ -116,7 +134,14 @@ if summary:
     with tab2:
         st.subheader("5-Year Detailed Cost Breakdown (in USD)")
         if not df_results.empty:
-            st.dataframe(df_results.style.format(formatter="{:,.0f}", subset=pd.IndexSlice[:, df_results.columns != 'LCOE ($/MWh)']).format({"LCOE ($/MWh)": "{:,.2f}"}), use_container_width=True)
+            # A more robust way to format the dataframe
+            display_df = df_results.copy()
+            for col in ['annual capex', 'annual opex', 'total annual cost', 'capex (pv)', 'opex (pv)', 'total cost (pv)']:
+                if col in display_df.columns:
+                    display_df[col] = display_df[col].map('{:,.0f}'.format)
+            if 'lcoe ($/mwh)' in display_df.columns:
+                display_df['lcoe ($/mwh)'] = display_df['lcoe ($/mwh)'].map('{:,.2f}'.format)
+            st.dataframe(display_df, use_container_width=True)
 
     with tab3:
         st.subheader("Input Data")
@@ -126,3 +151,4 @@ if summary:
         st.json(config)
 else:
     st.warning("Could not calculate results. Please check your configuration and input files.")
+
