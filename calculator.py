@@ -14,7 +14,6 @@ def calculate_5yr_tco(config, user_inputs):
     econ_assumptions = user_inputs['econ_assumptions']
     
     # --- FIX: Defensively access config parameters using .get() ---
-    # .get()을 사용하여 KeyError를 방지하고, 키가 없을 경우 빈 딕셔너리를 반환합니다.
     transition_phase_config = config.get('transition_phase', {})
     initial_phase_config = config.get('initial_phase', {})
 
@@ -26,7 +25,7 @@ def calculate_5yr_tco(config, user_inputs):
     grid_params = initial_phase_config.get('energy_sources', {}).get('grid', {})
 
     if not tech_params or not grid_params:
-        st.error("Configuration Error: 'energy_sources' or 'grid' section is missing under the phase configurations in config.yml.")
+        st.error("Configuration Error: 'energy_sources' or 'grid' section is missing in config.yml.")
         return pd.DataFrame(), {}
 
     results = []
