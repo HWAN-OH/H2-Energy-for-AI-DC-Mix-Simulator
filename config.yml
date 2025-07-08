@@ -1,0 +1,39 @@
+constraints:
+  max_carbon_emission_factor: 0.4
+initial_phase:
+  energy_sources:
+    NG_SOFC:
+      capex_per_kw: 2500
+      carbon_emission_factor: 0.4
+      efficiency: 0.55
+      fuel_cost_per_kwh: 0.08
+    grid:
+      carbon_emission_factor: 0.45
+      price_per_kwh: 0.12
+  years: 3
+simulation_period_years: 5
+transition_phase:
+  energy_sources:
+    ESS:
+      capex_per_kwh: 400
+      round_trip_efficiency: 0.85
+    diesel_backup:
+      capex_per_kw: 500
+      carbon_emission_factor: 0.7
+      fuel_cost_per_kwh: 0.15
+    hydrogen:
+      SOFC:
+        capex_per_kw: 2800
+        carbon_emission_factor: 0.0
+        efficiency: 0.6
+      electrolyzer:
+        capex_per_kw: 900
+        efficiency: 0.65
+        type: PEM
+    solar:
+      capacity_factor: 0.2
+      capex_per_kw: 1000
+    wind:
+      capacity_factor: 0.35
+      capex_per_kw: 1500
+  renewable_share_target: 0.5
