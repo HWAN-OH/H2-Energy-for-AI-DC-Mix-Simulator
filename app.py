@@ -5,17 +5,15 @@ import yaml
 from calculator import calculate_5yr_tco
 
 # --- Page Configuration ---
-st.set_page_config(
-    page_title="AI Data Center Energy Strategy Simulator",
-    page_icon="💡",
-    layout="wide"
-)
+st.set_page_config(page_title="AI DC Energy Strategy Simulator", page_icon="💡", layout="wide")
 
 # --- Load Data and Config ---
 @st.cache_data
 def load_data():
     try:
         demand_df = pd.read_csv('demand_profile.csv')
+        # Standardize column names to prevent errors
+        # 오류 방지를 위해 열 이름을 표준화합니다.
         demand_df.columns = [col.strip().lower() for col in demand_df.columns]
         required_cols = ['year', 'demand_mwh', 'peak_demand_mw']
         if not all(col in demand_df.columns for col in required_cols):
@@ -44,7 +42,7 @@ if config is None or demand_profile is None:
 
 # --- UI ---
 st.title("💡 AI Data Center Energy Strategy Simulator")
-st.markdown("Design your optimal energy portfolio and analyze the 5-year Total Cost of Ownership (TCO).")
+st.markdown("Design an optimal energy portfolio and analyze the 5-year Total Cost of Ownership (TCO).")
 
 # --- Sidebar ---
 st.sidebar.title("📊 Scenario Configuration")
@@ -73,9 +71,8 @@ st.sidebar.header("3. Carbon Tax Scenario")
 carbon_tax_year = st.sidebar.select_slider("Carbon Tax Intro Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "None" if x is None else f"Year {x}")
 carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
 
-# --- FIX: Add a Run Button to trigger calculation ---
+# --- Calculation ---
 if st.button("🚀 Run Analysis", use_container_width=True):
-
     user_inputs = {
         'demand_profile': demand_profile,
         'energy_mix': energy_mix,
@@ -89,6 +86,7 @@ if st.button("🚀 Run Analysis", use_container_width=True):
     with st.spinner("Calculating... Please wait."):
         df_results, summary = calculate_5yr_tco(config, user_inputs)
 
+    # --- Display Results ---
     st.markdown("---")
     st.header("Comprehensive Analysis (5-Year TCO)")
 
@@ -126,7 +124,7 @@ if st.button("🚀 Run Analysis", use_container_width=True):
             st.json(config)
     else:
         st.warning("Could not calculate results. Please check your configuration and input files.")
-
 else:
     st.info("Please configure your scenario in the sidebar and click 'Run Analysis'.")
+
 
