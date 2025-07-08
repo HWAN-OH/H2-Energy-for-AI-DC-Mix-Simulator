@@ -1,59 +1,134 @@
-
 import streamlit as st
 import pandas as pd
+import plotly.express as px
+from config_loader import load_config
+from calculator import calculate_5yr_tco
 
-# Sidebar Inputs
-st.sidebar.title("Input Parameters")
+# --- Page Configuration ---
+st.set_page_config(
+    page_title="AI 데이터센터 에너지 전략 시뮬레이터",
+    page_icon="💡",
+    layout="wide"
+)
 
-# Phase switch year
-phase_switch_year = st.sidebar.slider("Start of Phase 2 (Year)", 1, 5, 3)
+# --- Load Data and Config ---
+@st.cache_data
+def load_data():
+    """
+    Loads demand profile and configuration files.
+    수요 프로필과 설정 파일을 로드합니다.
+    """
+    demand_df = pd.read_csv('demand_profile (2).csv')
+    config = load_config('config (2).yml')
+    return demand_df, config
 
-# Annual electricity demand
-annual_demand_kwh = st.sidebar.number_input("Annual Electricity Demand (kWh)", value=50_000_000)
+demand_profile, config = load_data()
 
-# Phase 1 settings
-st.sidebar.subheader("Phase 1 Settings")
-phase1_cost_per_kwh = st.sidebar.number_input("Cost per kWh (USD) - Phase 1", value=0.15)
-phase1_emission_factor = st.sidebar.number_input("Emission Factor (kg/kWh) - Phase 1", value=0.4)
+if config is None:
+    st.stop()
 
-# Phase 2 settings
-st.sidebar.subheader("Phase 2 Settings")
-phase2_cost_per_kwh = st.sidebar.number_input("Cost per kWh (USD) - Phase 2", value=0.08)
-phase2_emission_factor = st.sidebar.number_input("Emission Factor (kg/kWh) - Phase 2", value=0.05)
+# --- UI ---
+st.title("💡 AI 데이터센터 에너지 전략 시뮬레이터")
+st.markdown("향후 5년간의 다양한 변수를 고려하여, 데이터센터에 가장 효율적인 에너지 포트폴리오를 설계하고 총소유비용(TCO)을 분석합니다.")
 
-# Simulation period
-total_years = 5
-data = []
+# --- Sidebar for User Inputs ---
+st.sidebar.title("📊 시나리오 설정")
 
-for year in range(1, total_years + 1):
-    if year < phase_switch_year:
-        phase = "Phase 1"
-        cost = phase1_cost_per_kwh * annual_demand_kwh
-        emissions = phase1_emission_factor * annual_demand_kwh
-        emission_factor = phase1_emission_factor
-        cost_per_mwh = phase1_cost_per_kwh * 1000
-    else:
-        phase = "Phase 2"
-        cost = phase2_cost_per_kwh * annual_demand_kwh
-        emissions = phase2_emission_factor * annual_demand_kwh
-        emission_factor = phase2_emission_factor
-        cost_per_mwh = phase2_cost_per_kwh * 1000
+st.sidebar.header("1. 에너지 믹스 설계 (%)")
+st.sidebar.info("각 발전원의 비중을 조절하세요. 총합은 100%가 되어야 합니다.")
 
-    data.append({
-        "Year": f"Year {year}",
-        "Phase": phase,
-        "Total Cost (USD)": cost,
-        "Carbon Emissions (ton CO₂)": emissions / 1000,
-        "Emission Factor (kg/kWh)": emission_factor,
-        "LCOE (USD/MWh)": cost_per_mwh
-    })
+# Energy Mix Sliders
+grid_mix = st.sidebar.slider("Grid (전력망)", 0, 100, 60)
+solar_mix = st.sidebar.slider("Solar (태양광)", 0, 100, 20)
+wind_mix = st.sidebar.slider("Wind (풍력)", 0, 100, 0)
+h2_sofc_mix = st.sidebar.slider("H2 Fuel Cell (수소 연료전지)", 0, 100, 20)
 
-df_result = pd.DataFrame(data)
+# Validate total mix is 100%
+total_mix = grid_mix + solar_mix + wind_mix + h2_sofc_mix
+if total_mix != 100:
+    st.sidebar.error(f"에너지 믹스의 총합이 100%가 되어야 합니다. (현재: {total_mix}%)")
+    st.stop()
 
-st.title("Energy Mix Scenario for AI Data Center - Phase Transition Analysis")
-st.dataframe(df_result.style.format({
-    "Total Cost (USD)": "${:,.0f}",
-    "Carbon Emissions (ton CO₂)": "{:,.1f}",
-    "Emission Factor (kg/kWh)": "{:.3f}",
-    "LCOE (USD/MWh)": "{:.1f}"
-}), use_container_width=True)
+energy_mix = {
+    'grid': grid_mix,
+    'solar': solar_mix,
+    'wind': wind_mix,
+    'hydrogen_SOFC': h2_sofc_mix
+}
+
+st.sidebar.header("2. 경제성 변수 설정")
+discount_rate = st.sidebar.slider("할인율 (Discount Rate, %)", 3.0, 15.0, 8.0, 0.1) / 100
+grid_escalation = st.sidebar.slider("연간 그리드 요금 상승률 (%)", 0.0, 10.0, 3.0, 0.1) / 100
+h2_fuel_cost = st.sidebar.number_input("초기 수소 연료비 ($/kWh)", 0.05, 0.30, 0.12, 0.01)
+fuel_escalation = st.sidebar.slider("연간 연료비 상승률 (%)", -5.0, 10.0, 0.0, 0.5) / 100
+
+st.sidebar.header("3. 탄소세 시나리오")
+carbon_tax_year = st.sidebar.select_slider(
+    "탄소세 도입 연도",
+    options=[None, 2, 3, 4, 5],
+    value=3,
+    format_func=lambda x: "미도입" if x is None else f"{x}년차"
+)
+carbon_tax_price = st.sidebar.number_input("탄소세 가격 ($/ton)", 0, 200, 50, 5)
+
+
+# --- Calculation ---
+user_inputs = {
+    'demand_profile': demand_profile,
+    'energy_mix': energy_mix,
+    'econ_assumptions': {
+        'discount_rate': discount_rate,
+        'grid_escalation': grid_escalation,
+        'h2_fuel_cost': h2_fuel_cost,
+        'fuel_escalation': fuel_escalation,
+        'carbon_tax_year': carbon_tax_year,
+        'carbon_tax_price': carbon_tax_price
+    }
+}
+
+df_results, summary = calculate_5yr_tco(config, user_inputs)
+
+
+# --- Display Results ---
+st.markdown("---")
+st.header("종합 분석 결과 (5-Year TCO Analysis)")
+
+# KPI Cards
+col1, col2, col3 = st.columns(3)
+col1.metric("5년 총소유비용 (TCO)", f"${summary['5_Year_TCO']:,.0f}")
+col2.metric("5년 평균 LCOE", f"${summary['LCOE_Avg_5yr']:.2f} / MWh")
+col3.metric("총 CAPEX (현재가치)", f"${summary['Total_CAPEX_PV']:,.0f}")
+
+
+# Tabs for detailed analysis
+tab1, tab2, tab3 = st.tabs(["📈 비용 추이 분석", "💰 비용 상세 내역", "📄 원본 데이터"])
+
+with tab1:
+    st.subheader("연도별 비용 구성 (현재가치 기준)")
+    
+    # Stacked Bar Chart for costs
+    fig = px.bar(df_results, x='Year', y=['CAPEX (PV)', 'OPEX (PV)'],
+                 title="연간 비용 추이 (CAPEX vs OPEX)",
+                 labels={'value': '비용 (USD)', 'variable': '비용 종류'},
+                 template='plotly_white')
+    fig.update_layout(barmode='stack', yaxis_title='비용 (USD)', xaxis_title='연도')
+    st.plotly_chart(fig, use_container_width=True)
+
+with tab2:
+    st.subheader("5년간 상세 비용 내역 (단위: USD)")
+    st.dataframe(df_results.style.format({
+        "Annual CAPEX": "{:,.0f}",
+        "Annual OPEX": "{:,.0f}",
+        "Total Annual Cost": "{:,.0f}",
+        "CAPEX (PV)": "{:,.0f}",
+        "OPEX (PV)": "{:,.0f}",
+        "Total Cost (PV)": "{:,.0f}",
+        "LCOE ($/MWh)": "{:,.2f}"
+    }), use_container_width=True)
+
+with tab3:
+    st.subheader("입력 데이터")
+    st.markdown("`demand_profile (2).csv`")
+    st.dataframe(demand_profile, use_container_width=True)
+    st.markdown("`config (2).yml`")
+    st.json(config)
