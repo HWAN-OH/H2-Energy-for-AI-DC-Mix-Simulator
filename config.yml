@@ -3,8 +3,7 @@ simulation_period_years: 5
 
 # ===============================================
 # Technical & Cost Parameters for Energy Sources
-# - These values serve as the base assumptions for the simulation.
-# - Some values can be dynamically adjusted in the Streamlit sidebar.
+# - All sources are now at the same level for simplicity and robustness.
 # ===============================================
 
 energy_sources:
@@ -18,13 +17,12 @@ energy_sources:
     capex_per_kw: 1000             # Initial capital expenditure ($/kW)
     opex_rate: 0.015               # Annual O&M cost rate (as a fraction of CAPEX)
     capacity_factor: 0.18          # Annual average capacity factor (%)
-    degradation_rate: 0.005        # Annual efficiency degradation rate (%)
 
   # Wind
   wind:
     capex_per_kw: 1500             # Initial capital expenditure ($/kW)
     opex_rate: 0.02                # Annual O&M cost rate (as a fraction of CAPEX)
-    capacity_factor: 0.30          # Annual average capacity factor (%) - assuming offshore
+    capacity_factor: 0.30          # Annual average capacity factor (%)
 
   # Hydrogen Fuel Cell (SOFC)
   hydrogen_SOFC:
@@ -33,10 +31,3 @@ energy_sources:
     efficiency: 0.60               # Power generation efficiency (%)
     stack_lifetime_years: 3        # Stack replacement cycle (years)
     stack_replacement_cost_rate: 0.4 # Stack replacement cost (as a fraction of initial CAPEX)
-    carbon_emission_factor: 0.0    # Zero-emission
-
-  # Energy Storage System (ESS) - for future expansion
-  ESS:
-    capex_per_kwh: 350             # Initial capital expenditure ($/kWh)
-    opex_rate: 0.01                # Annual O&M cost rate (as a fraction of CAPEX)
-    round_trip_efficiency: 0.85    # Charging/discharging efficiency (%)
