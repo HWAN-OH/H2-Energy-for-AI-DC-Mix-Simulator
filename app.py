@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import yaml
-from calculator import calculate_5yr_tco
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -15,22 +14,26 @@ st.set_page_config(
 @st.cache_data
 def load_data():
     try:
+        # --- FIX: Ensure the exact filename from GitHub is used ---
         demand_df = pd.read_csv('demand_profile.csv')
     except FileNotFoundError:
-        st.error("Error: 'demand_profile.csv' not found. Please ensure the file is in the project folder.")
+        st.error("Error: 'demand_profile.csv' not found. Please ensure the file is in your GitHub repository.")
         return None, None
         
     try:
         with open('config.yml', 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
     except FileNotFoundError:
-        st.error("Error: 'config.yml' not found. Please ensure the file is in the project folder.")
+        st.error("Error: 'config.yml' not found. Please ensure the file is in your GitHub repository.")
         return None, None
     except Exception as e:
         st.error(f"Error loading or parsing 'config.yml': {e}")
         return None, None
         
     return demand_df, config
+
+# This needs to be outside the cached function to avoid circular dependency issues with calculator
+from calculator import calculate_5yr_tco
 
 demand_profile, config = load_data()
 
