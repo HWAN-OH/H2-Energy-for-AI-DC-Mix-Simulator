@@ -3,8 +3,8 @@ import numpy as np
 
 def calculate_5yr_tco(config, user_inputs):
     """
-    Calculates the 5-year TCO using standardized data and a simplified config.
-    표준화된 데이터와 단순화된 config를 사용하여 5년 TCO를 계산합니다.
+    Calculates the 5-year TCO. This version corrects the LCOE calculation.
+    LCOE 계산 로직이 수정된 버전입니다.
     """
     demand_profile = user_inputs['demand_profile']
     energy_mix = user_inputs['energy_mix']
@@ -51,7 +51,6 @@ def calculate_5yr_tco(config, user_inputs):
 
         # --- 2. Calculate Annual OPEX ---
         annual_opex = 0
-        total_energy_generated = 1 # Avoid division by zero
         total_emissions_kg = 0
         
         # Grid
@@ -59,7 +58,6 @@ def calculate_5yr_tco(config, user_inputs):
         grid_kwh = annual_demand_kwh * (energy_mix.get('grid', 0) / 100)
         grid_price = grid_params.get('price_per_kwh', 0.12) * ((1 + econ_assumptions['grid_escalation']) ** (simulation_year - 1))
         annual_opex += grid_kwh * grid_price
-        total_energy_generated += grid_kwh
         total_emissions_kg += grid_kwh * grid_params.get('carbon_emission_factor', 0)
         
         # Renewables & Fuel Cell
@@ -71,15 +69,11 @@ def calculate_5yr_tco(config, user_inputs):
                 # O&M Cost
                 annual_opex += (capacity_kw * source_params.get('capex_per_kw', 0)) * source_params.get('opex_rate', 0.015)
                 
-                # Energy Generation & Fuel Cost
+                # Fuel Cost for SOFC
                 if source == 'hydrogen_SOFC':
                     energy_kwh = annual_demand_kwh * (energy_mix[source] / 100)
                     fuel_cost = econ_assumptions['h2_fuel_cost'] * ((1 + econ_assumptions['fuel_escalation']) ** (simulation_year - 1))
                     annual_opex += energy_kwh * fuel_cost
-                else: # Solar & Wind
-                    energy_kwh = capacity_kw * 8760 * source_params.get('capacity_factor', 0)
-                
-                total_energy_generated += energy_kwh
 
         # Carbon Tax
         if econ_assumptions['carbon_tax_year'] and simulation_year >= econ_assumptions['carbon_tax_year']:
@@ -91,6 +85,11 @@ def calculate_5yr_tco(config, user_inputs):
         opex_pv = annual_opex * discount_factor
         total_capex_pv += capex_pv
         total_opex_pv += opex_pv
+        
+        # --- FIX: LCOE denominator is now annual_demand_kwh ---
+        # LCOE 분모를 연간 실제 수요량으로 수정합니다.
+        lcoe_mwh = ((annual_capex + annual_opex) / annual_demand_kwh) * 1000 if annual_demand_kwh > 0 else 0
+        
         results.append({
             'year': actual_year,
             'annual capex': annual_capex,
@@ -99,15 +98,16 @@ def calculate_5yr_tco(config, user_inputs):
             'capex (pv)': capex_pv,
             'opex (pv)': opex_pv,
             'total cost (pv)': capex_pv + opex_pv,
-            'lcoe ($/mwh)': ((annual_capex + annual_opex) / total_energy_generated) * 1000
+            'lcoe ($/mwh)': lcoe_mwh
         })
 
     tco_5yr = total_capex_pv + total_opex_pv
+    total_demand_mwh = demand_profile['demand_mwh'].sum()
     
     summary = {
         '5_Year_TCO': tco_5yr,
         'Total_CAPEX_PV': total_capex_pv,
         'Total_OPEX_PV': total_opex_pv,
-        'LCOE_Avg_5yr': (tco_5yr / (demand_profile['demand_mwh'].sum() * 1000)) if demand_profile['demand_mwh'].sum() > 0 else 0
+        'LCOE_Avg_5yr': (tco_5yr / (total_demand_mwh * 1000)) * 1000 if total_demand_mwh > 0 else 0
     }
     return pd.DataFrame(results), summary
