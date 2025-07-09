@@ -13,11 +13,10 @@ This tool was born from a real-world need to answer the most critical question f
 
 ## Key Features
 
-- **5-Year TCO Analysis:** Calculates the full Total Cost of Ownership, including initial CAPEX, ongoing OPEX, asset replacement costs (e.g., fuel cell stacks), and future carbon taxes.
-- **Dynamic Scenario Design:** Interactively design your own energy portfolio by adjusting the mix of Grid power, Solar, Wind, and Hydrogen Fuel Cells (SOFC).
-- **Economic Assumption Modeling:** Factor in real-world economic variables like discount rates, annual price escalations for grid power and fuel, and potential carbon tax scenarios.
-- **Present Value (PV) Calculation:** All future costs are discounted to their present value, enabling a true "apples-to-apples" comparison of long-term investments.
-- **Intuitive Visualization:** Key metrics (TCO, LCOE, CAPEX) and annual cost trends are visualized through an interactive dashboard for clear, immediate insights.
+- **5-Year TCO Analysis:** Calculates the full Total Cost of Ownership, including initial CAPEX, ongoing OPEX, asset replacement costs, and future carbon taxes.
+- **Dynamic Scenario Design:** Interactively design your own energy portfolio by adjusting the mix of Grid power, Solar, Wind, and Hydrogen/Natural Gas Fuel Cells.
+- **Global Market Scenarios:** Analyze project feasibility across different regions (e.g., USA, South Korea, EU) with realistic, market-specific energy pricing.
+- **Financial Modeling:** Incorporates key financial metrics like Discount Rate and Present Value (PV) for a true "apples-to-apples" comparison of long-term investments.
 
 ## How to Use
 
@@ -41,20 +40,21 @@ This tool was born from a real-world need to answer the most critical question f
     streamlit run app.py
     ```
 
-5.  **Configure & Analyze:**
-    - Use the sidebar to design your energy mix and set economic assumptions.
-    - Click "Run Analysis" to view the comprehensive results on the main dashboard.
+## Key Assumptions & Data Sources
+
+The credibility of this simulation rests on the transparency of its underlying data. The default values in `config.yml` are not arbitrary; they are representative figures derived from a survey of recent industry reports, market data, and established energy benchmarks.
+
+-   **Market Scenarios (Grid & Gas Prices):** The regional electricity and natural gas prices are based on publicly available data and reports from sources such as the **U.S. Energy Information Administration (EIA)**, **Eurostat**, and analysis of the Korean industrial market. They are intended to reflect the higher, all-in costs for new, large-scale data center customers, which include infrastructure and grid upgrade costs, not just simple retail rates.
+
+-   **Technology Costs (CAPEX/OPEX):** The capital and operational expenditures for technologies like Solar, Wind, and SOFC are based on industry benchmarks from leading energy analysis institutions like **Lazard's LCOE Analysis**, **NREL**, and various market intelligence reports.
+
+-   **No Subsidies Assumption:** **Crucially, this model does NOT include any government subsidies, tax credits (like the U.S. IRA), or other incentives.** It is a pure, unsubsidized cost-based analysis, providing a conservative baseline for economic feasibility.
 
 ## Core Logic & Simulation Scale
 
 The simulation engine (`calculator.py`) performs a year-by-year analysis based on the user's scenario. The total required capacity of the power sources is determined by the `peak_demand_mw` specified in the `demand_profile.csv` for each year.
 
-**The provided example `demand_profile.csv` simulates a data center starting with an initial peak load of approximately 8.5 MW, which grows over the 5-year period.** Users can adapt the simulation to any scale by modifying this CSV file to reflect their specific project's load profile.
-
-1.  **Annual CAPEX Calculation:** Initial investments are calculated in Year 1 based on the required capacity to meet peak demand. Mid-life asset replacement costs (like SOFC stack replacements) are factored in at the specified year.
-2.  **Annual OPEX Calculation:** Operational costs are calculated annually, including variable costs (grid power, fuel) subject to escalation rates, and fixed costs (O&M) based on a percentage of CAPEX.
-3.  **Present Value (PV) Analysis:** All annual costs (both CAPEX and OPEX) are discounted to their present value using the user-defined discount rate.
-4.  **TCO & LCOE Calculation:** The sum of all discounted costs over the 5-year period yields the final TCO. The average LCOE is then derived from this total cost and the total energy demand.
+**The provided example `demand_profile.csv` simulates a data center scaling from an initial peak load of 40 MW to a final load of 100 MW over 5 years.** Users can adapt the simulation to any scale by modifying this CSV file.
 
 ## Project Philosophy
 
