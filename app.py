@@ -52,7 +52,7 @@ with st.expander("About this Simulator & Key Assumptions"):
     #### **Key Assumptions & Definitions**
 
     * **Data Center Scale:** The scale is defined by **Peak Demand (MW)**. The default `demand_profile.csv` simulates a data center scaling from **{initial_peak_demand:.1f} MW** to **{final_peak_demand:.1f} MW**.
-    * **Market Scenarios:** The initial grid and natural gas prices are loaded based on the selected market scenario.
+    * **Market Scenarios:** The initial grid and natural gas prices are loaded based on the selected market scenario in the sidebar.
     * **LCOE & TCO:** The LCOE (Levelized Cost of Energy) is calculated based on the asset's full lifetime ({config.get('asset_lifetime_years', 20)} years) to provide a true annualized cost. The TCO reflects the 5-year total cost outlay.
     * **No Subsidies:** **Crucially, this model does NOT include any government subsidies, tax credits (like the U.S. IRA), or other incentives.** It is a pure cost-based analysis.
     """)
@@ -118,24 +118,23 @@ if st.button("🚀 Run Analysis", use_container_width=True):
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("5-Year Total Cost (TCO)", f"${summary.get('5_Year_TCO', 0):,.0f}")
         col2.metric(f"Avg. LCOE ({config.get('asset_lifetime_years', 20)}-yr lifetime)", f"${summary.get('LCOE_Avg_5yr', 0):.2f} / MWh")
-        col3.metric("Total Initial CAPEX", f"${summary.get('Total_CAPEX_Initial', 0):,.0f}")
+        col3.metric("Total Initial CAPEX", f"${summary.get('Total_Initial_CAPEX', 0):,.0f}")
         col4.metric("Total Fuel Cell CAPEX", f"${total_fc_capex:,.0f}")
 
         tab1, tab2 = st.tabs(["📊 Cost Composition", "📄 Detailed Data"])
 
         with tab1:
-            st.subheader("5-Year Cost Composition (Present Value)")
-            
-            # Display detailed OPEX breakdown with a Pie Chart
-            opex_df = pd.DataFrame.from_dict(opex_breakdown, orient='index', columns=['Cost'])
-            opex_df.index.name = 'OPEX Component'
-            opex_df = opex_df.reset_index()
-            fig_opex = px.pie(opex_df, values='Cost', names='OPEX Component', title='Total 5-Year OPEX Breakdown (PV)')
-            st.plotly_chart(fig_opex, use_container_width=True)
-
             st.subheader("Initial CAPEX Breakdown")
             capex_df = pd.DataFrame.from_dict(capex_details, orient='index', columns=['Cost (USD)'])
             st.dataframe(capex_df.style.format("${:,.0f}"), use_container_width=True)
+
+            st.subheader("5-Year OPEX Composition (Present Value)")
+            if opex_breakdown:
+                opex_df = pd.DataFrame.from_dict(opex_breakdown, orient='index', columns=['Cost (PV)'])
+                opex_df.index.name = 'OPEX Component'
+                opex_df = opex_df.reset_index()
+                fig_opex = px.pie(opex_df, values='Cost (PV)', names='OPEX Component', title='Total 5-Year OPEX Breakdown (PV)')
+                st.plotly_chart(fig_opex, use_container_width=True)
 
         with tab2:
             st.subheader("Full Annual Calculation Results")
@@ -146,4 +145,4 @@ if st.button("🚀 Run Analysis", use_container_width=True):
     else:
         st.warning("Could not calculate results.")
 else:
-    st.info("Configure your scenario and click 'Run Analysis'.")
+    st.info("Configure your scenario in the sidebar and click 'Run Analysis'.")
