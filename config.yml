@@ -6,53 +6,55 @@ asset_lifetime_years: 20
 
 # ===============================================
 # Market Scenarios
-# - Defines region-specific energy prices.
+# - Defines region-specific energy prices based on recent data.
 # ===============================================
 market_scenarios:
-  USA_Virginia:
-    description: "Major data center hub with competitive but rising power costs."
-    # Grid price is now defined in the main energy_sources section
+  USA_Virginia_DC:
+    description: "Hyperscale data center hub. Price reflects total cost of securing power, not just retail rate."
+    grid_price_per_kwh: 0.16
     gas_fuel_cost_per_kwh: 0.07 
-  South_Korea:
+  South_Korea_Industrial:
     description: "High industrial electricity rates and reliance on imported fuel."
-    # Grid price is now defined in the main energy_sources section
+    grid_price_per_kwh: 0.13
     gas_fuel_cost_per_kwh: 0.11
-  EU_Nordics:
+  EU_Germany_Frankfurt:
+    description: "Major EU hub with high electricity prices due to taxes and grid fees."
+    grid_price_per_kwh: 0.22
+    gas_fuel_cost_per_kwh: 0.09
+  EU_Nordics_Favorable:
     description: "Low power costs due to abundant renewable energy (hydro/wind)."
-    # Grid price is now defined in the main energy_sources section
+    grid_price_per_kwh: 0.07
     gas_fuel_cost_per_kwh: 0.09
 
 # ===============================================
 # Technical & Cost Parameters for Energy Sources
-# - These values are updated based on real market data.
 # ===============================================
 energy_sources:
-  # Grid Power
+  # Grid Power (Price is now loaded from market_scenarios)
   grid:
-    price_per_kwh: 0.20            # Initial purchase price per kWh ($)
-    carbon_emission_factor: 0.45   # kg CO2 per kWh
+    carbon_emission_factor: 0.45
 
   # Solar PV
   solar:
-    capex_per_kw: 1500             # Initial capital expenditure ($/kW)
-    opex_rate: 0.015               # Annual O&M cost rate (as a fraction of CAPEX)
-    capacity_factor: 0.18          # Annual average capacity factor (%)
+    capex_per_kw: 1500
+    opex_rate: 0.015
+    capacity_factor: 0.18
 
   # Wind
   wind:
-    capex_per_kw: 2000             # Initial capital expenditure ($/kW)
-    opex_rate: 0.02                # Annual O&M cost rate (as a fraction of CAPEX)
-    capacity_factor: 0.30          # Annual average capacity factor (%)
+    capex_per_kw: 2000
+    opex_rate: 0.02
+    capacity_factor: 0.30
 
   # Hydrogen Fuel Cell (SOFC)
   hydrogen_SOFC:
-    capex_per_kw: 3500             # Initial capital expenditure ($/kW)
-    opex_rate: 0.02                # Annual O&M cost rate (as a fraction of CAPEX)
-    efficiency: 0.60               # Power generation efficiency (%)
-    stack_lifetime_years: 5        # Stack replacement cycle (years)
-    stack_replacement_cost_rate: 0.3 # Stack replacement cost (as a fraction of initial CAPEX)
+    capex_per_kw: 3500
+    opex_rate: 0.02
+    efficiency: 0.60
+    stack_lifetime_years: 5
+    stack_replacement_cost_rate: 0.3
   
-  # Natural Gas Fuel Cell (NG-SOFC) - Kept for comparison if needed
+  # Natural Gas Fuel Cell (NG-SOFC)
   NG_SOFC:
     capex_per_kw: 3500
     opex_rate: 0.025
