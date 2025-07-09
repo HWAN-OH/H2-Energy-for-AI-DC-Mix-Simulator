@@ -1,6 +1,9 @@
 # Overall simulation period in years
 simulation_period_years: 5
 
+# Asset lifetime for LCOE calculation (years)
+asset_lifetime_years: 20
+
 # ===============================================
 # Market Scenarios
 # - Defines region-specific energy prices.
@@ -8,22 +11,21 @@ simulation_period_years: 5
 market_scenarios:
   USA_Virginia:
     description: "Major data center hub with competitive but rising power costs."
-    grid_price_per_kwh: 0.09
-    gas_fuel_cost_per_kwh: 0.07 # Based on Henry Hub prices + transport
+    # Grid price is now defined in the main energy_sources section
+    gas_fuel_cost_per_kwh: 0.07 
   South_Korea:
     description: "High industrial electricity rates and reliance on imported fuel."
-    grid_price_per_kwh: 0.13
-    gas_fuel_cost_per_kwh: 0.11 # Based on LNG import prices
+    # Grid price is now defined in the main energy_sources section
+    gas_fuel_cost_per_kwh: 0.11
   EU_Nordics:
     description: "Low power costs due to abundant renewable energy (hydro/wind)."
-    grid_price_per_kwh: 0.06
-    gas_fuel_cost_per_kwh: 0.09 # Higher due to European gas market
+    # Grid price is now defined in the main energy_sources section
+    gas_fuel_cost_per_kwh: 0.09
 
 # ===============================================
 # Technical & Cost Parameters for Energy Sources
-# - All sources are now at the same level for simplicity and robustness.
+# - These values are updated based on real market data.
 # ===============================================
-
 energy_sources:
   # Grid Power
   grid:
@@ -49,3 +51,10 @@ energy_sources:
     efficiency: 0.60               # Power generation efficiency (%)
     stack_lifetime_years: 5        # Stack replacement cycle (years)
     stack_replacement_cost_rate: 0.3 # Stack replacement cost (as a fraction of initial CAPEX)
+  
+  # Natural Gas Fuel Cell (NG-SOFC) - Kept for comparison if needed
+  NG_SOFC:
+    capex_per_kw: 3500
+    opex_rate: 0.025
+    efficiency: 0.55
+    carbon_emission_factor: 0.4
