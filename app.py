@@ -44,36 +44,23 @@ if config is None or demand_profile is None:
 
 # --- UI ---
 st.title("💡 AI Data Center Energy Strategy Simulator")
-st.markdown("Design an optimal energy portfolio and analyze the 5-year Total Cost of Ownership (TCO).")
 
-# --- FIX: Add Expander for Context and Credit ---
+# --- FIX: Dynamically display the data center scale in the description ---
+initial_peak_demand = demand_profile['peak_demand_mw'].iloc[0]
+st.markdown(f"Design an optimal energy portfolio for a **{initial_peak_demand:.1f} MW** data center and analyze its 5-year Total Cost of Ownership (TCO).")
+# --- END OF FIX ---
+
+
+# --- Expander for Context and Credit ---
 with st.expander("About this Simulator & Key Assumptions"):
     st.markdown("""
     **Developed by: [OH SEONG-HWAN](https://www.linkedin.com/in/shoh1224/)**
 
     This tool was built to provide a high-level strategic analysis of energy portfolios for AI data centers. It reflects a core belief that the most pressing challenges of our time can only be solved by bridging deep industry knowledge with data-driven, systems-level thinking.
-
-    ---
-
-    **How is the Data Center scale defined?**
-
-    You are correct, the scale of a data center is often discussed in terms of its **IT Load (MW)**, which is the power consumed by servers, storage, and network equipment.
-
-    This simulation, however, uses **Peak Demand (MW)** as a primary input, which represents the **Total Facility Power**. This includes not only the IT Load but also all supporting infrastructure like cooling, lighting, and power distribution systems.
-
-    The relationship is defined by the Power Usage Effectiveness (PUE):
-    `Total Facility Power = IT Load * PUE`
-
-    For context, the default `demand_profile.csv` simulates a data center with a peak demand starting at **8.5 MW**. Assuming a PUE of 1.5, this would correspond to an **IT Load of approximately 5.7 MW**.
-
-    You can tailor the simulation to your specific project by modifying the `demand_profile.csv` file.
     """)
-# --- END OF FIX ---
-
 
 # --- Sidebar ---
 st.sidebar.title("📊 Scenario Configuration")
-# ... (The rest of the sidebar code remains the same)
 st.sidebar.header("1. Energy Mix Design (%)")
 st.sidebar.info("Adjust the share of each power source. The total must be 100%.")
 
@@ -98,7 +85,6 @@ fuel_escalation = st.sidebar.slider("Annual Fuel Cost Escalation (%)", -5.0, 10.
 st.sidebar.header("3. Carbon Tax Scenario")
 carbon_tax_year = st.sidebar.select_slider("Carbon Tax Intro Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "None" if x is None else f"Year {x}")
 carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
-
 
 # --- Calculation & Display ---
 if st.button("🚀 Run Analysis", use_container_width=True):
