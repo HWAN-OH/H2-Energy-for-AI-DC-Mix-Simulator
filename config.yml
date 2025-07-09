@@ -47,9 +47,10 @@ energy_sources:
     stack_lifetime_years: 4
     stack_replacement_cost_rate: 0.4
 
-  # Natural Gas Fuel Cell (NG-SOFC) - For comparison
+  # Natural Gas Fuel Cell (NG-SOFC)
   NG_SOFC:
     capex_per_kw: 2200
     opex_rate: 0.025
     efficiency: 0.55
     carbon_emission_factor: 0.4
+
