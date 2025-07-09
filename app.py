@@ -52,7 +52,7 @@ with st.expander("About this Simulator & Key Assumptions"):
     #### **Key Assumptions & Definitions**
 
     * **Data Center Scale:** The scale is defined by **Peak Demand (MW)**. The default `demand_profile.csv` simulates a data center scaling from **{initial_peak_demand:.1f} MW** to **{final_peak_demand:.1f} MW**.
-    * **Market Scenarios:** The initial grid and natural gas prices are loaded based on the selected market scenario in the sidebar.
+    * **Market Scenarios:** The initial grid and natural gas prices are loaded based on the selected market scenario.
     * **LCOE & TCO:** The LCOE (Levelized Cost of Energy) is calculated based on the asset's full lifetime ({config.get('asset_lifetime_years', 20)} years) to provide a true annualized cost. The TCO reflects the 5-year total cost outlay.
     * **No Subsidies:** **Crucially, this model does NOT include any government subsidies, tax credits (like the U.S. IRA), or other incentives.** It is a pure cost-based analysis.
     """)
