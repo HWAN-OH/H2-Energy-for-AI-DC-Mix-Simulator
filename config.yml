@@ -2,6 +2,24 @@
 simulation_period_years: 5
 
 # ===============================================
+# Market Scenarios
+# - Defines region-specific energy prices.
+# ===============================================
+market_scenarios:
+  USA_Virginia:
+    description: "Major data center hub with competitive but rising power costs."
+    grid_price_per_kwh: 0.09
+    gas_fuel_cost_per_kwh: 0.07 # Based on Henry Hub prices + transport
+  South_Korea:
+    description: "High industrial electricity rates and reliance on imported fuel."
+    grid_price_per_kwh: 0.13
+    gas_fuel_cost_per_kwh: 0.11 # Based on LNG import prices
+  EU_Nordics:
+    description: "Low power costs due to abundant renewable energy (hydro/wind)."
+    grid_price_per_kwh: 0.06
+    gas_fuel_cost_per_kwh: 0.09 # Higher due to European gas market
+
+# ===============================================
 # Technical & Cost Parameters for Energy Sources
 # - All sources are now at the same level for simplicity and robustness.
 # ===============================================
