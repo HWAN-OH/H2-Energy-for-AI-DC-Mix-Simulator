@@ -12,6 +12,7 @@ st.set_page_config(page_title="AI DC Energy Strategy Simulator", page_icon="💡
 def load_data():
     try:
         demand_df = pd.read_csv('demand_profile.csv')
+        # Standardize column names to prevent errors
         demand_df.columns = [col.strip().lower() for col in demand_df.columns]
         required_cols = ['year', 'demand_mwh', 'peak_demand_mw']
         if not all(col in demand_df.columns for col in required_cols):
@@ -39,61 +40,47 @@ if config is None or demand_profile is None:
     st.stop()
 
 # --- UI ---
-st.title("💡 AI Data Center Global Energy Strategy Simulator")
+st.title("💡 AI Data Center Energy Strategy Simulator")
 initial_peak_demand = demand_profile['peak_demand_mw'].iloc[0]
-st.markdown(f"Design an optimal energy portfolio for a **{initial_peak_demand:.1f} MW** data center and analyze its 5-year Total Cost of Ownership (TCO) across different global markets.")
+st.markdown(f"Design an optimal energy portfolio for a **{initial_peak_demand:.1f} MW** data center and analyze its 5-year Total Cost of Ownership (TCO).")
 
-# --- FIX: Restore and upgrade the expander for context and credit ---
 with st.expander("About this Simulator & Key Assumptions"):
-    st.markdown("""
+    st.markdown(f"""
     **Developed by: [OH SEONG-HWAN](https://www.linkedin.com/in/shoh1224/)**
 
-    This tool was built to provide a high-level strategic analysis of energy portfolios for AI data centers. It reflects a core belief that the most pressing challenges of our time can only be solved by bridging deep industry knowledge with data-driven, systems-level thinking.
-
+    This tool was built to provide a high-level strategic analysis of energy portfolios for AI data centers.
+    
     ---
     #### **Key Assumptions & Definitions**
 
-    * **Data Center Scale:** The scale is defined by **Peak Demand (MW)**, representing the Total Facility Power. The default `demand_profile.csv` simulates a data center starting at **{:.1f} MW**. Assuming a PUE of 1.5, this corresponds to an initial **IT Load of approximately {:.1f} MW**.
-    * **Market Scenarios:** The initial grid and natural gas prices are loaded based on the selected market scenario in the sidebar. This allows for a more realistic comparison of project feasibility in different regions.
-    * **TCO (Total Cost of Ownership):** All future costs (CAPEX & OPEX) are discounted to their present value to provide a true "apples-to-apples" financial comparison over the 5-year period.
-
-    *You can tailor the simulation to your specific project by modifying the `demand_profile.csv` and `config.yml` files.*
-    """.format(initial_peak_demand, initial_peak_demand / 1.5))
-# --- END OF FIX ---
-
+    * **Data Center Scale:** The scale is defined by **Peak Demand (MW)**. The default `demand_profile.csv` simulates a data center starting at **{initial_peak_demand:.1f} MW**.
+    * **TCO (Total Cost of Ownership):** All future costs are discounted to their present value for a true "apples-to-apples" financial comparison.
+    """)
 
 # --- Sidebar ---
 st.sidebar.title("📊 Scenario Configuration")
-
-st.sidebar.header("1. Select Market Scenario")
-scenario_options = list(config.get('market_scenarios', {}).keys())
-selected_scenario = st.sidebar.selectbox("Market / Region", scenario_options)
-scenario_params = config['market_scenarios'][selected_scenario]
-st.sidebar.caption(scenario_params.get('description', ''))
-
-st.sidebar.header("2. Energy Mix Design (%)")
+st.sidebar.header("1. Energy Mix Design (%)")
 st.sidebar.info("Adjust the share of each power source. The total must be 100%.")
 
 grid_mix = st.sidebar.slider("Grid", 0, 100, 60)
-solar_mix = st.sidebar.slider("Solar", 0, 100, 10)
+solar_mix = st.sidebar.slider("Solar", 0, 100, 20)
 wind_mix = st.sidebar.slider("Wind", 0, 100, 0)
-h2_sofc_mix = st.sidebar.slider("H2 Fuel Cell (SOFC)", 0, 100, 10)
-ng_sofc_mix = st.sidebar.slider("NG Fuel Cell (NG-SOFC)", 0, 100, 20)
+h2_sofc_mix = st.sidebar.slider("H2 Fuel Cell (SOFC)", 0, 100, 20)
 
-total_mix = grid_mix + solar_mix + wind_mix + h2_sofc_mix + ng_sofc_mix
+total_mix = grid_mix + solar_mix + wind_mix + h2_sofc_mix
 if total_mix != 100:
     st.sidebar.error(f"Total energy mix must be 100%. (Currently: {total_mix}%)")
     st.stop()
 
-energy_mix = {'grid': grid_mix, 'solar': solar_mix, 'wind': wind_mix, 'hydrogen_SOFC': h2_sofc_mix, 'NG_SOFC': ng_sofc_mix}
+energy_mix = {'grid': grid_mix, 'solar': solar_mix, 'wind': wind_mix, 'hydrogen_SOFC': h2_sofc_mix}
 
-st.sidebar.header("3. Economic Assumptions")
+st.sidebar.header("2. Economic Assumptions")
 discount_rate = st.sidebar.slider("Discount Rate (%)", 3.0, 15.0, 8.0, 0.1) / 100
 grid_escalation = st.sidebar.slider("Annual Grid Price Escalation (%)", 0.0, 10.0, 3.0, 0.1) / 100
-h2_fuel_cost = st.sidebar.number_input("Initial H2 Fuel Cost ($/kWh)", 0.05, 0.30, 0.15, 0.01)
-fuel_escalation = st.sidebar.slider("Annual Fuel Cost Escalation (%)", -5.0, 10.0, 2.0, 0.5) / 100
+h2_fuel_cost = st.sidebar.number_input("Initial H2 Fuel Cost ($/kWh)", 0.05, 0.30, 0.12, 0.01)
+fuel_escalation = st.sidebar.slider("Annual Fuel Cost Escalation (%)", -5.0, 10.0, 0.0, 0.5) / 100
 
-st.sidebar.header("4. Carbon Tax Scenario")
+st.sidebar.header("3. Carbon Tax Scenario")
 carbon_tax_year = st.sidebar.select_slider("Carbon Tax Intro Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "None" if x is None else f"Year {x}")
 carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
 
@@ -102,7 +89,6 @@ if st.button("🚀 Run Analysis", use_container_width=True):
     user_inputs = {
         'demand_profile': demand_profile,
         'energy_mix': energy_mix,
-        'scenario_params': scenario_params,
         'econ_assumptions': {
             'discount_rate': discount_rate, 'grid_escalation': grid_escalation,
             'h2_fuel_cost': h2_fuel_cost, 'fuel_escalation': fuel_escalation,
@@ -114,7 +100,7 @@ if st.button("🚀 Run Analysis", use_container_width=True):
         df_results, summary = calculate_5yr_tco(config, user_inputs)
 
     st.markdown("---")
-    st.header(f"Analysis for: **{selected_scenario}**")
+    st.header("Comprehensive Analysis (5-Year TCO)")
 
     if summary:
         col1, col2, col3 = st.columns(3)
@@ -137,8 +123,7 @@ if st.button("🚀 Run Analysis", use_container_width=True):
         with tab2:
             st.subheader("5-Year Detailed Cost Breakdown (in USD)")
             if not df_results.empty:
-                display_df = df_results.copy()
-                display_df = display_df.set_index('year')
+                display_df = df_results.copy().set_index('year')
                 formatters = {col: '{:,.0f}' for col in display_df.columns if 'lcoe' not in col}
                 formatters['lcoe ($/mwh)'] = '{:,.2f}'
                 st.dataframe(display_df.style.format(formatters), use_container_width=True)
