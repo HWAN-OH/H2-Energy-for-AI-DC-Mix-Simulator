@@ -45,9 +45,11 @@ This tool was born from a real-world need to answer the most critical question f
     - Use the sidebar to design your energy mix and set economic assumptions.
     - Click "Run Analysis" to view the comprehensive results on the main dashboard.
 
-## Core Logic
+## Core Logic & Simulation Scale
 
-The simulation engine (`calculator.py`) performs a year-by-year analysis based on the user's scenario.
+The simulation engine (`calculator.py`) performs a year-by-year analysis based on the user's scenario. The total required capacity of the power sources is determined by the `peak_demand_mw` specified in the `demand_profile.csv` for each year.
+
+**The provided example `demand_profile.csv` simulates a data center starting with an initial peak load of approximately 8.5 MW, which grows over the 5-year period.** Users can adapt the simulation to any scale by modifying this CSV file to reflect their specific project's load profile.
 
 1.  **Annual CAPEX Calculation:** Initial investments are calculated in Year 1 based on the required capacity to meet peak demand. Mid-life asset replacement costs (like SOFC stack replacements) are factored in at the specified year.
 2.  **Annual OPEX Calculation:** Operational costs are calculated annually, including variable costs (grid power, fuel) subject to escalation rates, and fixed costs (O&M) based on a percentage of CAPEX.
