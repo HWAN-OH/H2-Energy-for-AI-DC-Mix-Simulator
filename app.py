@@ -92,7 +92,6 @@ st.sidebar.header("4. Carbon Tax Scenario")
 carbon_tax_year = st.sidebar.select_slider("Carbon Tax Intro Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "None" if x is None else f"Year {x}")
 carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
 
-# --- FIX: Updated copyright year ---
 st.sidebar.markdown("---")
 st.sidebar.info("© 2025, OH SEONG-HWAN. All rights reserved.")
 
@@ -122,16 +121,21 @@ if st.button("🚀 Run Analysis", use_container_width=True):
         col3.metric("Total Initial CAPEX", f"${summary.get('Total_CAPEX_Initial', 0):,.0f}")
         col4.metric("Total Fuel Cell CAPEX", f"${total_fc_capex:,.0f}")
 
-        tab1, tab2 = st.tabs(["💰 Detailed Cost Breakdown", "📄 Raw Data"])
+        tab1, tab2 = st.tabs(["📊 Cost Composition", "📄 Detailed Data"])
 
         with tab1:
+            st.subheader("5-Year Cost Composition (Present Value)")
+            
+            # Display detailed OPEX breakdown with a Pie Chart
+            opex_df = pd.DataFrame.from_dict(opex_breakdown, orient='index', columns=['Cost'])
+            opex_df.index.name = 'OPEX Component'
+            opex_df = opex_df.reset_index()
+            fig_opex = px.pie(opex_df, values='Cost', names='OPEX Component', title='Total 5-Year OPEX Breakdown (PV)')
+            st.plotly_chart(fig_opex, use_container_width=True)
+
             st.subheader("Initial CAPEX Breakdown")
             capex_df = pd.DataFrame.from_dict(capex_details, orient='index', columns=['Cost (USD)'])
             st.dataframe(capex_df.style.format("${:,.0f}"), use_container_width=True)
-
-            st.subheader("Total 5-Year OPEX Breakdown (Present Value)")
-            opex_breakdown_df = pd.DataFrame.from_dict(opex_breakdown, orient='index', columns=['Total Cost (USD)'])
-            st.dataframe(opex_breakdown_df.style.format("${:,.0f}"), use_container_width=True)
 
         with tab2:
             st.subheader("Full Annual Calculation Results")
