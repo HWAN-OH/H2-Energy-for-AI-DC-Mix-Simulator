@@ -44,11 +44,11 @@ This tool was born from a real-world need to answer the most critical question f
 
 The credibility of this simulation rests on the transparency of its underlying data. The default values in `config.yml` are not arbitrary; they are representative figures derived from a survey of recent industry reports, market data, and established energy benchmarks.
 
--   **Market Scenarios (Grid & Gas Prices):** The regional electricity and natural gas prices are based on publicly available data and reports from sources such as the **U.S. Energy Information Administration (EIA)**, **Eurostat**, and analysis of the Korean industrial market. They are intended to reflect the higher, all-in costs for new, large-scale data center customers, which include infrastructure and grid upgrade costs, not just simple retail rates.
+-   **Market Scenarios (Grid & Gas Prices):** The regional electricity and natural gas prices are based on publicly available data and reports from sources such as the **U.S. Energy Information Administration (EIA)**, **Eurostat**, and analysis of the Korean industrial market. They are intended to reflect the higher, all-in costs for new, large-scale data center customers.
 
--   **Technology Costs (CAPEX/OPEX):** The capital and operational expenditures for technologies like Solar, Wind, and SOFC are based on industry benchmarks from leading energy analysis institutions like **Lazard's LCOE Analysis**, **NREL**, and various market intelligence reports.
+-   **Technology Costs (CAPEX/OPEX):** The capital and operational expenditures for technologies like Solar, Wind, and SOFC are based on industry benchmarks from leading energy analysis institutions like **Lazard's LCOE Analysis** and **NREL**.
 
--   **No Subsidies Assumption:** **Crucially, this model does NOT include any government subsidies, tax credits (like the U.S. IRA), or other incentives.** It is a pure, unsubsidized cost-based analysis, providing a conservative baseline for economic feasibility.
+-   **No Subsidies Assumption:** **Crucially, this model does NOT include any government subsidies, tax credits (like the U.S. IRA), or other incentives.** It is a pure, unsubsidized cost-based analysis.
 
 ## Core Logic & Simulation Scale
 
@@ -58,10 +58,8 @@ The simulation engine (`calculator.py`) performs a year-by-year analysis based o
 
 ## Project Philosophy
 
-This tool was developed by **[OH SEONG-HWAN](https://www.linkedin.com/in/shoh1224/)**, a leader with deep expertise across the energy, manufacturing, and technology sectors. It reflects a core belief: the most pressing challenges of our time, from energy transition to AI infrastructure, can only be solved by bridging the gap between deep industry knowledge and data-driven, systems-level thinking.
-
-This simulator is an open invitation to all builders, operators, and visionaries to join in shaping a more sustainable and intelligent future.
+This tool was developed by **[OH SEONG-HWAN](https://www.linkedin.com/in/shoh1224/)**, a leader with deep expertise across the energy, manufacturing, and technology sectors. It reflects a core belief: the most pressing challenges of our time can only be solved by bridging the gap between deep industry knowledge and data-driven, systems-level thinking.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. Copyright (c) 2025, OH SEONG-HWAN.
