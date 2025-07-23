@@ -4,12 +4,21 @@
 business_assumptions:
   analysis_years: 10 # 사업 타당성 분석 기간 (년)
 
+# ===============================================
+# User & Pricing Model Assumptions (Unit Economics)
+# ===============================================
 user_assumptions:
-  assumed_low_tier_fee: 20.0
-  high_to_low_pricing_ratio: 5
-  total_users: 150000
-  low_tier_user_pct: 0.9
-  high_tier_user_pct: 0.1
+  total_users_for_100mw: 150000 # 100MW DC 기준 총 사용자 수
+  tiers:
+    free:
+      ratio: 0.70 # 전체 사용자 중 70%
+      monthly_token_usage_millions: 0.1 # 월간 10만 토큰 사용
+    paid:
+      ratio: 0.25 # 전체 사용자 중 25%
+      monthly_token_usage_millions: 2.0 # 월간 200만 토큰 사용
+    premium:
+      ratio: 0.05 # 전체 사용자 중 5%
+      monthly_token_usage_millions: 10.0 # 월간 1000만 토큰 사용
 
 # ===============================================
 # Infrastructure & Hardware Assumptions
@@ -47,3 +56,4 @@ electricity_pricing_scenarios:
     price_per_kwh: 0.13 # Represents a baseline industrial rate
   net_zero_ppa:
     price_per_kwh: 0.20 # Represents a premium for a 100% renewable PPA
+
