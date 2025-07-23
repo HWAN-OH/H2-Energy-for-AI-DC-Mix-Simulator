@@ -76,6 +76,7 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
             'electricity_price': config.get('electricity_pricing_scenarios', {}).get(electricity_scenario, {}).get('price_per_kwh', 0.13)
         }
         summary = calculate_business_case(config, user_inputs)
+        analysis_years = config.get('business_assumptions', {}).get('analysis_years', 10)
 
     # --- 4.1. Display Results ---
     st.markdown("---")
@@ -107,9 +108,15 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     # --- Output Section C: Overall Viability ---
     st.subheader(t('output_section_C_title'))
     payback = summary.get('payback_period', float('inf'))
-    payback_display = f"{payback:.2f} {t('years_suffix', default='년')}" if payback != float('inf') else t('payback_inf')
-    st.metric(t('payback_period_label'), payback_display)
+    
+    if payback == float('inf'):
+        payback_display = t('payback_inf')
+    elif payback > analysis_years:
+        payback_display = f"{payback:.2f} {t('years_suffix_projected')}"
+    else:
+        payback_display = f"{payback:.2f} {t('years_suffix')}"
 
+    st.metric(t('payback_period_label'), payback_display)
 
     # --- Footnote for Advanced Architecture ---
     if apply_advanced_arch:
@@ -118,4 +125,3 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
 else:
     st.info(t('initial_prompt'))
-
