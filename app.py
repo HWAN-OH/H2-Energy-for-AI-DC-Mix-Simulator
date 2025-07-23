@@ -57,21 +57,13 @@ high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 100, 5, help
 # Market and Economic Assumptions
 st.sidebar.header(t('section_2_header'))
 
-# --- Market Selector (Robust Version) ---
+# Market Selector (Robust Version)
 market_keys = list(config.get('market_scenarios', {}).keys())
 market_display_names = t('market_names')
 formatted_options = [market_display_names.get(key, key) for key in market_keys]
-
-# Create a mapping from display name back to the original key
 display_name_to_key_map = {display_name: key for key, display_name in zip(market_keys, formatted_options)}
-
-selected_display_name = st.sidebar.selectbox(
-    t('market_label'),
-    options=formatted_options,
-    key='market_selector'
-)
+selected_display_name = st.sidebar.selectbox(t('market_label'), options=formatted_options, key='market_selector')
 selected_scenario_key = display_name_to_key_map[selected_display_name]
-# --- End of Robust Version ---
 
 discount_rate = st.sidebar.slider(t('discount_rate_label'), 3.0, 15.0, 8.0, 0.1)
 
@@ -85,7 +77,7 @@ st.markdown(t('app_subtitle'))
 
 if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     with st.spinner(t('spinner_text')):
-        # --- 4.1. Calculate User's Scenario ---
+        # ... (4.1, 4.2, 4.3 계산 로직은 이전과 동일) ...
         user_inputs = {
             'demand_profile': demand_profile,
             'apply_mirrormind': apply_mirrormind,
@@ -95,7 +87,6 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
         }
         user_summary = calculate_integrated_tco(config, user_inputs)
 
-        # --- 4.2. Calculate 4 Benchmark Scenarios ---
         scenarios = {
             t('option_1_name'): {'apply_mirrormind': False, 'high_perf_hw_ratio': 100, 'desc': t('strategy_1_desc')},
             t('option_2_name'): {'apply_mirrormind': False, 'high_perf_hw_ratio': 0, 'desc': t('strategy_2_desc')},
@@ -115,10 +106,7 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
             })
         
         benchmark_df = pd.DataFrame(benchmark_results)
-
-        # --- 4.3. Generate Narrative Interpretation ---
         narrative = generate_narrative(user_inputs, user_summary, benchmark_df, t)
-
 
     # --- 4.4. Display Results ---
     st.markdown("---")
@@ -141,6 +129,15 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
     with st.expander(t('narrative_expander_title'), expanded=True):
         st.markdown(narrative)
+
+    # --- [새로 추가된 각주 섹션] ---
+    st.markdown("---")
+    st.info(f"""
+    **{t('footnote_title')}**
+
+    {t('footnote_text')}
+    """, icon="ℹ️")
+    # --- 여기까지 추가 ---
 
 else:
     st.info("사이드바에서 시나리오를 구성한 후 'TCO 분석 실행' 버튼을 클릭하세요. / Configure your scenario in the sidebar and click 'Run TCO Analysis'.")
