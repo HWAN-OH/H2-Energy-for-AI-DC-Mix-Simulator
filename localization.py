@@ -1,9 +1,9 @@
 # localization.py
-# UI 텍스트를 위한 한/영 문자열 저장소 (v5.0)
+# UI 텍스트를 위한 한/영 문자열 저장소 (v5.2)
 
 loc_strings = {
     'ko': {
-        'app_title': "💡 AI 서비스 사업성 시뮬레이터 (v5.0)",
+        'app_title': "💡 AI 서비스 사업성 시뮬레이터 (v5.2)",
         'app_subtitle': "기술 및 가격 전략을 조절하여, 사용자 그룹별 수익성과 전체 사업의 타당성을 분석합니다.",
         'sidebar_title': "⚙️ 시나리오 입력 변수",
         'lang_selector_label': "언어 (Language)",
@@ -49,6 +49,10 @@ loc_strings = {
         'profit_status_profit': "수익",
         'profit_status_loss': "손실",
 
+        'output_section_C_title': "C. 전체 사업 타당성",
+        'payback_period_label': "전체 투자 회수 기간 (년)",
+        'payback_inf': "> 10 년",
+
         'footnote_title': "※ '고급 아키텍처 적용' 효과에 대한 참고사항",
         'footnote_text': """
         * **가설 기반:** '고급 아키텍처' 효과는 '작업 종류에 따라 최적화된 경량 모델을 지능적으로 선택하여 자원 낭비를 제거한다'는 가설에 기반합니다.
@@ -56,7 +60,7 @@ loc_strings = {
         """
     },
     'en': {
-        'app_title': "💡 AI Service Business Case Simulator (v5.0)",
+        'app_title': "💡 AI Service Business Case Simulator (v5.2)",
         'app_subtitle': "Analyze the profitability of user segments and overall business viability by adjusting tech and pricing strategies.",
         'sidebar_title': "⚙️ Scenario Input Variables",
         'lang_selector_label': "Language",
@@ -101,6 +105,10 @@ loc_strings = {
         'monthly_profit_label': "Monthly Profit/Loss",
         'profit_status_profit': "Profit",
         'profit_status_loss': "Loss",
+
+        'output_section_C_title': "C. Overall Business Viability",
+        'payback_period_label': "Overall Investment Payback Period (Years)",
+        'payback_inf': "> 10 Years",
 
         'footnote_title': "※ Note on the 'Advanced Architecture' Effect",
         'footnote_text': """
