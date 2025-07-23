@@ -45,7 +45,7 @@ selected_lang_display = st.sidebar.radio(
     t('lang_selector_label'),
     ['한국어', 'English'],
     index=0 if st.session_state.lang == 'ko' else 1,
-    key='language_selector' # 위젯에 고유 키 부여
+    key='language_selector'
 )
 st.session_state.lang = 'ko' if selected_lang_display == '한국어' else 'en'
 
@@ -57,25 +57,21 @@ high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 100, 5, help
 # Market and Economic Assumptions
 st.sidebar.header(t('section_2_header'))
 
-# --- Market Selector (수정된 부분) ---
+# --- Market Selector (Robust Version) ---
 market_keys = list(config.get('market_scenarios', {}).keys())
 market_display_names = t('market_names')
-
-# 드롭다운에 표시될 이름 목록 생성
-# 만약 market_names 딕셔너리에 키가 없으면, 원래 키를 그대로 사용
 formatted_options = [market_display_names.get(key, key) for key in market_keys]
 
-# 사용자가 선택한 '표시 이름'
+# Create a mapping from display name back to the original key
+display_name_to_key_map = {display_name: key for key, display_name in zip(market_keys, formatted_options)}
+
 selected_display_name = st.sidebar.selectbox(
     t('market_label'),
     options=formatted_options,
-    key='market_selector' # 위젯에 고유 키 부여
+    key='market_selector'
 )
-
-# 선택된 '표시 이름'을 원래의 '키'로 변환
-# 이것이 프로그램 내부에서 사용될 실제 값
-selected_scenario_key = market_keys[formatted_options.index(selected_display_name)]
-# --- 여기까지 수정 ---
+selected_scenario_key = display_name_to_key_map[selected_display_name]
+# --- End of Robust Version ---
 
 discount_rate = st.sidebar.slider(t('discount_rate_label'), 3.0, 15.0, 8.0, 0.1)
 
@@ -109,7 +105,6 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
         
         benchmark_results = []
         for name, params in scenarios.items():
-            # 벤치마크 계산 시, 사용자가 선택한 시장과 IRR을 그대로 사용
             inputs = user_inputs.copy()
             inputs.update(params)
             result = calculate_integrated_tco(config, inputs)
@@ -129,13 +124,11 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     st.markdown("---")
     st.header(t('results_header'))
 
-    # Display User's Result
     st.subheader(t('user_scenario_header'))
     col1, col2 = st.columns(2)
     col1.metric(t('tco_metric_label'), f"${user_summary.get('final_integrated_tco_5yr', 0):,.0f}")
     col2.metric(t('investment_metric_label'), f"${user_summary.get('investment_per_mw', 0):,.2f} M / MW")
 
-    # Display Business Viability Analysis
     st.subheader(t('viability_header'))
     viability_data = user_summary.get('viability', {})
     col_v1, col_v2, col_v3 = st.columns(3)
@@ -143,12 +136,9 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     col_v2.metric(t('token_price_label'), f"${viability_data.get('price_per_million_tokens', 0):.4f}")
     col_v3.metric(t('user_fee_label'), f"${viability_data.get('monthly_fee_per_user', 0):.2f}")
 
-
-    # Display Benchmark Comparison Table
     st.subheader(t('comparison_header'))
     st.dataframe(benchmark_df, use_container_width=True, hide_index=True)
 
-    # Display Narrative Interpretation
     with st.expander(t('narrative_expander_title'), expanded=True):
         st.markdown(narrative)
 
