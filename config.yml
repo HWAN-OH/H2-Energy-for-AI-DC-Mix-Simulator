@@ -1,20 +1,11 @@
 # Overall simulation period in years
 simulation_period_years: 5
 
-# Asset lifetime for LCOE calculation (years)
-asset_lifetime_years: 20
-
-# ===============================================
-# Revenue & Business Viability Assumptions
-# ===============================================
-revenue_assumptions:
-  tokens_processed_per_mwh: 3000000000 # 3 billion tokens
-  active_users_per_mw: 1500
-
 # ===============================================
 # Strategic & Financial Assumptions
 # ===============================================
 strategic_assumptions:
+  viability_analysis_years: 10 # 사업 타당성 분석 기간 (년)
   high_perf_gpu:
     name: "NVIDIA H100"
     cost_per_unit: 35000
@@ -31,17 +22,29 @@ strategic_assumptions:
   maintenance_rate_of_construction_capex: 0.02
 
 # ===============================================
-# MirrorMind Architecture Assumptions
+# Revenue & Business Viability Assumptions
 # ===============================================
-mirrormind_assumptions:
-  workload_efficiency_factor: 0.167
-  optimized_energy_mix:
+revenue_assumptions:
+  tokens_processed_per_mwh: 3000000000 # 3 billion tokens
+  active_users_per_mw: 1500
+
+# ===============================================
+# Advanced Architecture Assumptions
+# ===============================================
+advanced_architecture_assumptions:
+  workload_efficiency_factor: 0.167 # Equivalent to 83.3% reduction
+
+# ===============================================
+# Power Mix Configurations
+# ===============================================
+power_mix_options:
+  carbon_free_mix:
     grid: 40
     solar: 40
     wind: 0
     hydrogen_SOFC: 0
     NG_SOFC: 20
-  standard_energy_mix:
+  standard_mix:
     grid: 80
     solar: 0
     wind: 0
