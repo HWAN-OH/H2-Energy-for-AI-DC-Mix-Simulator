@@ -116,4 +116,3 @@ def calculate_integrated_tco(config, user_inputs):
         }
     }
     return summary
-
