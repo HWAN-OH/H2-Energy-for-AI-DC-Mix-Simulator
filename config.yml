@@ -49,6 +49,14 @@ service_unit_assumptions:
   tokens_processed_per_mwh: 3000000000 # 3 billion tokens
 
 # ===============================================
+# Research & Development (R&D) Assumptions
+# ===============================================
+research_and_development_assumptions:
+  total_model_development_cost: 500000000 # 5억 달러
+  model_amortization_years: 3 # 모델의 가치 상각 기간 (3년)
+  global_datacenter_count: 10 # R&D 비용을 분담할 전 세계 데이터센터 수
+
+# ===============================================
 # Electricity Pricing Scenarios
 # ===============================================
 electricity_pricing_scenarios:
@@ -56,4 +64,3 @@ electricity_pricing_scenarios:
     price_per_kwh: 0.13 # Represents a baseline industrial rate
   net_zero_ppa:
     price_per_kwh: 0.20 # Represents a premium for a 100% renewable PPA
-
