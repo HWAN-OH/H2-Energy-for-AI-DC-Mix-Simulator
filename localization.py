@@ -1,20 +1,35 @@
 # localization.py
-# UI 텍스트를 위한 한/영 문자열 저장소 (v2.4)
+# UI 텍스트를 위한 한/영 문자열 저장소 (v2.4.1 - 이모지 제거)
 
 loc_strings = {
     'ko': {
         'app_title': "💡 AI 데이터센터 통합 TCO & 사업 타당성 시뮬레이터 (v2.4)",
-        # ... (기존 텍스트는 대부분 동일) ...
         'market_label': "시장 / 지역",
         'market_names': {
-            'USA_California_HighCost': "🇺🇸 미국 (캘리포니아) - 고비용",
-            'USA_Virginia_AvgCost': "🇺🇸 미국 (버지니아) - 평균비용",
-            'USA_Washington_LowCost': "🇺🇸 미국 (워싱턴) - 저비용",
-            'South_Korea_Industrial': "🇰🇷 대한민국 (산업용)",
-            'EU_Germany_Frankfurt': "🇪🇺 유럽 (독일 프랑크푸르트)",
-            'EU_Nordics_Favorable': "🇪🇺 유럽 (북유럽) - 저비용"
+            'USA_California_HighCost': "미국 (캘리포니아) - 고비용",
+            'USA_Virginia_AvgCost': "미국 (버지니아) - 평균비용",
+            'USA_Washington_LowCost': "미국 (워싱턴) - 저비용",
+            'South_Korea_Industrial': "대한민국 (산업용)",
+            'EU_Germany_Frankfurt': "유럽 (독일 프랑크푸르트)",
+            'EU_Nordics_Favorable': "유럽 (북유럽) - 저비용"
         },
-        # ... (나머지 텍스트는 이전과 동일) ...
+        # ... (이하 내용은 이전 버전과 동일)
+        'app_subtitle': "IT 하드웨어, 아키텍처, 건설 및 에너지 비용을 통합하여 최적의 데이터센터 투자 전략을 분석합니다.",
+        'sidebar_title': "⚙️ 시나리오 구성",
+        'lang_selector_label': "언어 (Language)",
+        'section_1_header': "1. 핵심 전략 선택",
+        'mirrormind_toggle_label': "**MirrorMind 아키텍처 적용**",
+        'mirrormind_toggle_help': """
+        **적용 시:** AI 워크로드 효율화(필요 연산량 83.3% 감소) 및 에너지 믹스 최적화.
+        **미적용 시:** 표준 워크로드 및 에너지 믹스.
+        (참고: 효율화 효과는 '미러마인드 도입 제안서'의 가설에 기반합니다.)
+        """,
+        'hw_ratio_label': "**고성능 하드웨어(H100) 비중 (%)**",
+        'hw_ratio_help': """
+        전체 AI 워크로드 중 고성능 칩으로 처리해야 하는 비율.
+        0%는 모든 작업을 저비용 칩으로 처리, 100%는 모든 작업을 고성능 칩으로 처리함을 의미합니다.
+        """,
+        'section_2_header': "2. 시장 및 경제 가정",
         'discount_rate_label': "할인율 (%)",
         'section_3_header': "3. 사업 목표 설정",
         'target_irr_label': "목표 내부수익률 (IRR, %)",
@@ -72,17 +87,32 @@ loc_strings = {
     },
     'en': {
         'app_title': "💡 AI DC Integrated TCO & Business Viability Simulator (v2.4)",
-        # ... (기존 텍스트는 대부분 동일) ...
         'market_label': "Market / Region",
         'market_names': {
-            'USA_California_HighCost': "🇺🇸 USA (California) - High Cost",
-            'USA_Virginia_AvgCost': "🇺🇸 USA (Virginia) - Avg. Cost",
-            'USA_Washington_LowCost': "🇺🇸 USA (Washington) - Low Cost",
-            'South_Korea_Industrial': "🇰🇷 South Korea (Industrial)",
-            'EU_Germany_Frankfurt': "🇪🇺 EU (Germany, Frankfurt)",
-            'EU_Nordics_Favorable': "🇪🇺 EU (Nordics) - Low Cost"
+            'USA_California_HighCost': "USA (California) - High Cost",
+            'USA_Virginia_AvgCost': "USA (Virginia) - Avg. Cost",
+            'USA_Washington_LowCost': "USA (Washington) - Low Cost",
+            'South_Korea_Industrial': "South Korea (Industrial)",
+            'EU_Germany_Frankfurt': "EU (Germany, Frankfurt)",
+            'EU_Nordics_Favorable': "EU (Nordics) - Low Cost"
         },
-        # ... (나머지 텍스트는 이전과 동일) ...
+        # ... (이하 내용은 이전 버전과 동일)
+        'app_subtitle': "Analyze the optimal data center investment strategy by integrating IT hardware, architecture, construction, and energy costs.",
+        'sidebar_title': "⚙️ Scenario Configuration",
+        'lang_selector_label': "Language",
+        'section_1_header': "1. Core Strategic Choices",
+        'mirrormind_toggle_label': "**Apply MirrorMind Architecture**",
+        'mirrormind_toggle_help': """
+        **On:** Enables AI workload efficiency (83.3% reduction in required computation) and optimizes the energy mix.
+        **Off:** Uses standard workload and energy mix.
+        (Note: The efficiency effect is based on the hypothesis in the 'MirrorMind Adoption Proposal'.)
+        """,
+        'hw_ratio_label': "**High-Performance HW (H100) Ratio (%)**",
+        'hw_ratio_help': """
+        The percentage of the total AI workload that must be processed by high-performance chips.
+        0% means all tasks are handled by low-cost chips; 100% means all tasks are handled by high-performance chips.
+        """,
+        'section_2_header': "2. Market & Economic Assumptions",
         'discount_rate_label': "Discount Rate (%)",
         'section_3_header': "3. Business Goals",
         'target_irr_label': "Target IRR (%)",
@@ -139,3 +169,4 @@ loc_strings = {
         'viability_recommendation': "Use this pricing benchmark as a critical standard to assess your business model's viability against the current competitive market landscape. It will help you determine if your pricing is realistic or if you need to further reduce TCO to gain a competitive edge."
     }
 }
+
