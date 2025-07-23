@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import yaml
-import plotly.express as px
 from calculator import calculate_integrated_tco
+from localization import loc_strings
 
 # --- 1. Page Configuration and Data Loading ---
 st.set_page_config(page_title="AI DC TCO Simulator", page_icon="💡", layout="wide")
@@ -28,114 +28,107 @@ demand_profile, config = load_data()
 if config is None or demand_profile is None:
     st.stop()
 
-# --- 2. UI: Title and Sidebar ---
-st.title("💡 AI Data Center TCO & Strategy Simulator (v2.0)")
-st.markdown("IT 하드웨어, 아키텍처, 건설 및 에너지 비용을 통합하여 최적의 데이터센터 투자 전략을 분석합니다.")
+# --- 2. Language and State Management ---
+if 'lang' not in st.session_state:
+    st.session_state.lang = 'ko'
 
-st.sidebar.title("⚙️ Scenario Configuration")
+def t(key):
+    """Returns the localized string for the given key."""
+    return loc_strings[st.session_state.lang].get(key, key)
 
-# --- 2.1. Core Strategic Choices ---
-st.sidebar.header("1. Core Strategic Choices")
+# --- 3. UI: Sidebar ---
+st.sidebar.title(t('sidebar_title'))
+
+# Language Selector
+selected_lang_display = st.sidebar.radio(
+    t('lang_selector_label'),
+    ['한국어', 'English'],
+    index=0 if st.session_state.lang == 'ko' else 1
+)
+st.session_state.lang = 'ko' if selected_lang_display == '한국어' else 'en'
+
+# Core Strategic Choices
+st.sidebar.header(t('section_1_header'))
 apply_mirrormind = st.sidebar.toggle(
-    "**MirrorMind 아키텍처 적용**", 
+    t('mirrormind_toggle_label'),
     value=True,
-    help="""
-    **적용 시:** AI 워크로드 효율화(필요 연산량 83.3% 감소) 및 에너지 믹스 최적화.
-    **미적용 시:** 표준 워크로드 및 에너지 믹스.
-    (Note: 효율화 효과는 '미러마인드 도입 제안서'의 가설에 기반합니다.)
-    """
+    help=t('mirrormind_toggle_help')
 )
 
 high_perf_hw_ratio = st.sidebar.slider(
-    "**고성능 하드웨어(H100) 비중 (%)**", 
+    t('hw_ratio_label'),
     min_value=0, max_value=100, value=100, step=5,
-    help="""
-    전체 AI 워크로드 중 고성능 칩으로 처리해야 하는 비율.
-    0%는 모든 작업을 저비용 칩으로 처리, 100%는 모든 작업을 고성능 칩으로 처리함을 의미합니다.
-    """
+    help=t('hw_ratio_help')
 )
 
-# --- 2.2. Market and Economic Assumptions ---
-st.sidebar.header("2. Market & Economic Assumptions")
-selected_scenario = st.sidebar.selectbox(
-    "Market / Region", 
+# Market and Economic Assumptions
+st.sidebar.header(t('section_2_header'))
+selected_scenario_key = st.sidebar.selectbox(
+    t('market_label'),
     options=list(config.get('market_scenarios', {}).keys())
 )
 
-discount_rate = st.sidebar.slider("Discount Rate (%)", 3.0, 15.0, 8.0, 0.1)
+discount_rate = st.sidebar.slider(t('discount_rate_label'), 3.0, 15.0, 8.0, 0.1)
 
-# --- 3. Main Page Logic ---
-if st.button("🚀 Run TCO Analysis", use_container_width=True, type="primary"):
-    
-    # --- 3.1. Prepare and Run Calculation ---
-    user_inputs = {
-        'demand_profile': demand_profile,
-        'apply_mirrormind': apply_mirrormind,
-        'high_perf_hw_ratio': high_perf_hw_ratio,
-        'scenario_params': config['market_scenarios'][selected_scenario],
-        'econ_assumptions': {
-            'discount_rate': discount_rate / 100.0
+# --- 4. Main Page ---
+st.title(t('app_title'))
+st.markdown(t('app_subtitle'))
+
+if st.button(t('run_button_label'), use_container_width=True, type="primary"):
+    with st.spinner(t('spinner_text')):
+        # --- 4.1. Calculate User's Scenario ---
+        user_inputs = {
+            'demand_profile': demand_profile,
+            'apply_mirrormind': apply_mirrormind,
+            'high_perf_hw_ratio': high_perf_hw_ratio,
+            'scenario_params': config['market_scenarios'][selected_scenario_key],
+            'econ_assumptions': {'discount_rate': discount_rate / 100.0}
         }
-    }
-    
-    with st.spinner("Analyzing TCO..."):
-        summary = calculate_integrated_tco(config, user_inputs)
+        user_summary = calculate_integrated_tco(config, user_inputs)
 
-    # --- 3.2. Display Results ---
+        # --- 4.2. Calculate 4 Benchmark Scenarios ---
+        scenarios = {
+            t('option_1_name'): {'apply_mirrormind': False, 'high_perf_hw_ratio': 100, 'desc': t('strategy_1_desc')},
+            t('option_2_name'): {'apply_mirrormind': False, 'high_perf_hw_ratio': 0, 'desc': t('strategy_2_desc')},
+            t('option_3_name'): {'apply_mirrormind': True, 'high_perf_hw_ratio': 100, 'desc': t('strategy_3_desc')},
+            t('option_4_name'): {'apply_mirrormind': True, 'high_perf_hw_ratio': 0, 'desc': t('strategy_4_desc')},
+        }
+        
+        benchmark_results = []
+        for name, params in scenarios.items():
+            inputs = user_inputs.copy()
+            inputs.update(params)
+            result = calculate_integrated_tco(config, inputs)
+            benchmark_results.append({
+                t('strategy_col_1'): name,
+                t('strategy_col_2'): params['desc'],
+                t('strategy_col_3'): f"${result.get('investment_per_mw', 0):,.2f} M"
+            })
+        
+        benchmark_df = pd.DataFrame(benchmark_results)
+
+    # --- 4.3. Display Results ---
     st.markdown("---")
-    st.header("📊 Analysis Results")
-    
-    # Display key metrics
+    st.header(t('results_header'))
+
+    # Display User's Result
+    st.subheader(t('user_scenario_header'))
     col1, col2 = st.columns(2)
     col1.metric(
-        "5-Year Final Integrated TCO", 
-        f"${summary.get('final_integrated_tco_5yr', 0):,.0f}"
+        t('tco_metric_label'),
+        f"${user_summary.get('final_integrated_tco_5yr', 0):,.0f}"
     )
     col2.metric(
-        "Final Investment per MW", 
-        f"${summary.get('investment_per_mw', 0):,.2f} M / MW"
+        t('investment_metric_label'),
+        f"${user_summary.get('investment_per_mw', 0):,.2f} M / MW"
     )
-    
-    # Display cost breakdown chart
-    st.subheader("5-Year TCO Composition")
-    breakdown_data = summary.get('breakdown', {})
-    if breakdown_data:
-        breakdown_df = pd.DataFrame.from_dict(breakdown_data, orient='index', columns=['Cost (USD)'])
-        breakdown_df.index.name = 'Cost Component'
-        breakdown_df = breakdown_df.reset_index()
-        
-        # Clean up index names for better display
-        breakdown_df['Cost Component'] = breakdown_df['Cost Component'].str.replace('_', ' ').str.title()
-        
-        fig = px.pie(
-            breakdown_df, 
-            values='Cost (USD)', 
-            names='Cost Component', 
-            title='Total 5-Year Cost Breakdown',
-            hole=0.3
-        )
-        fig.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig, use_container_width=True)
 
-    # Display strategic context
-    with st.expander("💡 Strategic Interpretation & Next Steps"):
-        st.markdown(f"""
-        #### **현재 시나리오 분석**
-        - **MirrorMind 아키텍처:** `{'적용됨' if apply_mirrormind else '미적용'}`
-        - **고성능 하드웨어 비중:** `{high_perf_hw_ratio}%`
-        - **시장:** `{selected_scenario}`
-        - **산출된 단위 투자비:** **${summary.get('investment_per_mw', 0):,.2f} M / MW**
+    # Display Benchmark Comparison Table
+    st.subheader(t('comparison_header'))
+    st.dataframe(benchmark_df, use_container_width=True, hide_index=True)
 
-        #### **결과 해석**
-        이 결과는 귀사의 특정 전략 선택에 따른 5년간의 총 투자 비용을 의미합니다. 
-        사이드바의 '고성능 하드웨어 비중'을 조절하며 비용 변화를 관찰함으로써, 귀사의 워크로드 환경에 가장 적합한 최적의 하드웨어 포트폴리오를 설계할 수 있습니다.
-
-        #### **다음 단계 제안**
-        1.  **민감도 분석:** '고성능 하드웨어 비중'을 0%, 25%, 50%, 75%, 100%로 변경하며 각 시나리오의 TCO를 비교하여 최적의 균형점을 탐색하십시오.
-        2.  **경쟁 전략 비교:** 'MirrorMind 아키텍처 적용' 토글을 끄고 동일한 분석을 실행하여, 아키텍처 도입이 가져오는 경제적 가치를 정량적으로 확인하십시오.
-        """)
 else:
-    st.info("사이드바에서 시나리오를 구성한 후 'Run TCO Analysis' 버튼을 클릭하세요.")
+    st.info("사이드바에서 시나리오를 구성한 후 'TCO 분석 실행' 버튼을 클릭하세요. / Configure your scenario in the sidebar and click 'Run TCO Analysis'.")
 
 st.markdown("---")
-st.caption("© 2025, OH SEONG-HWAN. This is a conceptual simulator for strategic decision-making.")
+st.caption(t('footer_text'))
