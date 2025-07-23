@@ -29,6 +29,16 @@ revenue_assumptions:
   active_users_per_mw: 1500
 
 # ===============================================
+# User & Pricing Model Assumptions  <-- 이 섹션을 추가하세요
+# ===============================================
+user_assumptions:
+  assumed_low_tier_fee: 20.0 # 가정된 사용자 월 요금($)
+  high_to_low_pricing_ratio: 5 # 고가 요금제는 저가 요금제의 5배
+  total_users: 150000        # 총 사용자 수 (100MW 기준)
+  low_tier_user_pct: 0.9     # 저가 요금제 사용자 비율
+  high_tier_user_pct: 0.1    # 고가 요금제 사용자 비율
+
+# ===============================================
 # Advanced Architecture Assumptions
 # ===============================================
 advanced_architecture_assumptions:
