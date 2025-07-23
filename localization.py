@@ -1,10 +1,10 @@
 # localization.py
-# UI 텍스트를 위한 한/영 문자열 저장소 (v6.0)
+# UI 텍스트를 위한 한/영 문자열 저장소 (v7.0)
 
 loc_strings = {
     'ko': {
-        'app_title': "💡 AI 서비스 사업성 시뮬레이터 (v6.0)",
-        'app_subtitle': "기술/가격 전략에 따른 연간 손익(P&L)과 사업 타당성을 분석합니다.",
+        'app_title': "💡 AI 서비스 사업성 시뮬레이터 (v7.0)",
+        'app_subtitle': "기술/가격 전략에 따른 전체 사업 및 개별 사용자 단위의 손익(P&L)을 분석합니다.",
         'sidebar_title': "⚙️ 시나리오 입력 변수",
         'lang_selector_label': "언어 (Language)",
 
@@ -31,31 +31,22 @@ loc_strings = {
 
         'output_section_A_title': "A. 연간 손익계산서 (P&L, 5년차 기준)",
         'pnl_revenue': "매출",
-        'pnl_op_cost': "운영비용",
-        'pnl_op_cost_electric': "  - 전력비",
-        'pnl_op_cost_maint': "  - 유지보수비",
-        'pnl_dep_amort': "감가상각 및 상각비",
-        'pnl_dep_amort_asset': "  - 설비 감가상각비 (DC, HW)",
-        'pnl_dep_amort_rd': "  - 모델 무형자산상각비 (R&D)",
-        'pnl_op_profit': "영업이익 (EBIT)",
+        'pnl_cost_of_revenue': "매출원가 (운영비)",
+        'pnl_gross_profit': "매출총이익",
+        'pnl_operating_expenses': "영업비용 (상각비)",
+        'pnl_operating_profit': "영업이익",
 
-        'output_section_B_title': "B. 사용자 그룹별 수익성 (운영비 기준)",
+        'output_section_B_title': "B. 개별 사용자 월간 손익 (P&L)",
         'free_tier': "무료 사용자",
         'paid_tier': "유료 사용자",
         'premium_tier': "프리미엄 사용자",
-        'monthly_cost_label': "월간 운영비용",
-        'monthly_revenue_label': "월간 수익",
-        'monthly_profit_label': "월간 공헌이익",
-
-        'output_section_C_title': "C. 최종 사업 타당성 (초기 투자금 포함)",
-        'payback_period_label': "전체 투자 회수 기간",
-        'payback_inf': "회수 불가",
-        'years_suffix': "년",
-        'years_suffix_projected': "년 (추정)",
+        'pnl_user_revenue': "월 매출",
+        'pnl_user_cost': "월 총원가",
+        'pnl_user_profit': "월 영업이익",
     },
     'en': {
-        'app_title': "💡 AI Service Business Case Simulator (v6.0)",
-        'app_subtitle': "Analyze the annual Profit & Loss (P&L) and business viability based on your tech and pricing strategies.",
+        'app_title': "💡 AI Service Business Case Simulator (v7.0)",
+        'app_subtitle': "Analyze the full business and per-user Profit & Loss (P&L) based on your tech and pricing strategies.",
         'sidebar_title': "⚙️ Scenario Input Variables",
         'lang_selector_label': "Language",
 
@@ -82,26 +73,17 @@ loc_strings = {
 
         'output_section_A_title': "A. Annual Profit & Loss Statement (P&L, based on Year 5)",
         'pnl_revenue': "Revenue",
-        'pnl_op_cost': "Operating Costs",
-        'pnl_op_cost_electric': "  - Electricity",
-        'pnl_op_cost_maint': "  - Maintenance",
-        'pnl_dep_amort': "Depreciation & Amortization",
-        'pnl_dep_amort_asset': "  - Asset Depreciation (DC, HW)",
-        'pnl_dep_amort_rd': "  - R&D Amortization (Model)",
-        'pnl_op_profit': "Operating Profit (EBIT)",
+        'pnl_cost_of_revenue': "Cost of Revenue (Operating Costs)",
+        'pnl_gross_profit': "Gross Profit",
+        'pnl_operating_expenses': "Operating Expenses (D&A)",
+        'pnl_operating_profit': "Operating Profit",
 
-        'output_section_B_title': "B. Per-User Profitability (based on Operating Costs)",
+        'output_section_B_title': "B. Per-User Monthly P&L",
         'free_tier': "Free Users",
         'paid_tier': "Paid Users",
         'premium_tier': "Premium Users",
-        'monthly_cost_label': "Monthly Operating Cost",
-        'monthly_revenue_label': "Monthly Revenue",
-        'monthly_profit_label': "Monthly Contribution",
-
-        'output_section_C_title': "C. Final Business Viability (incl. Initial Investment)",
-        'payback_period_label': "Overall Investment Payback Period",
-        'payback_inf': "Not Recoverable",
-        'years_suffix': "Years",
-        'years_suffix_projected': "Years (Projected)",
+        'pnl_user_revenue': "Monthly Revenue",
+        'pnl_user_cost': "Monthly Full Cost",
+        'pnl_user_profit': "Monthly Operating Profit",
     }
 }
