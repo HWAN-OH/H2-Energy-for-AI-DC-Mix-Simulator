@@ -1,107 +1,45 @@
-# Overall simulation period in years
-simulation_period_years: 5
+# ===============================================
+# Core Business & Financial Assumptions
+# ===============================================
+business_assumptions:
+  analysis_years: 3
+  target_irr: 0.08
+  annual_rd_personnel_cost: 50000000 # 연간 R&D 인건비
 
 # ===============================================
-# Strategic & Financial Assumptions
+# AI Model Specific Assumptions
 # ===============================================
-strategic_assumptions:
-  viability_analysis_years: 10 # 사업 타당성 분석 기간 (년)
-  high_perf_gpu:
-    name: "NVIDIA H100"
-    cost_per_unit: 35000
-    performance_unit: 10
-  low_cost_gpu:
-    name: "NVIDIA A4000"
-    cost_per_unit: 1200
-    performance_unit: 1
-  dc_construction_cost_per_mw: 10000000
-  low_cost_hw_penalty_factor: 1.2
-  building_depreciation_years: 40
-  it_hw_depreciation_years: 5
-  corporate_tax_rate: 0.25
-  maintenance_rate_of_construction_capex: 0.02
+model_assumptions:
+  training_cost: 100000000 # 모델 훈련 비용 (초기 1회 발생)
 
 # ===============================================
-# Revenue & Business Viability Assumptions
+# User Base and Pricing Assumptions
 # ===============================================
-revenue_assumptions:
-  tokens_processed_per_mwh: 3000000000 # 3 billion tokens
-  active_users_per_mw: 1500
+user_assumptions:
+  total_users: 1000000
+  free_user_pct: 0.60
+  low_tier_user_pct: 0.30
+  high_tier_user_pct: 0.10
+  high_to_low_pricing_ratio: 10 # 고사용자:저사용자 요금 비율
 
 # ===============================================
-# Advanced Architecture Assumptions
+# Infrastructure Model Parameters
 # ===============================================
-advanced_architecture_assumptions:
-  workload_efficiency_factor: 0.167 # Equivalent to 83.3% reduction
-
-# ===============================================
-# Power Mix Configurations
-# ===============================================
-power_mix_options:
-  carbon_free_mix:
-    grid: 40
-    solar: 40
-    wind: 0
-    hydrogen_SOFC: 0
-    NG_SOFC: 20
-  standard_mix:
-    grid: 80
-    solar: 0
-    wind: 0
-    hydrogen_SOFC: 0
-    NG_SOFC: 20
-
-# ===============================================
-# Market Scenarios
-# ===============================================
-market_scenarios:
-  USA_California_HighCost:
-    description: "Represents a high-cost region with expensive electricity and stringent regulations. (e.g., Silicon Valley)"
-    grid_price_per_kwh: 0.24
-    gas_fuel_cost_per_kwh: 0.08
-  USA_Virginia_AvgCost:
-    description: "A major data center hub with relatively average power costs. (e.g., Data Center Alley)"
-    grid_price_per_kwh: 0.16
-    gas_fuel_cost_per_kwh: 0.07 
-  USA_Washington_LowCost:
-    description: "Represents a low-cost region with abundant and cheap hydropower."
-    grid_price_per_kwh: 0.11
-    gas_fuel_cost_per_kwh: 0.07
-  South_Korea_Industrial:
-    description: "High industrial electricity rates and reliance on imported fuel."
-    grid_price_per_kwh: 0.13
-    gas_fuel_cost_per_kwh: 0.11
-  EU_Germany_Frankfurt:
-    description: "Major EU hub with high electricity prices due to taxes and grid fees."
-    grid_price_per_kwh: 0.22
-    gas_fuel_cost_per_kwh: 0.09
-  EU_Nordics_Favorable:
-    description: "Low power costs due to abundant renewable energy (hydro/wind)."
-    grid_price_per_kwh: 0.07
-    gas_fuel_cost_per_kwh: 0.09
-
-# ===============================================
-# Technical & Cost Parameters for Energy Sources
-# ===============================================
-energy_sources:
-  grid:
-    carbon_emission_factor: 0.45
-  solar:
-    capex_per_kw: 1500
-    opex_rate: 0.015
-    capacity_factor: 0.18
-  wind:
-    capex_per_kw: 2000
-    opex_rate: 0.02
-    capacity_factor: 0.30
-  hydrogen_SOFC:
-    capex_per_kw: 3500
-    opex_rate: 0.02
-    efficiency: 0.60
-    stack_lifetime_years: 5
-    stack_replacement_cost_rate: 0.3
-  NG_SOFC:
-    capex_per_kw: 3500
-    opex_rate: 0.025
-    efficiency: 0.55
-    carbon_emission_factor: 0.4
+infrastructure_models:
+  cloud:
+    name: "Cloud-Based Operation"
+    # 연간 클라우드 인프라 운영 비용
+    annual_opex: 400000000 
+  
+  on_premise:
+    name: "On-Premise Infrastructure"
+    # 초기 투자 비용 (CAPEX)
+    initial_capex_server: 500000000
+    initial_capex_facility: 300000000
+    # 연간 온프레미스 인프라 운영 비용
+    annual_opex: 150000000
+    # 감가상각 내용연수 (세금 계산용)
+    depreciation_years_server: 5
+    depreciation_years_facility: 15
+    # 법인세율
+    corporate_tax_rate: 0.25
