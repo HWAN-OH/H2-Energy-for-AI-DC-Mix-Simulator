@@ -34,7 +34,7 @@ def calculate_business_case(config, user_inputs):
     
     # --- BUG FIX: Determine the actual physical DC size based on the architecture choice ---
     # 아키텍처 적용 시, 실제 건설하는 데이터센터의 물리적 크기(MW)를 결정합니다.
-    effective_dc_size_mw = adj_final_peak_demand_mw if apply_advanced_arch else original_final_peak_demand_mw
+    effective_dc_size_mw = adj_final_peak_demand_mw
 
     # --- 3. Calculate Initial Investments (CAPEX at Year 0) ---
     base_construction_cost_per_mw = infra_config.get('dc_construction_cost_per_mw', 10000000)
@@ -50,7 +50,6 @@ def calculate_business_case(config, user_inputs):
     
     # --- BUG FIX: IT 하드웨어 구매 비용도 실제 물리적 크기 기준으로 계산합니다.
     base_total_performance_units = (effective_dc_size_mw / 100) * 2000 * h_gpu.get('performance_unit', 10)
-    # Note: workload_factor is already baked into effective_dc_size_mw if arch is applied
     required_performance_units = base_total_performance_units 
     
     num_high_gpu = (required_performance_units * high_perf_hw_ratio) / h_gpu.get('performance_unit', 1)
@@ -91,7 +90,6 @@ def calculate_business_case(config, user_inputs):
     price_per_million_tokens = required_annual_revenue / total_tokens_processed_annually_millions if total_tokens_processed_annually_millions > 0 else 0
 
     # --- 5. Analysis B: Unit Economics ---
-    # Revenue potential is based on the original market size (100MW user base)
     total_users = user_config.get('total_users_for_100mw', 0) * (original_final_peak_demand_mw / 100)
     tier_fees = {'free': 0, 'paid': paid_tier_fee, 'premium': premium_tier_fee}
     unit_economics = {}
