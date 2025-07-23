@@ -29,14 +29,14 @@ revenue_assumptions:
   active_users_per_mw: 1500
 
 # ===============================================
-# User & Pricing Model Assumptions  <-- 이 섹션을 추가하세요
+# User & Pricing Model Assumptions
 # ===============================================
 user_assumptions:
-  assumed_low_tier_fee: 20.0 # 가정된 사용자 월 요금($)
-  high_to_low_pricing_ratio: 5 # 고가 요금제는 저가 요금제의 5배
-  total_users: 150000        # 총 사용자 수 (100MW 기준)
-  low_tier_user_pct: 0.9     # 저가 요금제 사용자 비율
-  high_tier_user_pct: 0.1    # 고가 요금제 사용자 비율
+  assumed_low_tier_fee: 20.0
+  high_to_low_pricing_ratio: 5
+  total_users: 150000
+  low_tier_user_pct: 0.9
+  high_tier_user_pct: 0.1
 
 # ===============================================
 # Advanced Architecture Assumptions
@@ -62,56 +62,10 @@ power_mix_options:
     NG_SOFC: 20
 
 # ===============================================
-# Market Scenarios
+# Market Scenarios & Electricity Pricing
 # ===============================================
-market_scenarios:
-  USA_California_HighCost:
-    description: "Represents a high-cost region with expensive electricity and stringent regulations. (e.g., Silicon Valley)"
-    grid_price_per_kwh: 0.24
-    gas_fuel_cost_per_kwh: 0.08
-  USA_Virginia_AvgCost:
-    description: "A major data center hub with relatively average power costs. (e.g., Data Center Alley)"
-    grid_price_per_kwh: 0.16
-    gas_fuel_cost_per_kwh: 0.07 
-  USA_Washington_LowCost:
-    description: "Represents a low-cost region with abundant and cheap hydropower."
-    grid_price_per_kwh: 0.11
-    gas_fuel_cost_per_kwh: 0.07
-  South_Korea_Industrial:
-    description: "High industrial electricity rates and reliance on imported fuel."
-    grid_price_per_kwh: 0.13
-    gas_fuel_cost_per_kwh: 0.11
-  EU_Germany_Frankfurt:
-    description: "Major EU hub with high electricity prices due to taxes and grid fees."
-    grid_price_per_kwh: 0.22
-    gas_fuel_cost_per_kwh: 0.09
-  EU_Nordics_Favorable:
-    description: "Low power costs due to abundant renewable energy (hydro/wind)."
-    grid_price_per_kwh: 0.07
-    gas_fuel_cost_per_kwh: 0.09
-
-# ===============================================
-# Technical & Cost Parameters for Energy Sources
-# ===============================================
-energy_sources:
-  grid:
-    carbon_emission_factor: 0.45
-  solar:
-    capex_per_kw: 1500
-    opex_rate: 0.015
-    capacity_factor: 0.18
-  wind:
-    capex_per_kw: 2000
-    opex_rate: 0.02
-    capacity_factor: 0.30
-  hydrogen_SOFC:
-    capex_per_kw: 3500
-    opex_rate: 0.02
-    efficiency: 0.60
-    stack_lifetime_years: 5
-    stack_replacement_cost_rate: 0.3
-  NG_SOFC:
-    capex_per_kw: 3500
-    opex_rate: 0.025
-    efficiency: 0.55
-    carbon_emission_factor: 0.4
+electricity_pricing_scenarios:
+  standard_grid:
+    price_per_kwh: 0.13 # Represents a baseline industrial rate
+  net_zero_ppa:
+    price_per_kwh: 0.20 # Represents a premium for a 100% renewable PPA
