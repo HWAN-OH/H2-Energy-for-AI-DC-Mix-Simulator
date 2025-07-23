@@ -1,9 +1,9 @@
 # localization.py
-# UI 텍스트를 위한 한/영 문자열 저장소 (v5.3)
+# UI 텍스트를 위한 한/영 문자열 저장소 (v5.5)
 
 loc_strings = {
     'ko': {
-        'app_title': "💡 AI 서비스 사업성 시뮬레이터 (v5.3)",
+        'app_title': "💡 AI 서비스 사업성 시뮬레이터 (v5.5)",
         'app_subtitle': "기술 및 가격 전략을 조절하여, 사용자 그룹별 수익성과 전체 사업의 타당성을 분석합니다.",
         'sidebar_title': "⚙️ 시나리오 입력 변수",
         'lang_selector_label': "언어 (Language)",
@@ -37,7 +37,7 @@ loc_strings = {
         'annual_revenue_label': "손익분기 연간 매출 (IRR 기준)",
         'token_price_label': "토큰당 원가 ($ / 1M tokens)",
 
-        'output_section_B_title': "B. 사용자 그룹별 수익성 분석 (Unit Economics)",
+        'output_section_B_title': "B. 사용자 그룹별 수익성 분석 (가격 모델 검증)",
         'user_tier_header': "사용자 그룹",
         'free_tier': "무료 사용자",
         'paid_tier': "유료 사용자",
@@ -49,7 +49,16 @@ loc_strings = {
         'profit_status_profit': "수익",
         'profit_status_loss': "손실",
 
-        'output_section_C_title': "C. 전체 사업 타당성",
+        'paradox_explanation_title': "💡 분석: 왜 사용자별 수익과 전체 수익이 다른가요?",
+        'paradox_explanation_text': """
+        **개별 사용자는 수익성이 높은데 전체 사업은 '회수 불가'인 것은, 시뮬레이터가 비즈니스의 중요한 딜레마를 정확히 보여주기 때문입니다.**
+
+        - **B 분석 (가격 모델):** 이 분석은 "만약 사업이 성공한다면, 우리 요금제는 원가 대비 수익성이 있는가?"를 답합니다. 현재 유료 고객들은 사용하는 서비스 원가보다 훨씬 많은 돈을 내므로 **가격 정책은 성공적**입니다.
+
+        - **C 분석 (사업 모델):** 이 분석은 "소수 유료 고객의 총수익이, 다수 무료 고객의 손실과 막대한 초기 투자금을 모두 감당할 수 있는가?"를 답합니다. 현재는 유료 고객 비중이 낮아 전체 비용 구조를 감당할 수 없으므로, **현재의 사업 모델은 실패할 가능성이 높음**을 의미합니다.
+        """,
+
+        'output_section_C_title': "C. 최종 사업 타당성 (초기 투자금 포함)",
         'payback_period_label': "전체 투자 회수 기간",
         'payback_inf': "회수 불가",
         'years_suffix': "년",
@@ -62,7 +71,7 @@ loc_strings = {
         """
     },
     'en': {
-        'app_title': "💡 AI Service Business Case Simulator (v5.3)",
+        'app_title': "💡 AI Service Business Case Simulator (v5.5)",
         'app_subtitle': "Analyze the profitability of user segments and overall business viability by adjusting tech and pricing strategies.",
         'sidebar_title': "⚙️ Scenario Input Variables",
         'lang_selector_label': "Language",
@@ -96,7 +105,7 @@ loc_strings = {
         'annual_revenue_label': "Break-Even Annual Revenue (for IRR)",
         'token_price_label': "Cost per Token ($ / 1M tokens)",
 
-        'output_section_B_title': "B. Unit Economics Analysis by User Tier",
+        'output_section_B_title': "B. Per-User Profitability Analysis (Pricing Model Check)",
         'user_tier_header': "User Tier",
         'free_tier': "Free Users",
         'paid_tier': "Paid Users",
@@ -108,7 +117,16 @@ loc_strings = {
         'profit_status_profit': "Profit",
         'profit_status_loss': "Loss",
 
-        'output_section_C_title': "C. Overall Business Viability",
+        'paradox_explanation_title': "💡 Analysis: Why is Per-User Profit High but Overall Payback Negative?",
+        'paradox_explanation_text': """
+        **The fact that individual users are profitable while the overall business is not recoverable is not a bug; it's the simulator accurately highlighting a critical business dilemma.**
+
+        - **Analysis B (Pricing Model):** This section answers, "If our business were to succeed (covering all costs), is our pricing for each user profitable against its marginal cost?" The answer is yes. Your paying customers are charged much more than they cost to serve, meaning your **pricing policy is sound.**
+
+        - **Analysis C (Business Model):** This section answers, "Can the total revenue from our few paying customers cover the losses from many free users AND the massive initial investment?" The answer is no. The percentage of paying users is too low to cover the enormous total costs, meaning your **overall business model is likely to fail.**
+        """,
+
+        'output_section_C_title': "C. Final Business Viability (incl. Initial Investment)",
         'payback_period_label': "Overall Investment Payback Period",
         'payback_inf': "Not Recoverable",
         'years_suffix': "Years",
