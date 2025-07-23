@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import numpy_financial as npf # <-- 재무 함수 라이브러리 추가
 
 def calculate_business_case(config, user_inputs):
     """
@@ -71,7 +72,8 @@ def calculate_business_case(config, user_inputs):
     building_salvage_value = dc_construction_capex * (infra_config.get('building_depreciation_years', 40) - analysis_years) / infra_config.get('building_depreciation_years', 40)
     cash_outflows[analysis_years] += building_salvage_value
 
-    required_npv = -np.npv(target_irr, cash_outflows)
+    # <-- 여기가 수정되었습니다: np.npv -> npf.npv
+    required_npv = -npf.npv(target_irr, cash_outflows)
     pvaf = (1 - (1 + target_irr)**-analysis_years) / target_irr if target_irr > 0 else analysis_years
     required_annual_revenue = required_npv / pvaf if pvaf > 0 else 0
 
