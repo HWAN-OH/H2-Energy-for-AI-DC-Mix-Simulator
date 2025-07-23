@@ -102,4 +102,3 @@ energy_sources:
     opex_rate: 0.025
     efficiency: 0.55
     carbon_emission_factor: 0.4
-
