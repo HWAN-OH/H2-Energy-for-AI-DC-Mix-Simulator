@@ -5,8 +5,57 @@ simulation_period_years: 5
 asset_lifetime_years: 20
 
 # ===============================================
+# Strategic & Financial Assumptions
+# - Defines the core variables for the TCO model.
+# ===============================================
+strategic_assumptions:
+  # IT Hardware Assumptions
+  high_perf_gpu:
+    name: "NVIDIA H100"
+    cost_per_unit: 35000
+    performance_unit: 10
+  low_cost_gpu:
+    name: "NVIDIA A4000"
+    cost_per_unit: 1200
+    performance_unit: 1
+  
+  # Data Center Construction Assumptions
+  dc_construction_cost_per_mw: 10000000 # $10M per MW (for high-perf hardware)
+  low_cost_hw_penalty_factor: 1.2 # 20% additional construction cost for low-cost hardware due to space/cooling inefficiency
+  
+  # Depreciation & Tax Assumptions (Based on Korean Tax Law)
+  building_depreciation_years: 40
+  it_hw_depreciation_years: 5
+  corporate_tax_rate: 0.25
+
+  # Maintenance Assumptions
+  maintenance_rate_of_construction_capex: 0.02 # Annual maintenance cost as a percentage of initial construction CAPEX
+
+# ===============================================
+# MirrorMind Architecture Assumptions
+# - Defines the impact of applying the MirrorMind architecture.
+# ===============================================
+mirrormind_assumptions:
+  # When MirrorMind is applied, total required computational power is reduced.
+  workload_efficiency_factor: 0.167 # Equivalent to 83.3% reduction (1/6 of original workload)
+  # Optimized energy mix when MirrorMind is applied
+  optimized_energy_mix:
+    grid: 40
+    solar: 40
+    wind: 0
+    hydrogen_SOFC: 0
+    NG_SOFC: 20
+  # Standard energy mix when MirrorMind is NOT applied
+  standard_energy_mix:
+    grid: 80
+    solar: 0
+    wind: 0
+    hydrogen_SOFC: 0
+    NG_SOFC: 20
+
+# ===============================================
 # Market Scenarios
-# - Defines region-specific energy prices based on recent data.
+# - Defines region-specific energy prices.
 # ===============================================
 market_scenarios:
   USA_Virginia_DC:
@@ -30,33 +79,25 @@ market_scenarios:
 # Technical & Cost Parameters for Energy Sources
 # ===============================================
 energy_sources:
-  # Grid Power (Price is now loaded from market_scenarios)
   grid:
     carbon_emission_factor: 0.45
-
-  # Solar PV
   solar:
     capex_per_kw: 1500
     opex_rate: 0.015
     capacity_factor: 0.18
-
-  # Wind
   wind:
     capex_per_kw: 2000
     opex_rate: 0.02
     capacity_factor: 0.30
-
-  # Hydrogen Fuel Cell (SOFC)
   hydrogen_SOFC:
     capex_per_kw: 3500
     opex_rate: 0.02
     efficiency: 0.60
     stack_lifetime_years: 5
     stack_replacement_cost_rate: 0.3
-  
-  # Natural Gas Fuel Cell (NG-SOFC)
   NG_SOFC:
     capex_per_kw: 3500
     opex_rate: 0.025
     efficiency: 0.55
     carbon_emission_factor: 0.4
+
