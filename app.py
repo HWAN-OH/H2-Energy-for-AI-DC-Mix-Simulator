@@ -89,9 +89,7 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
     # --- Output Section B: Unit Economics ---
     st.subheader(t('output_section_B_title'))
-    
     unit_economics = summary.get('unit_economics', {})
-    
     cols = st.columns(len(unit_economics))
     tier_names = {'free': t('free_tier'), 'paid': t('paid_tier'), 'premium': t('premium_tier')}
     
@@ -99,32 +97,19 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
         with cols[i]:
             with st.container(border=True):
                 st.markdown(f"**{tier_names.get(tier_name)}**")
-                
-                # Monthly Usage
-                st.metric(
-                    label=t('monthly_usage_label'),
-                    value=f"{data.get('token_usage', 0):.1f}M Tokens"
-                )
-                
-                # Monthly Cost
-                st.metric(
-                    label=t('monthly_cost_label'),
-                    value=f"${data.get('cost', 0):.2f}"
-                )
-                
-                # Monthly Revenue
-                st.metric(
-                    label=t('monthly_revenue_label'),
-                    value=f"${data.get('revenue', 0):.2f}"
-                )
-                
-                # Monthly Profit/Loss
+                st.metric(label=t('monthly_usage_label'), value=f"{data.get('token_usage', 0):.1f}M Tokens")
+                st.metric(label=t('monthly_cost_label'), value=f"${data.get('cost', 0):.2f}")
+                st.metric(label=t('monthly_revenue_label'), value=f"${data.get('revenue', 0):.2f}")
                 profit = data.get('profit', 0)
-                st.metric(
-                    label=t('monthly_profit_label'),
-                    value=f"${profit:.2f}",
-                    delta=f"{t('profit_status_profit') if profit >= 0 else t('profit_status_loss')}"
-                )
+                st.metric(label=t('monthly_profit_label'), value=f"${profit:.2f}",
+                            delta=f"{t('profit_status_profit') if profit >= 0 else t('profit_status_loss')}")
+
+    # --- Output Section C: Overall Viability ---
+    st.subheader(t('output_section_C_title'))
+    payback = summary.get('payback_period', float('inf'))
+    payback_display = f"{payback:.2f} {t('years_suffix', default='년')}" if payback != float('inf') else t('payback_inf')
+    st.metric(t('payback_period_label'), payback_display)
+
 
     # --- Footnote for Advanced Architecture ---
     if apply_advanced_arch:
