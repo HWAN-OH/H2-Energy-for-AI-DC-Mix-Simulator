@@ -104,6 +104,10 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
                 profit = data.get('profit', 0)
                 st.metric(label=t('monthly_profit_label'), value=f"${profit:.2f}",
                             delta=f"{t('profit_status_profit') if profit >= 0 else t('profit_status_loss')}")
+    
+    # --- NEW: Explanation for the paradox ---
+    st.info(f"**{t('paradox_explanation_title')}**\n\n{t('paradox_explanation_text')}", icon="💡")
+
 
     # --- Output Section C: Overall Viability ---
     st.subheader(t('output_section_C_title'))
