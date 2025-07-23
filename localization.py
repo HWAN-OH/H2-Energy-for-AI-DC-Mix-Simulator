@@ -1,20 +1,9 @@
 # localization.py
-# UI 텍스트를 위한 한/영 문자열 저장소 (v2.5 - 각주 추가)
+# UI 텍스트를 위한 한/영 문자열 저장소 (v2.5 - 최종 수정본)
 
 loc_strings = {
     'ko': {
         'app_title': "💡 AI 데이터센터 통합 TCO & 사업 타당성 시뮬레이터 (v2.5)",
-        # ... (이전 버전과 대부분 동일) ...
-        'narrative_expander_title': "결과 해설 및 전략적 제언",
-        'footnote_title': "※ 'MirrorMind 적용' 효과에 대한 중요 참고사항",
-        'footnote_text': """
-        본 시뮬레이션에서 'MirrorMind 적용' 시 나타나는 비용 절감 효과(필요 연산량 83.3% 감소)는 '미러마인드 도입 사업 제안서'에 제시된 **가설**에 기반합니다.
-
-        **핵심 논리:** 모든 AI 작업에 거대 단일 모델을 사용하는 대신, 작업의 종류(예: 단순 요약 vs 복잡한 분석)에 따라 최적화된 경량 모델을 지능적으로 선택하여 사용하는 '워크로드 최적화'를 통해 불필요한 컴퓨팅 자원 낭비를 제거하는 것입니다.
-
-        이 가설은 제안서의 전력 소비 비교('기존 1,200 kWh' vs '미러마인드 200 kWh')를 정량화한 것이며, 본 시뮬레이터는 이 가설이 실현될 경우의 **잠재적 경제성**을 분석하기 위한 도구입니다. 실제 절감 효과는 파일럿 프로젝트를 통한 실증이 필요합니다.
-        """,
-        # ... (나머지 텍스트는 이전과 동일)
         'app_subtitle': "IT 하드웨어, 아키텍처, 건설 및 에너지 비용을 통합하여 최적의 데이터센터 투자 전략을 분석합니다.",
         'sidebar_title': "⚙️ 시나리오 구성",
         'lang_selector_label': "언어 (Language)",
@@ -66,6 +55,7 @@ loc_strings = {
         'strategy_3_desc': "고성능 (적용)",
         'strategy_4_desc': "저비용 (적용)",
         'footer_text': "© 2025, OH SEONG-HWAN. 본 시뮬레이터는 전략적 의사결정을 위한 개념적 도구입니다.",
+        'narrative_expander_title': "결과 해설 및 전략적 제언",
         'narrative_title': "AI 전략 분석 리포트",
         'your_choice_title': "선택한 전략",
         'your_choice_text': "당신은 **{apply_mm_text}** 상태에서 **{hw_strategy} 전략**을 선택했으며, 그 결과 **단위 MW당 {investment_per_mw}**의 투자비가 산출되었습니다.",
@@ -92,21 +82,18 @@ loc_strings = {
         'rec_mm_hybrid_text': "반드시 고성능이 필요한 일부 워크로드와 비용 효율적인 일반 워크로드를 모두 고려한, 현실적인 하이브리드 전략입니다. 하드웨어 비중을 조절하며 최적의 균형점을 찾아보세요.",
         'rec_no_mm_title': "아키텍처 도입을 최우선으로 고려하십시오.",
         'rec_no_mm_text': "현재 전략은 높은 잠재적 비용을 안고 있습니다. 하드웨어 종류와 무관하게, 미러마인드 아키텍처를 도입하는 것만으로 TCO를 70% 이상 절감할 수 있는 기회가 있습니다.",
-        'viability_recommendation': "이 가격 지표를 현재 시장의 경쟁 환경 및 가격 정책과 비교하여, 당신의 비즈니스 모델이 현실적으로 생존 가능한지, 혹은 가격 경쟁력을 갖추기 위해 TCO를 더 절감해야 하는지 판단하는 핵심 기준으로 삼으십시오."
+        'viability_recommendation': "이 가격 지표를 현재 시장의 경쟁 환경 및 가격 정책과 비교하여, 당신의 비즈니스 모델이 현실적으로 생존 가능한지, 혹은 가격 경쟁력을 갖추기 위해 TCO를 더 절감해야 하는지 판단하는 핵심 기준으로 삼으십시오.",
+        'footnote_title': "※ 'MirrorMind 적용' 효과에 대한 중요 참고사항",
+        'footnote_text': """
+        본 시뮬레이션에서 'MirrorMind 적용' 시 나타나는 비용 절감 효과(필요 연산량 83.3% 감소)는 '미러마인드 도입 사업 제안서'에 제시된 **가설**에 기반합니다.
+
+        **핵심 논리:** 모든 AI 작업에 거대 단일 모델을 사용하는 대신, 작업의 종류(예: 단순 요약 vs 복잡한 분석)에 따라 최적화된 경량 모델을 지능적으로 선택하여 사용하는 '워크로드 최적화'를 통해 불필요한 컴퓨팅 자원 낭비를 제거하는 것입니다.
+
+        이 가설은 제안서의 전력 소비 비교('기존 1,200 kWh' vs '미러마인드 200 kWh')를 정량화한 것이며, 본 시뮬레이터는 이 가설이 실현될 경우의 **잠재적 경제성**을 분석하기 위한 도구입니다. 실제 절감 효과는 파일럿 프로젝트를 통한 실증이 필요합니다.
+        """
     },
     'en': {
         'app_title': "💡 AI DC Integrated TCO & Business Viability Simulator (v2.5)",
-        # ... (이전 버전과 대부분 동일) ...
-        'narrative_expander_title': "Interpretation & Strategic Recommendation",
-        'footnote_title': "※ Important Note on the 'Apply MirrorMind' Effect",
-        'footnote_text': """
-        The cost reduction effect (83.3% reduction in required computation) shown when 'Apply MirrorMind' is enabled is based on a **hypothesis** presented in the 'MirrorMind Adoption Proposal' document.
-
-        **Core Logic:** The principle is 'workload optimization'—eliminating unnecessary waste of computing resources by intelligently selecting optimized, lightweight models based on the task type (e.g., simple summarization vs. complex analysis), instead of using a single, large model for everything.
-
-        This hypothesis quantifies the power consumption comparison from the proposal ('Standard 1,200 kWh' vs. 'MirrorMind 200 kWh'). This simulator is a tool to analyze the **potential economic impact** if this hypothesis is realized. Actual savings require validation through a real-world pilot project.
-        """,
-        # ... (나머지 텍스트는 이전과 동일)
         'app_subtitle': "Analyze the optimal data center investment strategy by integrating IT hardware, architecture, construction, and energy costs.",
         'sidebar_title': "⚙️ Scenario Configuration",
         'lang_selector_label': "Language",
@@ -158,6 +145,7 @@ loc_strings = {
         'strategy_3_desc': "High-Perf (w/ MM)",
         'strategy_4_desc': "Low-Cost (w/ MM)",
         'footer_text': "© 2025, OH SEONG-HWAN. This is a conceptual simulator for strategic decision-making.",
+        'narrative_expander_title': "Interpretation & Strategic Recommendation",
         'narrative_title': "AI Strategy Analysis Report",
         'your_choice_title': "Your Chosen Strategy",
         'your_choice_text': "You have selected a **{hw_strategy} strategy** **{apply_mm_text}**, resulting in a final investment cost of **{investment_per_mw} per MW**.",
@@ -184,6 +172,14 @@ loc_strings = {
         'rec_mm_hybrid_text': "This is a realistic hybrid strategy that considers both workloads that absolutely require high performance and cost-effective general workloads. Try adjusting the hardware ratio to find the optimal balance.",
         'rec_no_mm_title': "Prioritize adopting a better architecture.",
         'rec_no_mm_text': "The current strategy carries high potential costs. Regardless of the hardware type, there is an opportunity to reduce TCO by over 70% simply by introducing the MirrorMind architecture.",
-        'viability_recommendation': "Use this pricing benchmark as a critical standard to assess your business model's viability against the current competitive market landscape. It will help you determine if your pricing is realistic or if you need to further reduce TCO to gain a competitive edge."
+        'viability_recommendation': "Use this pricing benchmark as a critical standard to assess your business model's viability against the current competitive market landscape. It will help you determine if your pricing is realistic or if you need to further reduce TCO to gain a competitive edge.",
+        'footnote_title': "※ Important Note on the 'Apply MirrorMind' Effect",
+        'footnote_text': """
+        The cost reduction effect (83.3% reduction in required computation) shown when 'Apply MirrorMind' is enabled is based on a **hypothesis** presented in the 'MirrorMind Adoption Proposal' document.
+
+        **Core Logic:** The principle is 'workload optimization'—eliminating unnecessary waste of computing resources by intelligently selecting optimized, lightweight models based on the task type (e.g., simple summarization vs. complex analysis), instead of using a single, large model for everything.
+
+        This hypothesis quantifies the power consumption comparison from the proposal ('Standard 1,200 kWh' vs. 'MirrorMind 200 kWh'). This simulator is a tool to analyze the **potential economic impact** if this hypothesis is realized. Actual savings require validation through a real-world pilot project.
+        """
     }
 }
