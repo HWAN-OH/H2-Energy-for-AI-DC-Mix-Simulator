@@ -3,9 +3,10 @@ import pandas as pd
 import yaml
 from calculator import calculate_integrated_tco
 from localization import loc_strings
+from interpreter import generate_narrative
 
 # --- 1. Page Configuration and Data Loading ---
-st.set_page_config(page_title="AI DC TCO Simulator", page_icon="💡", layout="wide")
+st.set_page_config(page_title="AI DC TCO & Viability Simulator", page_icon="💡", layout="wide")
 
 @st.cache_data
 def load_data():
@@ -49,26 +50,17 @@ st.session_state.lang = 'ko' if selected_lang_display == '한국어' else 'en'
 
 # Core Strategic Choices
 st.sidebar.header(t('section_1_header'))
-apply_mirrormind = st.sidebar.toggle(
-    t('mirrormind_toggle_label'),
-    value=True,
-    help=t('mirrormind_toggle_help')
-)
-
-high_perf_hw_ratio = st.sidebar.slider(
-    t('hw_ratio_label'),
-    min_value=0, max_value=100, value=100, step=5,
-    help=t('hw_ratio_help')
-)
+apply_mirrormind = st.sidebar.toggle(t('mirrormind_toggle_label'), value=True, help=t('mirrormind_toggle_help'))
+high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 100, 5, help=t('hw_ratio_help'))
 
 # Market and Economic Assumptions
 st.sidebar.header(t('section_2_header'))
-selected_scenario_key = st.sidebar.selectbox(
-    t('market_label'),
-    options=list(config.get('market_scenarios', {}).keys())
-)
-
+selected_scenario_key = st.sidebar.selectbox(t('market_label'), options=list(config.get('market_scenarios', {}).keys()))
 discount_rate = st.sidebar.slider(t('discount_rate_label'), 3.0, 15.0, 8.0, 0.1)
+
+# Business Goals
+st.sidebar.header(t('section_3_header'))
+target_irr = st.sidebar.slider(t('target_irr_label'), 5.0, 20.0, 8.0, 0.5)
 
 # --- 4. Main Page ---
 st.title(t('app_title'))
@@ -82,7 +74,7 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
             'apply_mirrormind': apply_mirrormind,
             'high_perf_hw_ratio': high_perf_hw_ratio,
             'scenario_params': config['market_scenarios'][selected_scenario_key],
-            'econ_assumptions': {'discount_rate': discount_rate / 100.0}
+            'econ_assumptions': {'discount_rate': discount_rate / 100.0, 'target_irr': target_irr / 100.0}
         }
         user_summary = calculate_integrated_tco(config, user_inputs)
 
@@ -107,25 +99,36 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
         
         benchmark_df = pd.DataFrame(benchmark_results)
 
-    # --- 4.3. Display Results ---
+        # --- 4.3. Generate Narrative Interpretation ---
+        narrative = generate_narrative(user_inputs, user_summary, benchmark_df, t)
+
+
+    # --- 4.4. Display Results ---
     st.markdown("---")
     st.header(t('results_header'))
 
     # Display User's Result
     st.subheader(t('user_scenario_header'))
     col1, col2 = st.columns(2)
-    col1.metric(
-        t('tco_metric_label'),
-        f"${user_summary.get('final_integrated_tco_5yr', 0):,.0f}"
-    )
-    col2.metric(
-        t('investment_metric_label'),
-        f"${user_summary.get('investment_per_mw', 0):,.2f} M / MW"
-    )
+    col1.metric(t('tco_metric_label'), f"${user_summary.get('final_integrated_tco_5yr', 0):,.0f}")
+    col2.metric(t('investment_metric_label'), f"${user_summary.get('investment_per_mw', 0):,.2f} M / MW")
+
+    # Display Business Viability Analysis
+    st.subheader(t('viability_header'))
+    viability_data = user_summary.get('viability', {})
+    col_v1, col_v2, col_v3 = st.columns(3)
+    col_v1.metric(t('annual_revenue_label'), f"${viability_data.get('required_annual_revenue', 0):,.0f}")
+    col_v2.metric(t('token_price_label'), f"${viability_data.get('price_per_million_tokens', 0):.4f}")
+    col_v3.metric(t('user_fee_label'), f"${viability_data.get('monthly_fee_per_user', 0):.2f}")
+
 
     # Display Benchmark Comparison Table
     st.subheader(t('comparison_header'))
     st.dataframe(benchmark_df, use_container_width=True, hide_index=True)
+
+    # Display Narrative Interpretation
+    with st.expander(t('narrative_expander_title'), expanded=True):
+        st.markdown(narrative)
 
 else:
     st.info("사이드바에서 시나리오를 구성한 후 'TCO 분석 실행' 버튼을 클릭하세요. / Configure your scenario in the sidebar and click 'Run TCO Analysis'.")
