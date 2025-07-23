@@ -1,85 +1,91 @@
-# localization.py
-# UI 텍스트를 위한 한/영 문자열 저장소
+# localization.py (v2.3)
 
 loc_strings = {
     'ko': {
-        'app_title': "💡 AI 데이터센터 통합 TCO & 전략 시뮬레이터 (v2.1)",
-        'app_subtitle': "IT 하드웨어, 아키텍처, 건설 및 에너지 비용을 통합하여 최적의 데이터센터 투자 전략을 분석합니다.",
-        'sidebar_title': "⚙️ 시나리오 구성",
-        'lang_selector_label': "언어 (Language)",
-        'section_1_header': "1. 핵심 전략 선택",
-        'mirrormind_toggle_label': "**MirrorMind 아키텍처 적용**",
-        'mirrormind_toggle_help': """
-        **적용 시:** AI 워크로드 효율화(필요 연산량 83.3% 감소) 및 에너지 믹스 최적화.
-        **미적용 시:** 표준 워크로드 및 에너지 믹스.
-        (참고: 효율화 효과는 '미러마인드 도입 제안서'의 가설에 기반합니다.)
-        """,
-        'hw_ratio_label': "**고성능 하드웨어(H100) 비중 (%)**",
-        'hw_ratio_help': """
-        전체 AI 워크로드 중 고성능 칩으로 처리해야 하는 비율.
-        0%는 모든 작업을 저비용 칩으로 처리, 100%는 모든 작업을 고성능 칩으로 처리함을 의미합니다.
-        """,
-        'section_2_header': "2. 시장 및 경제 가정",
-        'market_label': "시장 / 지역",
-        'discount_rate_label': "할인율 (%)",
-        'run_button_label': "🚀 TCO 분석 실행",
-        'spinner_text': "TCO 분석 중...",
-        'results_header': "📊 분석 결과",
-        'user_scenario_header': "나의 시나리오 결과",
-        'tco_metric_label': "5년 최종 통합 TCO",
-        'investment_metric_label': "단위 MW당 최종 투자 비용",
-        'comparison_header': "4대 핵심 전략 옵션 비교 기준점",
-        'strategy_col_1': "전략 옵션",
-        'strategy_col_2': "핵심 전략",
-        'strategy_col_3': "단위 MW당 투자 비용",
-        'option_1_name': "옵션 1: 현상 유지",
-        'option_2_name': "옵션 2: 잘못된 경제학",
-        'option_3_name': "옵션 3: 최적 경로",
-        'option_4_name': "옵션 4: 실행 가능한 대안",
-        'strategy_1_desc': "고성능 (미적용)",
-        'strategy_2_desc': "저비용 (미적용)",
-        'strategy_3_desc': "고성능 (적용)",
-        'strategy_4_desc': "저비용 (적용)",
-        'footer_text': "© 2025, OH SEONG-HWAN. 본 시뮬레이터는 전략적 의사결정을 위한 개념적 도구입니다."
+        'app_title': "💡 AI 데이터센터 통합 TCO & 사업 타당성 시뮬레이터 (v2.3)",
+        # ... (기존 텍스트 동일) ...
+        'section_3_header': "3. 사업 목표 설정",
+        'target_irr_label': "목표 내부수익률 (IRR, %)",
+        'viability_header': "사업 타당성 분석 (목표 IRR 달성 기준)",
+        'annual_revenue_label': "필요 연간 매출",
+        'token_price_label': "필요 서비스 단가 (백만 토큰 당)",
+        'user_fee_label': "필요 사용자당 월 요금",
+        # --- Narrative Generation Strings ---
+        'narrative_expander_title': "결과 해설 및 전략적 제언",
+        'narrative_title': "AI 전략 분석 리포트",
+        'your_choice_title': "선택한 전략",
+        # ... (기존 텍스트 동일) ...
+        'viability_title': "사업 타당성 평가",
+        'viability_text': "선택하신 인프라 투자({investment_per_mw} / MW)를 정당화하고 목표 IRR {target_irr}%를 달성하기 위해서는, 연간 약 **${annual_revenue:,.0f}**의 매출이 필요합니다. 이는 서비스 단가로는 **백만 토큰당 ${token_price:.4f}**, 혹은 **사용자당 월 ${user_fee:.2f}**의 요금 수준에 해당합니다.",
+        'viability_recommendation': "이 가격 지표를 현재 시장의 경쟁 환경 및 가격 정책과 비교하여, 당신의 비즈니스 모델이 현실적으로 생존 가능한지, 혹은 가격 경쟁력을 갖추기 위해 TCO를 더 절감해야 하는지 판단하는 핵심 기준으로 삼으십시오."
     },
     'en': {
-        'app_title': "💡 AI DC Integrated TCO & Strategy Simulator (v2.1)",
-        'app_subtitle': "Analyze the optimal data center investment strategy by integrating IT hardware, architecture, construction, and energy costs.",
-        'sidebar_title': "⚙️ Scenario Configuration",
-        'lang_selector_label': "Language",
-        'section_1_header': "1. Core Strategic Choices",
-        'mirrormind_toggle_label': "**Apply MirrorMind Architecture**",
-        'mirrormind_toggle_help': """
-        **On:** Enables AI workload efficiency (83.3% reduction in required computation) and optimizes the energy mix.
-        **Off:** Uses standard workload and energy mix.
-        (Note: The efficiency effect is based on the hypothesis in the 'MirrorMind Adoption Proposal'.)
-        """,
-        'hw_ratio_label': "**High-Performance HW (H100) Ratio (%)**",
-        'hw_ratio_help': """
-        The percentage of the total AI workload that must be processed by high-performance chips.
-        0% means all tasks are handled by low-cost chips; 100% means all tasks are handled by high-performance chips.
-        """,
-        'section_2_header': "2. Market & Economic Assumptions",
-        'market_label': "Market / Region",
-        'discount_rate_label': "Discount Rate (%)",
-        'run_button_label': "🚀 Run TCO Analysis",
-        'spinner_text': "Analyzing TCO...",
-        'results_header': "📊 Analysis Results",
-        'user_scenario_header': "My Scenario's Result",
-        'tco_metric_label': "5-Year Final Integrated TCO",
-        'investment_metric_label': "Final Investment per MW",
-        'comparison_header': "Benchmark: 4 Key Strategic Options",
-        'strategy_col_1': "Strategic Option",
-        'strategy_col_2': "Core Strategy",
-        'strategy_col_3': "Investment per MW",
-        'option_1_name': "Option 1: The Incumbent",
-        'option_2_name': "Option 2: The False Economy",
-        'option_3_name': "Option 3: The Optimal Path",
-        'option_4_name': "Option 4: The Viable Alternative",
-        'strategy_1_desc': "High-Perf (No MM)",
-        'strategy_2_desc': "Low-Cost (No MM)",
-        'strategy_3_desc': "High-Perf (w/ MM)",
-        'strategy_4_desc': "Low-Cost (w/ MM)",
-        'footer_text': "© 2025, OH SEONG-HWAN. This is a conceptual simulator for strategic decision-making."
+        'app_title': "💡 AI DC Integrated TCO & Business Viability Simulator (v2.3)",
+        # ... (기존 텍스트 동일) ...
+        'section_3_header': "3. Business Goals",
+        'target_irr_label': "Target IRR (%)",
+        'viability_header': "Business Viability Analysis (to achieve Target IRR)",
+        'annual_revenue_label': "Required Annual Revenue",
+        'token_price_label': "Required Service Price (per 1M tokens)",
+        'user_fee_label': "Required Monthly Fee per User",
+        # --- Narrative Generation Strings ---
+        'narrative_expander_title': "Interpretation & Strategic Recommendation",
+        'narrative_title': "AI Strategy Analysis Report",
+        'your_choice_title': "Your Chosen Strategy",
+        # ... (기존 텍스트 동일) ...
+        'viability_title': "Business Viability Assessment",
+        'viability_text': "To justify your infrastructure investment of **{investment_per_mw} per MW** and achieve a **{target_irr}% Target IRR**, your business needs to generate approximately **${annual_revenue:,.0f} in annual revenue**. This translates to a service price point of **${token_price:.4f} per million tokens**, or a **monthly fee of ${user_fee:.2f} per user**.",
+        'viability_recommendation': "Use this pricing benchmark as a critical standard to assess your business model's viability against the current competitive market landscape. It will help you determine if your pricing is realistic or if you need to further reduce TCO to gain a competitive edge."
     }
 }
+```python
+# interpreter.py (v2.3)
+
+def generate_narrative(user_inputs, user_summary, benchmark_df, t):
+    """
+    사용자의 선택과 결과 데이터를 바탕으로 동적인 해설을 생성합니다.
+    """
+    # --- 1. 입력 변수 추출 ---
+    apply_mm = user_inputs['apply_mirrormind']
+    hw_ratio = user_inputs['high_perf_hw_ratio']
+    target_irr = user_inputs['econ_assumptions']['target_irr'] * 100
+    user_investment_per_mw = user_summary.get('investment_per_mw', 0)
+    viability = user_summary.get('viability', {})
+    
+    # ... (기존 2, 3, 4 단계는 동일) ...
+    hw_strategy = t('hw_strategy_high') if hw_ratio > 80 else t('hw_strategy_low') if hw_ratio < 20 else t('hw_strategy_hybrid')
+    
+    narrative = f"### {t('narrative_title')}\n\n"
+    narrative += f"**{t('your_choice_title')}**\n"
+    narrative += f"👉 {t('your_choice_text').format(apply_mm_text=t('applied') if apply_mm else t('not_applied'), hw_strategy=hw_strategy, investment_per_mw=f'${user_investment_per_mw:,.2f} M')}\n\n"
+
+    narrative += f"**{t('key_driver_title')}**\n"
+    if apply_mm:
+        narrative += f"✅ **{t('driver_mm_on_title')}** {t('driver_mm_on_text')}\n"
+        option_3_cost_str = benchmark_df[benchmark_df[t('strategy_col_1')] == t('option_3_name')][t('strategy_col_3')].iloc[0]
+        narrative += f"   - {t('driver_mm_on_subtext').format(option_3_cost=option_3_cost_str)}\n\n"
+    else:
+        narrative += f"⚠️ **{t('driver_mm_off_title')}** {t('driver_mm_off_text')}\n"
+        option_1_cost_str = benchmark_df[benchmark_df[t('strategy_col_1')] == t('option_1_name')][t('strategy_col_3')].iloc[0]
+        narrative += f"   - {t('driver_mm_off_subtext').format(option_1_cost=option_1_cost_str)}\n\n"
+
+    # --- 5. 사업 타당성 평가 추가 ---
+    narrative += f"**{t('viability_title')}**\n"
+    narrative += f"📈 {t('viability_text').format(investment_per_mw=f'${user_investment_per_mw:,.2f} M', target_irr=target_irr, annual_revenue=viability.get('required_annual_revenue', 0), token_price=viability.get('price_per_million_tokens', 0), user_fee=viability.get('monthly_fee_per_user', 0))}\n\n"
+
+
+    # --- 6. 전략적 제언 ---
+    narrative += f"**{t('recommendation_title')}**\n"
+    if apply_mm:
+        if hw_ratio == 100:
+            narrative += f"👍 **{t('rec_mm_high_title')}** {t('rec_mm_high_text')}\n"
+        elif hw_ratio == 0:
+            narrative += f"💡 **{t('rec_mm_low_title')}** {t('rec_mm_low_text')}\n"
+        else:
+            narrative += f"🎯 **{t('rec_mm_hybrid_title')}** {t('rec_mm_hybrid_text')}\n"
+    else:
+        narrative += f"🔥 **{t('rec_no_mm_title')}** {t('rec_no_mm_text')}\n"
+        
+    narrative += f"   - {t('viability_recommendation')}\n"
+
+    return narrative
