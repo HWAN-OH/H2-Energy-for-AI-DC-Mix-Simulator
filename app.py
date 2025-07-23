@@ -1,148 +1,119 @@
-import streamlit as st
 import pandas as pd
-import plotly.express as px
-import yaml
-from calculator import calculate_5yr_tco
+import numpy as np
 
-# --- Page Configuration ---
-st.set_page_config(page_title="AI DC Energy Strategy Simulator", page_icon="💡", layout="wide")
-
-# --- Load Data and Config ---
-@st.cache_data
-def load_data():
-    try:
-        demand_df = pd.read_csv('demand_profile.csv')
-        demand_df.columns = [col.strip().lower() for col in demand_df.columns]
-        required_cols = ['year', 'demand_mwh', 'peak_demand_mw']
-        if not all(col in demand_df.columns for col in required_cols):
-            st.error(f"Error: 'demand_profile.csv' must contain the columns: {', '.join(required_cols)}")
-            return None, None
-    except FileNotFoundError:
-        st.error("Error: 'demand_profile.csv' not found. Please ensure it's in your repository.")
-        return None, None
-    try:
-        with open('config.yml', 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f)
-    except FileNotFoundError:
-        st.error("Error: 'config.yml' not found. Please ensure it's in your repository.")
-        return None, None
-    except Exception as e:
-        st.error(f"Error parsing 'config.yml': {e}")
-        return None, None
-    return demand_df, config
-
-demand_profile, config = load_data()
-
-if config is None or demand_profile is None:
-    st.stop()
-
-# --- UI ---
-st.title("💡 AI Data Center Global Energy Strategy Simulator")
-initial_peak_demand = demand_profile['peak_demand_mw'].iloc[0]
-final_peak_demand = demand_profile['peak_demand_mw'].iloc[-1]
-st.markdown(f"Design an optimal energy portfolio for a data center scaling from **{initial_peak_demand:.1f} MW** to **{final_peak_demand:.1f} MW** and analyze its 5-year Total Cost of Ownership (TCO).")
-
-with st.expander("About this Simulator & Key Assumptions"):
-    st.markdown(f"""
-    **Developed by: [OH SEONG-HWAN](https://www.linkedin.com/in/shoh1224/)**
-
-    This tool was built to provide a high-level strategic analysis of energy portfolios for AI data centers.
+def calculate_integrated_tco(config, user_inputs):
+    """
+    Calculates the fully integrated 5-year TCO for an AI Data Center.
+    This includes DC Construction, IT Hardware, Energy, Maintenance, and Depreciation effects.
+    """
+    # --- 1. Unpack all inputs ---
+    demand_profile = user_inputs['demand_profile']
+    apply_mirrormind = user_inputs['apply_mirrormind']
+    high_perf_hw_ratio = user_inputs['high_perf_hw_ratio'] / 100.0
+    econ_assumptions = user_inputs['econ_assumptions']
+    scenario_params = user_inputs['scenario_params']
     
-    ---
-    #### **Key Assumptions & Definitions**
+    # --- 2. Load strategic assumptions from config ---
+    sa = config.get('strategic_assumptions', {})
+    mm_config = config.get('mirrormind_assumptions', {})
+    tech_params = config.get('energy_sources', {})
+    
+    # --- 3. Determine core parameters based on MirrorMind selection ---
+    if apply_mirrormind:
+        workload_factor = mm_config.get('workload_efficiency_factor', 1.0)
+        energy_mix = mm_config.get('optimized_energy_mix', {})
+    else:
+        workload_factor = 1.0
+        energy_mix = mm_config.get('standard_energy_mix', {})
 
-    * **Data Center Scale:** The scale is defined by **Peak Demand (MW)**. The default `demand_profile.csv` simulates a data center scaling from **{initial_peak_demand:.1f} MW** to **{final_peak_demand:.1f} MW**.
-    * **Market Scenarios:** The initial grid and natural gas prices are loaded based on the selected market scenario.
-    * **LCOE & TCO:** The LCOE (Levelized Cost of Energy) is calculated based on the asset's full lifetime ({config.get('asset_lifetime_years', 20)} years) to provide a true annualized cost. The TCO reflects the 5-year total cost outlay.
-    * **No Subsidies:** **Crucially, this model does NOT include any government subsidies, tax credits (like the U.S. IRA), or other incentives.** It is a pure cost-based analysis.
-    """)
+    # Adjust demand profile based on workload efficiency
+    adj_demand_profile = demand_profile.copy()
+    adj_demand_profile['demand_mwh'] *= workload_factor
+    adj_demand_profile['peak_demand_mw'] *= workload_factor
+    
+    total_it_load_mw = adj_demand_profile['peak_demand_mw'].iloc[-1] # Final peak demand
 
-# --- Sidebar ---
-st.sidebar.title("📊 Scenario Configuration")
+    # --- 4. Calculate DC Construction & IT Hardware CAPEX (at t=0) ---
+    # Construction CAPEX with penalty for low-cost hardware
+    base_construction_cost_per_mw = sa.get('dc_construction_cost_per_mw', 10000000)
+    penalty_factor = sa.get('low_cost_hw_penalty_factor', 1.2)
+    
+    # The construction cost is a blend based on the hardware mix
+    effective_construction_cost_per_mw = (base_construction_cost_per_mw * high_perf_hw_ratio) + \
+                                         (base_construction_cost_per_mw * penalty_factor * (1 - high_perf_hw_ratio))
+    
+    dc_construction_capex = effective_construction_cost_per_mw * total_it_load_mw
 
-st.sidebar.header("1. Select Market Scenario")
-scenario_options = list(config.get('market_scenarios', {}).keys())
-if not scenario_options:
-    st.sidebar.error("No market scenarios found in config.yml. Please check the file.")
-    st.stop()
-selected_scenario = st.sidebar.selectbox("Market / Region", scenario_options)
-scenario_params = config['market_scenarios'][selected_scenario]
-st.sidebar.caption(scenario_params.get('description', ''))
+    # IT Hardware CAPEX
+    h_gpu = sa.get('high_perf_gpu', {})
+    l_gpu = sa.get('low_cost_gpu', {})
+    
+    # Total performance units needed for the entire DC at final scale
+    # Assuming a hypothetical total performance requirement for a 100MW non-MM DC
+    base_total_performance_units = (demand_profile['peak_demand_mw'].iloc[-1] / 100) * 2000 * h_gpu.get('performance_unit', 10)
+    
+    required_performance_units = base_total_performance_units * workload_factor
+    
+    perf_from_high = required_performance_units * high_perf_hw_ratio
+    perf_from_low = required_performance_units * (1 - high_perf_hw_ratio)
+    
+    num_high_gpu = perf_from_high / h_gpu.get('performance_unit', 10)
+    num_low_gpu = perf_from_low / l_gpu.get('performance_unit', 1)
+    
+    it_hardware_capex = (num_high_gpu * h_gpu.get('cost_per_unit', 0)) + \
+                        (num_low_gpu * l_gpu.get('cost_per_unit', 0))
 
-st.sidebar.header("2. Energy Mix Design (%)")
-st.sidebar.info("Adjust the share of each power source. The total must be 100%.")
-grid_mix = st.sidebar.slider("Grid", 0, 100, 60)
-solar_mix = st.sidebar.slider("Solar", 0, 100, 10)
-wind_mix = st.sidebar.slider("Wind", 0, 100, 0)
-h2_sofc_mix = st.sidebar.slider("H2 Fuel Cell (SOFC)", 0, 100, 10)
-ng_sofc_mix = st.sidebar.slider("NG Fuel Cell (NG-SOFC)", 0, 100, 20)
-total_mix = grid_mix + solar_mix + wind_mix + h2_sofc_mix + ng_sofc_mix
-if total_mix != 100:
-    st.sidebar.error(f"Total energy mix must be 100%. (Currently: {total_mix}%)")
-    st.stop()
-energy_mix = {'grid': grid_mix, 'solar': solar_mix, 'wind': wind_mix, 'hydrogen_SOFC': h2_sofc_mix, 'NG_SOFC': ng_sofc_mix}
+    # --- 5. Calculate 5-Year Energy TCO ---
+    # This part reuses a simplified energy calculation logic
+    initial_energy_capex = 0
+    peak_demand_kw_yr1 = adj_demand_profile['peak_demand_mw'].iloc[0] * 1000
+    for source, mix in energy_mix.items():
+        if source != 'grid' and mix > 0:
+            capacity_kw = peak_demand_kw_yr1 * (mix / 100)
+            initial_energy_capex += capacity_kw * tech_params.get(source, {}).get('capex_per_kw', 0)
+    
+    total_energy_opex_pv = 0
+    for index, row in adj_demand_profile.iterrows():
+        year = index + 1
+        discount_factor = 1 / ((1 + econ_assumptions['discount_rate']) ** year)
+        annual_demand_kwh = row['demand_mwh'] * 1000
+        
+        # Simplified OPEX calculation for this integrated model
+        grid_cost = (annual_demand_kwh * (energy_mix.get('grid', 0) / 100)) * scenario_params.get('grid_price_per_kwh', 0)
+        ng_cost = (annual_demand_kwh * (energy_mix.get('NG_SOFC', 0) / 100)) * scenario_params.get('gas_fuel_cost_per_kwh', 0)
+        
+        total_energy_opex_pv += (grid_cost + ng_cost) * discount_factor
+        
+    energy_tco_5yr = initial_energy_capex + total_energy_opex_pv
 
-st.sidebar.header("3. Economic Assumptions")
-discount_rate = st.sidebar.slider("Discount Rate (%)", 3.0, 15.0, 8.0, 0.1) / 100
-grid_escalation = st.sidebar.slider("Annual Grid Price Escalation (%)", 0.0, 10.0, 3.0, 0.1) / 100
-h2_fuel_cost = st.sidebar.number_input("Initial H2 Fuel Cost ($/kWh)", 0.05, 0.30, 0.15, 0.01)
-fuel_escalation = st.sidebar.slider("Annual Fuel Cost Escalation (%)", -5.0, 10.0, 2.0, 0.5) / 100
+    # --- 6. Calculate 5-Year Maintenance & Depreciation Effects ---
+    # Maintenance Cost
+    annual_maintenance_cost = dc_construction_capex * sa.get('maintenance_rate_of_construction_capex', 0.02)
+    maintenance_cost_5yr_pv = sum([annual_maintenance_cost / ((1 + econ_assumptions['discount_rate']) ** (i+1)) for i in range(5)])
 
-st.sidebar.header("4. Carbon Tax Scenario")
-carbon_tax_year = st.sidebar.select_slider("Carbon Tax Intro Year", options=[None, 2, 3, 4, 5], value=3, format_func=lambda x: "None" if x is None else f"Year {x}")
-carbon_tax_price = st.sidebar.number_input("Carbon Tax Price ($/ton)", 0, 200, 50, 5)
+    # Depreciation Tax Shield
+    building_depreciation_per_year = dc_construction_capex / sa.get('building_depreciation_years', 40)
+    it_hw_depreciation_per_year = it_hardware_capex / sa.get('it_hw_depreciation_years', 5)
+    
+    tax_shield_5yr_pv = 0
+    for i in range(5):
+        annual_depreciation = building_depreciation_per_year + it_hw_depreciation_per_year
+        tax_shield = annual_depreciation * sa.get('corporate_tax_rate', 0.25)
+        tax_shield_5yr_pv += tax_shield / ((1 + econ_assumptions['discount_rate']) ** (i+1))
 
-st.sidebar.markdown("---")
-st.sidebar.info("© 2025, OH SEONG-HWAN. All rights reserved.")
+    # --- 7. Final Integrated TCO Calculation ---
+    integrated_tco = (dc_construction_capex + it_hardware_capex + energy_tco_5yr + maintenance_cost_5yr_pv) - tax_shield_5yr_pv
 
-if st.button("🚀 Run Analysis", use_container_width=True):
-    user_inputs = {
-        'demand_profile': demand_profile,
-        'energy_mix': energy_mix,
-        'scenario_params': scenario_params,
-        'econ_assumptions': {
-            'discount_rate': discount_rate, 'grid_escalation': grid_escalation,
-            'h2_fuel_cost': h2_fuel_cost, 'fuel_escalation': fuel_escalation,
-            'carbon_tax_year': carbon_tax_year, 'carbon_tax_price': carbon_tax_price
+    # --- 8. Prepare Summary Output ---
+    summary = {
+        "final_integrated_tco_5yr": integrated_tco,
+        "investment_per_mw": integrated_tco / total_it_load_mw if total_it_load_mw > 0 else 0,
+        "breakdown": {
+            "A_DC_Construction_CAPEX": dc_construction_capex,
+            "B_IT_Hardware_CAPEX": it_hardware_capex,
+            "C_Energy_TCO_5yr": energy_tco_5yr,
+            "D_Maintenance_Cost_5yr_PV": maintenance_cost_5yr_pv,
+            "E_Tax_Shield_5yr_PV": -tax_shield_5yr_pv,
         }
     }
-    with st.spinner("Calculating... Please wait."):
-        df_results, summary, capex_details, opex_breakdown = calculate_5yr_tco(config, user_inputs)
-    
-    st.markdown("---")
-    st.header(f"Analysis for: **{selected_scenario}**")
-
-    if summary:
-        total_fc_capex = capex_details.get('hydrogen_SOFC_capex', 0) + capex_details.get('NG_SOFC_capex', 0)
-        
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("5-Year Total Cost (TCO)", f"${summary.get('5_Year_TCO', 0):,.0f}")
-        col2.metric(f"Avg. LCOE ({config.get('asset_lifetime_years', 20)}-yr lifetime)", f"${summary.get('LCOE_Avg_5yr', 0):.2f} / MWh")
-        col3.metric("Total Initial CAPEX", f"${summary.get('Total_Initial_CAPEX', 0):,.0f}")
-        col4.metric("Total Fuel Cell CAPEX", f"${total_fc_capex:,.0f}")
-
-        tab1, tab2 = st.tabs(["📊 Cost Composition", "📄 Detailed Data"])
-
-        with tab1:
-            st.subheader("Initial CAPEX Breakdown")
-            capex_df = pd.DataFrame.from_dict(capex_details, orient='index', columns=['Cost (USD)'])
-            st.dataframe(capex_df.style.format("${:,.0f}"), use_container_width=True)
-
-            st.subheader("5-Year OPEX Composition (Present Value)")
-            if opex_breakdown:
-                opex_df = pd.DataFrame.from_dict(opex_breakdown, orient='index', columns=['Cost (PV)'])
-                opex_df.index.name = 'OPEX Component'
-                opex_df = opex_df.reset_index()
-                fig_opex = px.pie(opex_df, values='Cost (PV)', names='OPEX Component', title='Total 5-Year OPEX Breakdown (PV)')
-                st.plotly_chart(fig_opex, use_container_width=True)
-
-        with tab2:
-            st.subheader("Full Annual Calculation Results")
-            st.dataframe(df_results, use_container_width=True)
-            st.subheader("Input Data")
-            with st.expander("Click to view configuration"):
-                st.json(config)
-    else:
-        st.warning("Could not calculate results.")
-else:
-    st.info("Configure your scenario in the sidebar and click 'Run Analysis'.")
+    return summary
