@@ -32,6 +32,21 @@ strategic_assumptions:
   maintenance_rate_of_construction_capex: 0.02 # Annual maintenance cost as a percentage of initial construction CAPEX
 
 # ===============================================
+# Revenue & Business Viability Assumptions
+# - Defines key metrics to translate revenue into tangible business goals.
+# ===============================================
+revenue_assumptions:
+  # AI Service Unit per MWh of IT load. Links energy consumption to service output.
+  # 1 MWh의 IT 전력으로 처리할 수 있는 AI 서비스 유닛. 에너지 소비와 서비스 제공량을 연결.
+  tokens_processed_per_mwh: 3000000000 # 3 billion tokens
+  
+  # Number of concurrent active users that can be supported per MW of IT load.
+  # 1 MW의 IT 부하로 지원 가능한 동시 접속자 수.
+  active_users_per_mw: 1500
+
+# ===============================================
+
+# ===============================================
 # MirrorMind Architecture Assumptions
 # - Defines the impact of applying the MirrorMind architecture.
 # ===============================================
