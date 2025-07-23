@@ -1,60 +1,49 @@
-# AI Data Center Energy Strategy Simulator
+# AI Data Center TCO & Strategy Simulator (v2.0)
 
-A strategic decision-making tool designed to analyze and optimize the 5-year Total Cost of Ownership (TCO) for AI data center energy portfolios. This simulator empowers business leaders and investors to design their optimal energy mix and navigate the complex economic and environmental variables of the future.
+A comprehensive strategic decision-making tool designed to analyze and optimize the 5-year Total Cost of Ownership (TCO) for AI data centers. This simulator moves beyond simple energy analysis to provide a fully integrated model that includes **IT Hardware Strategy**, **Architectural Efficiency**, **Physical Construction Costs**, and **Energy Portfolio Management**.
 
-![Simulator Screenshot](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/assets/174906093/d385f096-7c39-4d69-a8c4-e40e2b957648)
-
+![Simulator Screenshot](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/assets/174906093/d385f096-7c39-4d69-a8c4-e40e2b957648) <!-- Placeholder image -->
 
 ## Overview
 
-The era of AI demands unprecedented levels of energy, making energy strategy a critical factor for the success and sustainability of any data center operation. This simulator moves beyond simple LCOE calculations to provide a comprehensive, 5-year TCO analysis, allowing users to model complex scenarios and make data-driven decisions.
+The economics of AI data centers are complex. A winning strategy requires balancing the costs of IT hardware, the efficiency of the software architecture, the physical construction of the facility, and the long-term cost of energy. This simulator provides a unified framework to analyze these trade-offs and identify the optimal investment path.
 
-This tool was born from a real-world need to answer the most critical question for data center operators: **"What is the most economically viable and sustainable energy strategy for my facility over the next five years?"**
+This upgraded version (v2.0) directly incorporates the "MirrorMind" architectural efficiency concept, allowing leaders to quantify the economic impact of investing in a smarter architecture versus simply buying more or cheaper hardware.
 
 ## Key Features
 
-- **5-Year TCO Analysis:** Calculates the full Total Cost of Ownership, including initial CAPEX, ongoing OPEX, asset replacement costs, and future carbon taxes.
-- **Dynamic Scenario Design:** Interactively design your own energy portfolio by adjusting the mix of Grid power, Solar, Wind, and Hydrogen/Natural Gas Fuel Cells.
-- **Global Market Scenarios:** Analyze project feasibility across different regions (e.g., USA, South Korea, EU) with realistic, market-specific energy pricing.
-- **Financial Modeling:** Incorporates key financial metrics like Discount Rate and Present Value (PV) for a true "apples-to-apples" comparison of long-term investments.
+- **Integrated TCO Modeling:** Calculates a comprehensive 5-year TCO, including DC construction, IT hardware, energy, maintenance, and depreciation tax shield effects.
+- **Strategic Choice Analysis:** Directly compare different strategic postures by toggling key options:
+    - **MirrorMind Architecture:** Quantify the value of architectural efficiency.
+    - **Hardware Portfolio Mix:** Find the optimal balance between high-performance and low-cost hardware.
+- **Realistic Cost Assumptions:** The model is built on verifiable industry data for construction costs, hardware pricing, and energy rates.
+- **Dynamic Scenario Simulation:** Interactively adjust your core strategic choices and immediately see the impact on your bottom line, represented as the final `Investment per MW`.
 
 ## How to Use
 
-1.  **Clone the repository:**
+1.  **Clone the repository and install dependencies:**
     ```bash
     git clone [https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator.git](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator.git)
     cd H2-Energy-for-AI-DC-Mix-Simulator
-    ```
-
-2.  **Install dependencies:**
-    ```bash
     pip install -r requirements.txt
     ```
 
-3.  **Prepare your data (Optional):**
-    - Modify `demand_profile.csv` with your own 5-year forecast for energy demand (MWh) and peak load (MW).
-    - Adjust the base assumptions for technology costs and performance in `config.yml`.
-
-4.  **Run the simulator:**
+2.  **Run the simulator:**
     ```bash
     streamlit run app.py
     ```
 
-## Key Assumptions & Data Sources
+3.  **Configure Your Scenario in the Sidebar:**
+    - **Core Strategic Choices:** This is the heart of the simulation.
+        - **Toggle `MirrorMind 아키텍처 적용`:** Decide whether to apply the architectural efficiency model. This is the most impactful choice.
+        - **Adjust `고성능 하드웨어(H100) 비중 (%)`:** Define your hardware strategy based on your specific workload needs.
+    - **Market & Economic Assumptions:** Select your target region and set the discount rate.
 
-The credibility of this simulation rests on the transparency of its underlying data. The default values in `config.yml` are not arbitrary; they are representative figures derived from a survey of recent industry reports, market data, and established energy benchmarks.
-
--   **Market Scenarios (Grid & Gas Prices):** The regional electricity and natural gas prices are based on publicly available data and reports from sources such as the **U.S. Energy Information Administration (EIA)**, **Eurostat**, and analysis of the Korean industrial market. They are intended to reflect the higher, all-in costs for new, large-scale data center customers.
-
--   **Technology Costs (CAPEX/OPEX):** The capital and operational expenditures for technologies like Solar, Wind, and SOFC are based on industry benchmarks from leading energy analysis institutions like **Lazard's LCOE Analysis** and **NREL**.
-
--   **No Subsidies Assumption:** **Crucially, this model does NOT include any government subsidies, tax credits (like the U.S. IRA), or other incentives.** It is a pure, unsubsidized cost-based analysis.
-
-## Core Logic & Simulation Scale
-
-The simulation engine (`calculator.py`) performs a year-by-year analysis based on the user's scenario. The total required capacity of the power sources is determined by the `peak_demand_mw` specified in the `demand_profile.csv` for each year.
-
-**The provided example `demand_profile.csv` simulates a data center scaling from an initial peak load of 40 MW to a final load of 100 MW over 5 years.** Users can adapt the simulation to any scale by modifying this CSV file.
+4.  **Run and Analyze:**
+    - Click the **`Run TCO Analysis`** button.
+    - Review the key metrics: **Final Integrated TCO** and **Final Investment per MW**.
+    - Use the pie chart to understand the cost composition of your chosen strategy.
+    - Experiment with different configurations to find your optimal path.
 
 ## Project Philosophy
 
@@ -62,4 +51,4 @@ This tool was developed by **[OH SEONG-HWAN](https://www.linkedin.com/in/shoh122
 
 ## License
 
-This project is licensed under the MIT License. Copyright (c) 2025, OH SEONG-HWAN.
+This project is licensed under the MIT License. Copyright (c) 2025, OH SUNG-HWAN.
