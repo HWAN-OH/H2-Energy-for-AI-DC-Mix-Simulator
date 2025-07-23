@@ -56,15 +56,12 @@ high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 100, 5, help
 
 # Market and Economic Assumptions
 st.sidebar.header(t('section_2_header'))
-
-# Market Selector (Robust Version)
 market_keys = list(config.get('market_scenarios', {}).keys())
 market_display_names = t('market_names')
 formatted_options = [market_display_names.get(key, key) for key in market_keys]
 display_name_to_key_map = {display_name: key for key, display_name in zip(market_keys, formatted_options)}
 selected_display_name = st.sidebar.selectbox(t('market_label'), options=formatted_options, key='market_selector')
 selected_scenario_key = display_name_to_key_map[selected_display_name]
-
 discount_rate = st.sidebar.slider(t('discount_rate_label'), 3.0, 15.0, 8.0, 0.1)
 
 # Business Goals
@@ -77,7 +74,6 @@ st.markdown(t('app_subtitle'))
 
 if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     with st.spinner(t('spinner_text')):
-        # ... (4.1, 4.2, 4.3 계산 로직은 이전과 동일) ...
         user_inputs = {
             'demand_profile': demand_profile,
             'apply_mirrormind': apply_mirrormind,
@@ -119,10 +115,11 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
     st.subheader(t('viability_header'))
     viability_data = user_summary.get('viability', {})
-    col_v1, col_v2, col_v3 = st.columns(3)
+    col_v1, col_v2, col_v3, col_v4 = st.columns(4) # 4개 열로 변경
     col_v1.metric(t('annual_revenue_label'), f"${viability_data.get('required_annual_revenue', 0):,.0f}")
     col_v2.metric(t('token_price_label'), f"${viability_data.get('price_per_million_tokens', 0):.4f}")
     col_v3.metric(t('user_fee_label'), f"${viability_data.get('monthly_fee_per_user', 0):.2f}")
+    col_v4.metric(t('serviceable_users_label'), f"{viability_data.get('total_serviceable_users', 0):,.0f}") # 새 항목 추가
 
     st.subheader(t('comparison_header'))
     st.dataframe(benchmark_df, use_container_width=True, hide_index=True)
@@ -130,14 +127,11 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     with st.expander(t('narrative_expander_title'), expanded=True):
         st.markdown(narrative)
 
-    # --- [새로 추가된 각주 섹션] ---
     st.markdown("---")
     st.info(f"""
     **{t('footnote_title')}**
-
     {t('footnote_text')}
     """, icon="ℹ️")
-    # --- 여기까지 추가 ---
 
 else:
     st.info("사이드바에서 시나리오를 구성한 후 'TCO 분석 실행' 버튼을 클릭하세요. / Configure your scenario in the sidebar and click 'Run TCO Analysis'.")
