@@ -71,62 +71,50 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
             'electricity_price': config.get('electricity_pricing_scenarios', {}).get(electricity_scenario, {}).get('price_per_kwh', 0.13)
         }
         summary = calculate_business_case(config, user_inputs)
-        analysis_years = config.get('business_assumptions', {}).get('analysis_years', 10)
         pnl = summary.get('pnl', {})
+        unit_pnl = summary.get('unit_pnl', {})
 
     # --- 4.1. Display Results ---
     st.markdown("---")
     st.header(t('results_header'))
 
-    # --- Output Section A: P&L ---
+    # --- Output Section A: Annual P&L Table ---
     st.subheader(t('output_section_A_title'))
-    with st.container(border=True):
-        rev = pnl.get('revenue', 0)
-        op_cost = pnl.get('op_cost_electricity', 0) + pnl.get('op_cost_maintenance', 0)
-        dep_amort = pnl.get('depreciation_amortization_asset', 0) + pnl.get('depreciation_amortization_rd', 0)
-        op_profit = pnl.get('operating_profit', 0)
+    
+    pnl_data = {
+        '항목': [
+            t('pnl_revenue'),
+            t('pnl_cost_of_revenue'),
+            t('pnl_gross_profit'),
+            t('pnl_operating_expenses'),
+            t('pnl_operating_profit')
+        ],
+        '금액 ($)': [
+            f"{pnl.get('revenue', 0):,.0f}",
+            f"{pnl.get('cost_of_revenue', 0):,.0f}",
+            f"{pnl.get('gross_profit', 0):,.0f}",
+            f"{pnl.get('operating_expenses', 0):,.0f}",
+            f"{pnl.get('operating_profit', 0):,.0f}"
+        ]
+    }
+    pnl_df = pd.DataFrame(pnl_data)
+    st.dataframe(pnl_df, hide_index=True, use_container_width=True)
 
-        st.markdown(f"**{t('pnl_revenue')}:** `${rev:,.0f}`")
-        st.markdown("---")
-        st.markdown(f"**{t('pnl_op_cost')}:** `${op_cost:,.0f}`")
-        st.markdown(f"&nbsp;&nbsp;&nbsp;{t('pnl_op_cost_electric')}: `${pnl.get('op_cost_electricity', 0):,.0f}`")
-        st.markdown(f"&nbsp;&nbsp;&nbsp;{t('pnl_op_cost_maint')}: `${pnl.get('op_cost_maintenance', 0):,.0f}`")
-        st.markdown("---")
-        st.markdown(f"**{t('pnl_dep_amort')}:** `${dep_amort:,.0f}`")
-        st.markdown(f"&nbsp;&nbsp;&nbsp;{t('pnl_dep_amort_asset')}: `${pnl.get('depreciation_amortization_asset', 0):,.0f}`")
-        st.markdown(f"&nbsp;&nbsp;&nbsp;{t('pnl_dep_amort_rd')}: `${pnl.get('depreciation_amortization_rd', 0):,.0f}`")
-        st.markdown("---")
-        st.markdown(f"#### **{t('pnl_op_profit')}:** `${op_profit:,.0f}`")
 
-
-    # --- Output Section B: Unit Economics ---
+    # --- Output Section B: Per-User P&L ---
     st.subheader(t('output_section_B_title'))
-    unit_economics = summary.get('unit_economics', {})
-    cols = st.columns(len(unit_economics))
+    cols = st.columns(len(unit_pnl))
     tier_names = {'free': t('free_tier'), 'paid': t('paid_tier'), 'premium': t('premium_tier')}
     
-    for i, (tier_name, data) in enumerate(unit_economics.items()):
+    for i, (tier_name, data) in enumerate(unit_pnl.items()):
         with cols[i]:
             with st.container(border=True):
                 st.markdown(f"**{tier_names.get(tier_name)}**")
-                st.metric(label=t('monthly_cost_label'), value=f"${data.get('cost', 0):.2f}")
-                st.metric(label=t('monthly_revenue_label'), value=f"${data.get('revenue', 0):.2f}")
+                st.metric(label=t('pnl_user_revenue'), value=f"${data.get('revenue', 0):.2f}")
+                st.metric(label=t('pnl_user_cost'), value=f"${data.get('cost', 0):.2f}")
                 profit = data.get('profit', 0)
-                st.metric(label=t('monthly_profit_label'), value=f"${profit:.2f}",
+                st.metric(label=t('pnl_user_profit'), value=f"${profit:.2f}",
                             delta="수익" if profit >= 0 else "손실")
-
-    # --- Output Section C: Overall Viability ---
-    st.subheader(t('output_section_C_title'))
-    payback = summary.get('payback_period', float('inf'))
-    
-    if payback == float('inf'):
-        payback_display = t('payback_inf')
-    elif payback > analysis_years:
-        payback_display = f"{payback:.2f} {t('years_suffix_projected')}"
-    else:
-        payback_display = f"{payback:.2f} {t('years_suffix')}"
-
-    st.metric(t('payback_period_label'), payback_display)
 
 else:
     st.info(t('initial_prompt'))
