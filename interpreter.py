@@ -58,14 +58,14 @@
         "        try:\n",
         "            option_3_cost_str = benchmark_df[benchmark_df[t('strategy_col_1')] == t('option_3_name')][t('strategy_col_3')].iloc[0]\n",
         "            narrative += f\"   - {t('driver_mm_on_subtext').format(option_3_cost=option_3_cost_str)}\\n\\n\"\n",
-        "        except IndexError:\n",
+        "        except (IndexError, KeyError):\n",
         "            pass # 벤치마크 데이터가 없는 경우를 대비\n",
         "    else:\n",
         "        narrative += f\"⚠️ **{t('driver_mm_off_title')}** {t('driver_mm_off_text')}\\n\"\n",
         "        try:\n",
         "            option_1_cost_str = benchmark_df[benchmark_df[t('strategy_col_1')] == t('option_1_name')][t('strategy_col_3')].iloc[0]\n",
         "            narrative += f\"   - {t('driver_mm_off_subtext').format(option_1_cost=option_1_cost_str)}\\n\\n\"\n",
-        "        except IndexError:\n",
+        "        except (IndexError, KeyError):\n",
         "            pass\n",
         "\n",
         "    # --- 3.3. 사업 타당성 평가 ---\n",
@@ -91,7 +91,7 @@
       "outputs": [],
       "execution_count": null,
       "metadata": {
-        "id": "HBAj4g85YXmd"
+        "id": "Uhf6VD5LY7yU"
       }
     }
   ],
