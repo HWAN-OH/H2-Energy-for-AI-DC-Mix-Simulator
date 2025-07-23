@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-import numpy_financial as npf # <-- 재무 함수 라이브러리 추가
+import numpy_financial as npf
 
 def calculate_business_case(config, user_inputs):
     """
-    Calculates TCO, required revenue for IRR, and detailed unit economics.
+    Calculates TCO, required revenue for IRR, detailed unit economics, and payback period.
     """
     # --- 1. Unpack all inputs & assumptions ---
     demand_profile = user_inputs['demand_profile']
@@ -29,8 +29,7 @@ def calculate_business_case(config, user_inputs):
     adj_demand_profile['demand_mwh'] *= workload_factor
     adj_demand_profile['peak_demand_mw'] *= workload_factor
     final_peak_demand_mw = demand_profile['peak_demand_mw'].iloc[-1]
-    adj_final_peak_demand_mw = adj_demand_profile['peak_demand_mw'].iloc[-1]
-
+    
     # --- 3. Calculate Initial Investments (CAPEX at Year 0) ---
     base_construction_cost_per_mw = infra_config.get('dc_construction_cost_per_mw', 10000000)
     penalty_factor = infra_config.get('low_cost_hw_penalty_factor', 1.2)
@@ -48,12 +47,12 @@ def calculate_business_case(config, user_inputs):
                         (num_low_gpu * l_gpu.get('cost_per_unit', 0))
 
     initial_investment = dc_construction_capex + it_hardware_capex
+    it_reinvestment_capex = it_hardware_capex
 
     # --- 4. Analysis A: Required Revenue for Target IRR (Cost Basis) ---
-    cash_outflows = [0] * (analysis_years + 1)
-    cash_outflows[0] = -initial_investment
-    it_reinvestment_capex = it_hardware_capex
-    cash_outflows[5] -= it_reinvestment_capex
+    cost_cash_outflows = [0] * (analysis_years + 1)
+    cost_cash_outflows[0] = -initial_investment
+    cost_cash_outflows[5] -= it_reinvestment_capex
 
     for year in range(1, analysis_years + 1):
         demand_row = adj_demand_profile.iloc[min(year - 1, len(adj_demand_profile) - 1)]
@@ -66,14 +65,12 @@ def calculate_business_case(config, user_inputs):
         
         taxable_income_op = -(annual_electricity_cost + annual_maintenance + annual_depreciation)
         tax_shield = -taxable_income_op * infra_config.get('corporate_tax_rate', 0.25)
-
-        cash_outflows[year] -= (annual_electricity_cost + annual_maintenance - tax_shield)
+        cost_cash_outflows[year] -= (annual_electricity_cost + annual_maintenance - tax_shield)
     
     building_salvage_value = dc_construction_capex * (infra_config.get('building_depreciation_years', 40) - analysis_years) / infra_config.get('building_depreciation_years', 40)
-    cash_outflows[analysis_years] += building_salvage_value
+    cost_cash_outflows[analysis_years] += building_salvage_value
 
-    # <-- 여기가 수정되었습니다: np.npv -> npf.npv
-    required_npv = -npf.npv(target_irr, cash_outflows)
+    required_npv = -npf.npv(target_irr, cost_cash_outflows)
     pvaf = (1 - (1 + target_irr)**-analysis_years) / target_irr if target_irr > 0 else analysis_years
     required_annual_revenue = required_npv / pvaf if pvaf > 0 else 0
 
@@ -81,36 +78,54 @@ def calculate_business_case(config, user_inputs):
     total_tokens_processed_annually_millions = avg_annual_demand_mwh * service_config.get('tokens_processed_per_mwh', 1) / 1_000_000
     price_per_million_tokens = required_annual_revenue / total_tokens_processed_annually_millions if total_tokens_processed_annually_millions > 0 else 0
 
-    # --- 5. Analysis B: Unit Economics & Payback Period ---
+    # --- 5. Analysis B: Unit Economics ---
     unit_economics = {}
-    total_annual_revenue_from_users = 0
     total_users = user_config.get('total_users_for_100mw', 0) * (final_peak_demand_mw / 100)
-    
     tier_fees = {'free': 0, 'paid': paid_tier_fee, 'premium': premium_tier_fee}
-
+    
     for tier_name, tier_data in user_config.get('tiers', {}).items():
-        cost_per_user = tier_data['monthly_token_usage_millions'] * price_per_million_tokens
-        revenue_per_user = tier_fees.get(tier_name, 0)
-        profit_per_user = revenue_per_user - cost_per_user
-        
         unit_economics[tier_name] = {
-            'token_usage': tier_data['monthly_token_usage_millions'],
-            'cost': cost_per_user,
-            'revenue': revenue_per_user,
-            'profit': profit_per_user,
-            'num_users': total_users * tier_data['ratio']
+            'token_usage': tier_data.get('monthly_token_usage_millions', 0),
+            'cost': tier_data.get('monthly_token_usage_millions', 0) * price_per_million_tokens,
+            'revenue': tier_fees.get(tier_name, 0),
+            'profit': tier_fees.get(tier_name, 0) - (tier_data.get('monthly_token_usage_millions', 0) * price_per_million_tokens),
+            'num_users': total_users * tier_data.get('ratio', 0)
         }
-        total_annual_revenue_from_users += unit_economics[tier_name]['num_users'] * profit_per_user * 12
 
+    # --- 6. Analysis C: Payback Period Calculation ---
+    assumed_annual_revenue = (unit_economics['paid']['num_users'] * unit_economics['paid']['revenue'] +
+                              unit_economics['premium']['num_users'] * unit_economics['premium']['revenue']) * 12
+
+    cumulative_cash_flow = -initial_investment
     payback_period = float('inf')
-    # Payback calculation can be added here if needed, based on the new revenue model.
-    # For now, focusing on unit economics as the primary output.
 
-    # --- 6. Prepare Summary Output ---
+    for year in range(1, analysis_years + 1):
+        demand_row = adj_demand_profile.iloc[min(year - 1, len(adj_demand_profile) - 1)]
+        annual_opex = (demand_row['demand_mwh'] * 1000) * electricity_price + \
+                      (dc_construction_capex * infra_config.get('maintenance_rate_of_construction_capex', 0.02))
+        
+        depreciation_y1_5 = (dc_construction_capex / infra_config.get('building_depreciation_years', 40)) + (it_hardware_capex / infra_config.get('it_hw_depreciation_years', 5))
+        depreciation_y6_10 = (dc_construction_capex / infra_config.get('building_depreciation_years', 40)) + (it_reinvestment_capex / infra_config.get('it_hw_depreciation_years', 5))
+        annual_depreciation = depreciation_y1_5 if year <= 5 else depreciation_y6_10
+        
+        taxable_income = assumed_annual_revenue - annual_opex - annual_depreciation
+        tax = max(0, taxable_income * infra_config.get('corporate_tax_rate', 0.25))
+        
+        net_cash_flow_after_tax = assumed_annual_revenue - annual_opex - tax
+        
+        if year == 5:
+            net_cash_flow_after_tax -= it_reinvestment_capex
+        
+        if cumulative_cash_flow + net_cash_flow_after_tax >= 0 and payback_period == float('inf'):
+            payback_period = (year - 1) + (-cumulative_cash_flow / net_cash_flow_after_tax)
+        
+        cumulative_cash_flow += net_cash_flow_after_tax
+
+    # --- 7. Prepare Summary Output ---
     summary = {
         "required_annual_revenue": required_annual_revenue,
         "price_per_million_tokens": price_per_million_tokens,
         "unit_economics": unit_economics,
-        "payback_period": payback_period # Placeholder
+        "payback_period": payback_period
     }
     return summary
