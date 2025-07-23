@@ -16,7 +16,6 @@ def load_data():
         st.error(f"Error loading 'demand_profile.csv': {e}")
         return None, None
     try:
-        # Use _session to load the config only once
         with open('config.yml', 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
     except Exception as e:
@@ -52,32 +51,28 @@ high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 100, 5, help
 electricity_scenario = st.sidebar.radio(
     t('electricity_label'),
     ['standard_grid', 'net_zero_ppa'],
-    format_func=lambda x: t(x), # Use localization for display
+    format_func=lambda x: t(x),
     help=t('electricity_help')
 )
 apply_advanced_arch = st.sidebar.toggle(t('arch_toggle_label'), value=False, help=t('arch_toggle_help'))
 
 st.sidebar.header(t('section_3_header'))
-assumed_low_tier_fee = st.sidebar.number_input(
-    t('assumed_fee_label'),
-    min_value=5.0, max_value=100.0,
-    value=config.get('user_assumptions', {}).get('assumed_low_tier_fee', 20.0),
-    step=1.0,
-    help=t('assumed_fee_help')
-)
+paid_tier_fee = st.sidebar.slider(t('paid_tier_fee_label'), 5.0, 50.0, 20.0, 1.0, help=t('paid_tier_fee_help'))
+premium_tier_fee = st.sidebar.slider(t('premium_tier_fee_label'), 50.0, 200.0, 100.0, 5.0, help=t('premium_tier_fee_help'))
 
 # --- 4. Main Page ---
 st.title(t('app_title'))
 st.markdown(t('app_subtitle'))
 
 if st.button(t('run_button_label'), use_container_width=True, type="primary"):
-    with st.spinner(t('spinner_text', default="분석 중...")):
+    with st.spinner(t('spinner_text')):
         user_inputs = {
             'demand_profile': demand_profile,
             'apply_advanced_arch': apply_advanced_arch,
             'high_perf_hw_ratio': high_perf_hw_ratio,
             'target_irr': target_irr,
-            'assumed_low_tier_fee': assumed_low_tier_fee,
+            'paid_tier_fee': paid_tier_fee,
+            'premium_tier_fee': premium_tier_fee,
             'electricity_price': config.get('electricity_pricing_scenarios', {}).get(electricity_scenario, {}).get('price_per_kwh', 0.13)
         }
         summary = calculate_business_case(config, user_inputs)
@@ -86,39 +81,50 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     st.markdown("---")
     st.header(t('results_header'))
 
-    # --- Output Section A ---
+    # --- Output Section A: Cost Basis ---
     st.subheader(t('output_section_A_title'))
     col_a1, col_a2 = st.columns(2)
-    # Apply thousand separator format
     col_a1.metric(t('annual_revenue_label'), f"${summary.get('required_annual_revenue', 0):,.0f}")
     col_a2.metric(t('token_price_label'), f"${summary.get('price_per_million_tokens', 0):.4f}")
 
-    # --- Output Section B ---
+    # --- Output Section B: Unit Economics ---
     st.subheader(t('output_section_B_title'))
-
-    # --- NEW: Display Business Model Assumptions ---
-    with st.container(border=True):
-        st.markdown(f"**{t('biz_model_assumptions_title')}**")
-        user_config = config.get('user_assumptions', {})
-        total_users = user_config.get('total_users', 0)
-        low_tier_users = total_users * user_config.get('low_tier_user_pct', 0)
-        high_tier_users = total_users * user_config.get('high_tier_user_pct', 0)
-        high_tier_fee = assumed_low_tier_fee * user_config.get('high_to_low_pricing_ratio', 1)
-
-        col_b1, col_b2, col_b3 = st.columns(3)
-        col_b1.metric(t('total_users_label'), f"{total_users:,.0f}")
-        col_b2.metric(
-            t('low_tier_users_label', fee=f"{assumed_low_tier_fee:.0f}"),
-            f"{low_tier_users:,.0f}"
-        )
-        col_b3.metric(
-            t('high_tier_users_label', fee=f"{high_tier_fee:.0f}"),
-            f"{high_tier_users:,.0f}"
-        )
-
-    payback = summary.get('payback_period', float('inf'))
-    payback_display = f"{payback:.2f}" if payback != float('inf') else t('payback_inf')
-    st.metric(t('payback_period_label'), payback_display)
+    
+    unit_economics = summary.get('unit_economics', {})
+    
+    cols = st.columns(len(unit_economics))
+    tier_names = {'free': t('free_tier'), 'paid': t('paid_tier'), 'premium': t('premium_tier')}
+    
+    for i, (tier_name, data) in enumerate(unit_economics.items()):
+        with cols[i]:
+            with st.container(border=True):
+                st.markdown(f"**{tier_names.get(tier_name)}**")
+                
+                # Monthly Usage
+                st.metric(
+                    label=t('monthly_usage_label'),
+                    value=f"{data.get('token_usage', 0):.1f}M Tokens"
+                )
+                
+                # Monthly Cost
+                st.metric(
+                    label=t('monthly_cost_label'),
+                    value=f"${data.get('cost', 0):.2f}"
+                )
+                
+                # Monthly Revenue
+                st.metric(
+                    label=t('monthly_revenue_label'),
+                    value=f"${data.get('revenue', 0):.2f}"
+                )
+                
+                # Monthly Profit/Loss
+                profit = data.get('profit', 0)
+                st.metric(
+                    label=t('monthly_profit_label'),
+                    value=f"${profit:.2f}",
+                    delta=f"{t('profit_status_profit') if profit >= 0 else t('profit_status_loss')}"
+                )
 
     # --- Footnote for Advanced Architecture ---
     if apply_advanced_arch:
@@ -127,3 +133,4 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
 else:
     st.info(t('initial_prompt'))
+
