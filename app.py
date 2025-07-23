@@ -44,7 +44,8 @@ st.sidebar.title(t('sidebar_title'))
 selected_lang_display = st.sidebar.radio(
     t('lang_selector_label'),
     ['한국어', 'English'],
-    index=0 if st.session_state.lang == 'ko' else 1
+    index=0 if st.session_state.lang == 'ko' else 1,
+    key='language_selector' # 위젯에 고유 키 부여
 )
 st.session_state.lang = 'ko' if selected_lang_display == '한국어' else 'en'
 
@@ -55,7 +56,27 @@ high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 100, 5, help
 
 # Market and Economic Assumptions
 st.sidebar.header(t('section_2_header'))
-selected_scenario_key = st.sidebar.selectbox(t('market_label'), options=list(config.get('market_scenarios', {}).keys()))
+
+# --- Market Selector (수정된 부분) ---
+market_keys = list(config.get('market_scenarios', {}).keys())
+market_display_names = t('market_names')
+
+# 드롭다운에 표시될 이름 목록 생성
+# 만약 market_names 딕셔너리에 키가 없으면, 원래 키를 그대로 사용
+formatted_options = [market_display_names.get(key, key) for key in market_keys]
+
+# 사용자가 선택한 '표시 이름'
+selected_display_name = st.sidebar.selectbox(
+    t('market_label'),
+    options=formatted_options,
+    key='market_selector' # 위젯에 고유 키 부여
+)
+
+# 선택된 '표시 이름'을 원래의 '키'로 변환
+# 이것이 프로그램 내부에서 사용될 실제 값
+selected_scenario_key = market_keys[formatted_options.index(selected_display_name)]
+# --- 여기까지 수정 ---
+
 discount_rate = st.sidebar.slider(t('discount_rate_label'), 3.0, 15.0, 8.0, 0.1)
 
 # Business Goals
@@ -88,6 +109,7 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
         
         benchmark_results = []
         for name, params in scenarios.items():
+            # 벤치마크 계산 시, 사용자가 선택한 시장과 IRR을 그대로 사용
             inputs = user_inputs.copy()
             inputs.update(params)
             result = calculate_integrated_tco(config, inputs)
