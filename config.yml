@@ -2,44 +2,61 @@
 # Core Business & Financial Assumptions
 # ===============================================
 business_assumptions:
-  analysis_years: 3
-  target_irr: 0.08
-  annual_rd_personnel_cost: 50000000 # 연간 R&D 인건비
-
-# ===============================================
-# AI Model Specific Assumptions
-# ===============================================
-model_assumptions:
-  training_cost: 100000000 # 모델 훈련 비용 (초기 1회 발생)
-
+  analysis_years: 10 # IRR 및 회수기간 분석 기준 (년)
+  
 # ===============================================
 # User Base and Pricing Assumptions
 # ===============================================
 user_assumptions:
+  # IRR 기반 '필요 요금' 산출 시 사용되는 가정
   total_users: 1000000
   free_user_pct: 0.60
   low_tier_user_pct: 0.30
   high_tier_user_pct: 0.10
-  high_to_low_pricing_ratio: 10 # 고사용자:저사용자 요금 비율
+  high_to_low_pricing_ratio: 10
+  
+  # '투자 회수 기간' 분석 시 사용자가 입력할 기본값
+  assumed_low_tier_fee: 20.0 # 사용자가 직접 변경 가능
 
 # ===============================================
-# Infrastructure Model Parameters
+# Infrastructure & Technology Assumptions
 # ===============================================
-infrastructure_models:
-  cloud:
-    name: "Cloud-Based Operation"
-    # 연간 클라우드 인프라 운영 비용
-    annual_opex: 400000000 
+infrastructure_assumptions:
+  high_perf_gpu:
+    name: "NVIDIA H100"
+    cost_per_unit: 35000
+    performance_unit: 10
+  low_cost_gpu:
+    name: "NVIDIA A4000"
+    cost_per_unit: 1200
+    performance_unit: 1
+  dc_construction_cost_per_mw: 10000000
+  low_cost_hw_penalty_factor: 1.2
+  building_depreciation_years: 40
+  it_hw_depreciation_years: 5
+  corporate_tax_rate: 0.25
+  maintenance_rate_of_construction_capex: 0.02
   
-  on_premise:
-    name: "On-Premise Infrastructure"
-    # 초기 투자 비용 (CAPEX)
-    initial_capex_server: 500000000
-    initial_capex_facility: 300000000
-    # 연간 온프레미스 인프라 운영 비용
-    annual_opex: 150000000
-    # 감가상각 내용연수 (세금 계산용)
-    depreciation_years_server: 5
-    depreciation_years_facility: 15
-    # 법인세율
-    corporate_tax_rate: 0.25
+# ===============================================
+# Advanced Architecture Assumptions
+# ===============================================
+advanced_architecture_assumptions:
+  workload_efficiency_factor: 0.167 # 83.3% reduction
+
+# ===============================================
+# Electricity Pricing Scenarios
+# ===============================================
+electricity_pricing_scenarios:
+  standard_grid:
+    # 미국 버지니아 지역의 평균적인 산업용 전력 요금 기준
+    price_per_kwh: 0.16
+  net_zero_ppa:
+    # 신규 태양광+ESS 장기 전력 구매 계약(PPA) 단가를 가정한, 더 비싼 무탄소 전력 요금
+    price_per_kwh: 0.22
+
+# ===============================================
+# AI Service Unit Assumptions
+# ===============================================
+service_unit_assumptions:
+  tokens_processed_per_mwh: 3000000000
+  active_users_per_mw: 1500
