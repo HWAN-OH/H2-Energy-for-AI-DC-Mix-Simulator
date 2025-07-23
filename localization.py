@@ -12,9 +12,8 @@ loc_strings = {
 
         * **핵심 논리:** 모든 AI 작업에 거대 단일 모델을 사용하는 대신, 작업의 종류(예: 단순 요약 vs 복잡한 분석)에 따라 최적화된 경량 모델을 지능적으로 선택하여 사용하는 '워크로드 최적화'를 통해 불필요한 컴퓨팅 자원 낭비를 제거하는 것입니다.
         * **근거 자료:** 이 가설은 제안서의 전력 소비 비교('기존 1,200 kWh' vs '미러마인드 200 kWh')를 정량화한 것이며, 자세한 수학적 증명은 아래 논문에서 확인하실 수 있습니다.
-            * **논문 링크:** [A Mathematical Proof of the Computational and Energy Efficiency of the MirrorMind Architecture](https://github.com/HWAN-OH/AI-DC-TCO-Strategy-Simulator/blob/main/A_Mathematical_Proof_of_the_Computational_and_Energy_Efficiency_of_the_MirrorMind_Architecture.pdf) 
-            <!-- 위 링크의 URL을 당신의 깃허브에 올린 PDF 파일 주소로 변경하세요. -->
-
+            * **논문 링크:** [A Mathematical Proof of the Computational and Energy Efficiency of the MirrorMind Architecture](https://github.com/HWAN-OH/AI-DC-TCO-Strategy-Simulator/paper/A Mathematical Proof of the Computational and Energy Efficiency of the MirrorMind Architecture.pdf) 
+           
         본 시뮬레이터는 이 가설이 실현될 경우의 **잠재적 경제성**을 분석하기 위한 도구이며, 실제 절감 효과는 파일럿 프로젝트를 통한 실증이 필요합니다.
         """,
         # ... (이하 모든 텍스트는 이전 버전과 동일)
@@ -107,7 +106,7 @@ loc_strings = {
 
         * **Core Logic:** The principle is 'workload optimization'—eliminating unnecessary waste of computing resources by intelligently selecting optimized, lightweight models based on the task type (e.g., simple summarization vs. complex analysis), instead of using a single, large model for everything.
         * **Source:** This hypothesis quantifies the power consumption comparison from the proposal ('Standard 1,200 kWh' vs. 'MirrorMind 200 kWh'). You can find the detailed mathematical proof in the following paper.
-            * **Link to Paper:** [A Mathematical Proof of the Computational and Energy Efficiency of the MirrorMind Architecture](https://github.com/HWAN-OH/AI-DC-TCO-Strategy-Simulator/blob/main/A_Mathematical_Proof_of_the_Computational_and_Energy_Efficiency_of_the_MirrorMind_Architecture.pdf)
+            * **Link to Paper:** [A Mathematical Proof of the Computational and Energy Efficiency of the MirrorMind Architecture](https://github.com/HWAN-OH/AI-DC-TCO-Strategy-Simulator/paper/A Mathematical Proof of the Computational and Energy Efficiency of the MirrorMind Architecture.pdf)
             <!-- Please replace the URL above with the address of the PDF file you uploaded to your GitHub. -->
 
         This simulator is a tool to analyze the **potential economic impact** if this hypothesis is realized. Actual savings require validation through a real-world pilot project.
