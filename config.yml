@@ -2,65 +2,61 @@
 # Business & Financial Assumptions
 # ===============================================
 business_assumptions:
-  analysis_years: 10 # 사업 타당성 분석 기간 (년)
+  # 100MW급 데이터센터를 짓는 데 필요한 총 투자 예산 (IT 하드웨어 제외)
+  dc_construction_budget: 1000000000 # 10억 달러
+  # IT 하드웨어에 투자할 총 예산
+  it_hardware_budget: 700000000 # 7억 달러
 
 # ===============================================
-# User & Pricing Model Assumptions (Unit Economics)
+# Performance & Cost Assumptions
+# ===============================================
+performance_assumptions:
+  # 고성능 GPU (예: H100)
+  high_perf_gpu:
+    cost_per_unit: 35000
+    performance_score_per_unit: 100 # 상대적 성능 점수
+  # 저비용 GPU (예: A4000)
+  low_cost_gpu:
+    cost_per_unit: 1200
+    performance_score_per_unit: 10 # 상대적 성능 점수
+  
+  # 성능 점수 1점이 1시간 동안 처리할 수 있는 토큰의 양 (백만 개 단위)
+  m_tokens_per_hour_per_performance_score: 0.05
+
+# ===============================================
+# User & Pricing Model Assumptions
 # ===============================================
 user_assumptions:
-  total_users_for_100mw: 150000 # 100MW DC 기준 총 사용자 수
-  tiers:
+  # 이 사용자 조합을 '1개 사용자 세트'로 정의
+  user_set_composition:
     free:
-      ratio: 0.70 # 전체 사용자 중 70%
-      monthly_token_usage_millions: 0.1 # 월간 10만 토큰 사용
+      ratio: 70
+      monthly_token_usage_millions: 0.1
     paid:
-      ratio: 0.25 # 전체 사용자 중 25%
-      monthly_token_usage_millions: 2.0 # 월간 200만 토큰 사용
+      ratio: 25
+      monthly_token_usage_millions: 2.0
     premium:
-      ratio: 0.05 # 전체 사용자 중 5%
-      monthly_token_usage_millions: 10.0 # 월간 1000만 토큰 사용
+      ratio: 5
+      monthly_token_usage_millions: 10.0
+  
+  # 유료 및 프리미엄 사용자 월 요금
+  pricing:
+    paid_tier_fee: 20.0
+    premium_tier_fee: 100.0
 
 # ===============================================
-# Infrastructure & Hardware Assumptions
+# Other Operating Assumptions
 # ===============================================
-infrastructure_assumptions:
-  dc_construction_cost_per_mw: 10000000
-  low_cost_hw_penalty_factor: 1.2
-  high_perf_gpu:
-    name: "NVIDIA H100"
-    cost_per_unit: 35000
-    performance_unit: 10
-  low_cost_gpu:
-    name: "NVIDIA A4000"
-    cost_per_unit: 1200
-    performance_unit: 1
+operating_assumptions:
+  # 데이터센터 건설비에 대한 연간 유지보수비 비율
   maintenance_rate_of_construction_capex: 0.02
+  # 감가상각 기간 (년)
   building_depreciation_years: 40
   it_hw_depreciation_years: 5
-  corporate_tax_rate: 0.25
+  # 전력 비용 ($/kWh)
+  electricity_price_per_kwh: 0.13
+  # 데이터센터 전력효율지수 (PUE)
+  pue: 1.5
+  # IT 장비의 전력 소모량 (와트 / 달러 기준)
+  watts_per_dollar_of_it_hardware: 0.025
 
-# ===============================================
-# Service & Architecture Assumptions
-# ===============================================
-advanced_architecture_assumptions:
-  workload_efficiency_factor: 0.167 # Equivalent to 83.3% reduction
-
-service_unit_assumptions:
-  tokens_processed_per_mwh: 3000000000 # 3 billion tokens
-
-# ===============================================
-# Research & Development (R&D) Assumptions
-# ===============================================
-research_and_development_assumptions:
-  total_model_development_cost: 500000000 # 5억 달러
-  model_amortization_years: 3 # 모델의 가치 상각 기간 (3년)
-  global_datacenter_count: 10 # R&D 비용을 분담할 전 세계 데이터센터 수
-
-# ===============================================
-# Electricity Pricing Scenarios
-# ===============================================
-electricity_pricing_scenarios:
-  standard_grid:
-    price_per_kwh: 0.13 # Represents a baseline industrial rate
-  net_zero_ppa:
-    price_per_kwh: 0.20 # Represents a premium for a 100% renewable PPA
