@@ -84,28 +84,48 @@ if st.session_state.results:
     
     st.header(t("section_2_title", lang))
     
-    # 고객 그룹별 손익 데이터프레임 생성 및 표시
-    segment_df = pd.DataFrame(res['pnl_by_segment'])
-    segment_df.columns = [t('col_segment', lang), t('col_total_revenue', lang), t('col_total_cost', lang), t('col_total_profit', lang)]
-    
-    # 티어 이름 번역 적용
-    tier_map = {
-        'Free': t('tier_free', lang),
-        'Standard': t('tier_standard', lang),
-        'Premium': t('tier_premium', lang)
-    }
-    segment_df[t('col_segment', lang)] = segment_df[t('col_segment', lang)].str.title().map(tier_map)
+    # --- START: ROBUST DATAFRAME DISPLAY LOGIC ---
+    if res.get('pnl_by_segment') and len(res['pnl_by_segment']) > 0:
+        # 1. Create DataFrame with original English keys from calculator.py
+        segment_df = pd.DataFrame(res['pnl_by_segment'])
 
-    st.dataframe(
-        segment_df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            t('col_total_revenue', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
-            t('col_total_cost', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
-            t('col_total_profit', lang): st.column_config.NumberColumn(format="$ {:,.0f}")
+        # 2. Map the English segment names to translated names for display
+        tier_map = {
+            'Free': t('tier_free', lang),
+            'Standard': t('tier_standard', lang),
+            'Premium': t('tier_premium', lang)
         }
-    )
+        segment_df['segment'] = segment_df['segment'].str.title().map(tier_map)
+
+        # 3. Define column configurations: Use original English keys and set translated 'label' for display
+        column_config = {
+            "segment": st.column_config.TextColumn(
+                label=t('col_segment', lang),
+            ),
+            "total_revenue": st.column_config.NumberColumn(
+                label=t('col_total_revenue', lang),
+                format="$ {:,.0f}"
+            ),
+            "total_cost": st.column_config.NumberColumn(
+                label=t('col_total_cost', lang),
+                format="$ {:,.0f}"
+            ),
+            "total_profit": st.column_config.NumberColumn(
+                label=t('col_total_profit', lang),
+                format="$ {:,.0f}"
+            )
+        }
+
+        # 4. Display the DataFrame using the robust configuration
+        st.dataframe(
+            segment_df,
+            use_container_width=True,
+            hide_index=True,
+            column_config=column_config
+        )
+    else:
+        st.warning("고객 그룹별 손익 데이터를 계산할 수 없습니다.") # Could not calculate P&L data by customer segment.
+    # --- END: ROBUST DATAFRAME DISPLAY LOGIC ---
 
     # 투자금 회수 기간 계산 및 표시
     st.subheader(t('payback_title', lang))
@@ -122,3 +142,4 @@ else:
 
 # --- Footer ---
 st.markdown(f'<div class="footer"><p>{t("copyright_text", lang)} | {t("contact_text", lang)}</p></div>', unsafe_allow_html=True)
+
