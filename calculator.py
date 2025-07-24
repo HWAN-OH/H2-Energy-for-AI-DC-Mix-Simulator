@@ -1,6 +1,7 @@
-# calculator.py (v5.0 - DataFrame First)
+# calculator.py (v6.0 - Final Refactor)
 import yaml
 import pandas as pd
+from localization import t # localization.py에서 t 함수를 직접 임포트
 
 def calculate_business_case(
     dc_size_mw,
@@ -9,7 +10,7 @@ def calculate_business_case(
     high_perf_gpu_ratio,
     utilization_rate,
     market_price_per_m_tokens,
-    lang
+    lang # 현재 언어 설정을 받음
 ):
     # [1] config.yml 로드
     with open("config.yml", "r") as f:
@@ -50,7 +51,7 @@ def calculate_business_case(
         segment_revenue = (segment_tokens / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
         
         segment_data.append({
-            "segment": tier_name.title(),
+            "tier_key": f"tier_{tier_name}", # 현지화를 위한 키
             "token_usage_ratio": token_usage_ratio,
             "total_revenue": segment_revenue,
         })
@@ -73,25 +74,19 @@ def calculate_business_case(
     gross_profit = revenue - cost_of_revenue
     operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
 
-    # --- 5. 그룹별 비용 및 손익 최종 할당 ---
+    # --- 5. [FINAL FIX] 현지화까지 완료된 최종 데이터프레임 생성 ---
     pnl_by_segment_data = []
     for s in segment_data:
         segment_cost = total_operating_cost * s['token_usage_ratio']
         segment_profit = s['total_revenue'] - segment_cost
         pnl_by_segment_data.append({
-            "segment": s['segment'],
-            "total_revenue": s['total_revenue'],
-            "total_cost": segment_cost,
-            "total_profit": segment_profit
+            t('col_segment', lang): t(s['tier_key'], lang), # 여기서 직접 현지화
+            t('col_total_revenue', lang): s['total_revenue'],
+            t('col_total_cost', lang): segment_cost,
+            t('col_total_profit', lang): segment_profit
         })
     
-    # [FINAL FIX] Create a fully typed DataFrame directly in the calculation module.
-    pnl_by_segment_df = pd.DataFrame(pnl_by_segment_data).astype({
-        'segment': 'string',
-        'total_revenue': 'float64',
-        'total_cost': 'float64',
-        'total_profit': 'float64'
-    })
+    pnl_by_segment_df = pd.DataFrame(pnl_by_segment_data)
 
     # --- 6. 결과 정리 ---
     pnl_annual = {
@@ -102,7 +97,7 @@ def calculate_business_case(
 
     results = {
         "pnl_annual": pnl_annual,
-        "pnl_by_segment_df": pnl_by_segment_df, # Return the DataFrame object
+        "pnl_by_segment_df": pnl_by_segment_df, # 완벽하게 준비된 DF 반환
         "total_investment": total_investment,
         "assumptions": {
             "gpu_mix_string": f"H:{int(num_high_perf_gpus)} / S:{int(num_standard_gpus)}",
