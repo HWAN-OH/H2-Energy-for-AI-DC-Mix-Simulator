@@ -46,25 +46,23 @@ def calculate_business_case(dc_size_mw, use_clean_power, apply_mirrormind, high_
     pricing = {"free": 0, "standard": paid_tier_fee, "premium": paid_tier_fee * premium_tier_multiplier}
     
     total_revenue = 0
-    segment_data = {}
+    segment_pnl = {}
     for tier, tier_conf in tiers_conf.items():
         users_in_tier = int(actual_users_total * tier_conf["ratio"])
         revenue_tier = pricing[tier] * 12 * users_in_tier if tier != "free" else 0
         total_revenue += revenue_tier
-        segment_data[tier] = {"users": users_in_tier, "total_revenue": revenue_tier}
+        segment_pnl[tier] = {"users": users_in_tier, "total_revenue": revenue_tier}
 
     # --- 4. Build Complete P&L ---
     pnl = {}
     pnl['revenue'] = total_revenue
     
-    # Cost of Revenue
     power_cost_kwh = dc_conf["power_cost_kwh"][use_clean_power]
     annual_power_cost = total_power_kwh_consumed * power_cost_kwh
     annual_opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
     pnl['cost_of_revenue'] = annual_power_cost + annual_opex
     pnl['gross_profit'] = pnl['revenue'] - pnl['cost_of_revenue']
 
-    # Operating Expenses
     annual_capex_dc = (dc_conf["capex_per_mw"] * dc_size_mw)
     annual_capex_it = it_budget
     pnl['d_and_a'] = (annual_capex_dc / dc_conf["amortization_years"]) + (annual_capex_it / dc_conf["amortization_years"])
@@ -76,14 +74,22 @@ def calculate_business_case(dc_size_mw, use_clean_power, apply_mirrormind, high_
     pnl['operating_expenses'] = pnl['d_and_a'] + pnl['rd_amortization'] + pnl['sg_and_a']
     pnl['operating_profit'] = pnl['gross_profit'] - pnl['operating_expenses']
 
-    # --- 5. Per-User P&L ---
+    # --- 5. Per-User P&L Calculation (FIX) ---
     total_cost = pnl['cost_of_revenue'] + pnl['operating_expenses']
-    for tier in segment_data:
-        data = segment_data[tier]
-        user_ratio = (data['users'] / actual_users_total) if actual_users_total > 0 else 0
+    for tier in segment_pnl:
+        data = segment_pnl[tier]
+        users_in_tier = data['users']
+        user_ratio = (users_in_tier / actual_users_total) if actual_users_total > 0 else 0
         cost_share = total_cost * user_ratio
+        
         data['total_cost'] = cost_share
         data['total_profit'] = data['total_revenue'] - cost_share
+        
+        # --- THIS IS THE FIX ---
+        data['per_user_revenue'] = (data['total_revenue'] / users_in_tier) if users_in_tier > 0 else 0
+        data['per_user_cost'] = (cost_share / users_in_tier) if users_in_tier > 0 else 0
+        data['per_user_profit'] = (data['total_profit'] / users_in_tier) if users_in_tier > 0 else 0
+        # --- END OF FIX ---
 
     # --- 6. Payback Period ---
     annual_cash_flow = pnl['operating_profit'] + pnl['d_and_a'] + pnl['rd_amortization']
@@ -99,6 +105,6 @@ def calculate_business_case(dc_size_mw, use_clean_power, apply_mirrormind, high_
             "consumed_power_gwh": total_power_kwh_consumed / 1_000_000
         },
         "pnl_annual": pnl,
-        "pnl_segments": segment_data,
+        "pnl_segments": segment_pnl,
         "payback_years": payback_years
     }
