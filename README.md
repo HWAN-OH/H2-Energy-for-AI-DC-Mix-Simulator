@@ -12,7 +12,7 @@ AI 서비스의 현실적인 손익(P&L)과 투자 회수 기간을 분석하여
 
 [**>>> Click to Launch Live App / 라이브 앱 실행하기**](https://h2-energy-for-ai-dc-mix-simulator-lokmn9dwmkrbtmp7ovd3pn.streamlit.app/)
 
-![Simulator's Final UI](https://i.imgur.com/GZqB3sL.png)
+![Simulator's Final UI](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/blob/b3be6fc9d4a7b25f32a46099c36543946a7a9104/paper/AI%20DC%20%EC%8B%9C%EB%AE%AC%EB%A0%88%EC%9D%B4%EC%85%98%20%EC%8A%A4%ED%81%AC%EB%A6%B0%EC%83%B7.png)
 
 ## Overview
 
