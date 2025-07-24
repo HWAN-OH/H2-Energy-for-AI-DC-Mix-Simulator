@@ -1,13 +1,18 @@
-# calculator.py (패치버전)
-
 import yaml
 
-def calculate_business_case(dc_size_mw, power_type, target_irr, apply_mirrormind, lang_code):
-    # config 로딩
+def calculate_business_case(
+    dc_size_mw,
+    use_clean_power,
+    apply_mirrormind,
+    high_perf_gpu_ratio,
+    utilization_rate,
+    market_price_per_m_tokens,
+    lang
+):
+    # [1] config 로딩
     with open("config.yml", "r") as f:
         config = yaml.safe_load(f)
 
-    # [1] 기본 파라미터
     dc_conf = config["dc_defaults"]
     token_conf = config["token_processing"]
     tiers_conf = config["tiers"]
@@ -17,20 +22,31 @@ def calculate_business_case(dc_size_mw, power_type, target_irr, apply_mirrormind
     # [2] 토큰/효율/전력 파라미터
     EFFICIENCY = token_conf["mirrormind_efficiency"] if apply_mirrormind else 1.0
     TOKENS_PER_KWH = token_conf.get("tokens_per_kwh", 50000)
-    power_cost_kwh = dc_conf["power_cost_kwh"][power_type]
+    power_cost_kwh = dc_conf["power_cost_kwh"][use_clean_power]
 
-    # [3] 전체 토큰처리량(캐파) & 연간 전력량
-    total_power_kwh = dc_size_mw * 1000 * HOURS_PER_YEAR
-    total_token_capacity = total_power_kwh * TOKENS_PER_KWH * EFFICIENCY
+    # [3] GPU mix (high_perf_gpu_ratio) 적용
+    high_perf_ratio = high_perf_gpu_ratio
+    standard_ratio = 1 - high_perf_ratio
+    n_gpu = int(dc_size_mw * 30)  # 임의: MW 1당 30대
+    n_high = int(n_gpu * high_perf_ratio)
+    n_std = n_gpu - n_high
 
-    # [4] 연간 고객군별 토큰 수요 계산
+    # [4] 전체 연간 토큰 처리량 계산 (고성능/표준 구분)
+    tokens_per_high = token_conf.get("tokens_per_gpu_high_perf", 1_200_000_000)
+    tokens_per_std = token_conf.get("tokens_per_gpu_standard", 500_000_000)
+    total_token_capacity = (
+        n_high * tokens_per_high +
+        n_std * tokens_per_std
+    ) * utilization_rate * EFFICIENCY
+
+    # [5] 고객군별 연간 토큰 수요 계산
     tiers = ["free", "standard", "premium"]
     group_stats = []
     token_demand_total = 0
     for t in tiers:
         ratio = tiers_conf[t]["ratio"]
         month_token = tiers_conf[t]["monthly_token_usage"]
-        group_tokens = ratio * users_total * month_token * 12  # 1년간
+        group_tokens = ratio * users_total * month_token * 12
         token_demand_total += group_tokens
         group_stats.append({
             "tier": t,
@@ -39,13 +55,13 @@ def calculate_business_case(dc_size_mw, power_type, target_irr, apply_mirrormind
             "annual_tokens": group_tokens
         })
 
-    # [5] 실사용자 scaling (처리 한계 이상이면 자동 축소)
+    # [6] 실사용자 scaling (처리 한계 초과시 축소)
     scale = min(1.0, total_token_capacity / token_demand_total) if token_demand_total > 0 else 0
     for g in group_stats:
         g["users"] = int(g["users"] * scale)
         g["annual_tokens"] = g["annual_tokens"] * scale
 
-    # [6] 매출, 비용, 이익 (고객군별/전체)
+    # [7] 매출, 전력비, 이익 (고객군별/전체)
     revenue_total = 0
     power_cost_total = 0
     per_group_table = []
@@ -70,20 +86,21 @@ def calculate_business_case(dc_size_mw, power_type, target_irr, apply_mirrormind
         revenue_total += annual_revenue
         power_cost_total += group_power_cost
 
-    # [7] 연간 CAPEX/OPEX/감가상각 등
+    # [8] 연간 OPEX/CAPEX/감가상각 등 (DC config)
     opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
     capex = dc_conf["capex_per_mw"] * dc_size_mw / dc_conf["amortization_years"]
+    # (필요시 SG&A, 감가상각 등도 config에서 추가 가능)
 
-    # [8] 요약 손익
+    # [9] 연간 손익
     total_cost = power_cost_total + opex + capex
     profit = revenue_total - total_cost
     summary = f"총 매출: ${revenue_total:,.0f}, 총 비용: ${total_cost:,.0f}, 손익: ${profit:,.0f}"
 
-    # [9] 손익분기점 (연간 기준)
+    # [10] 손익분기점
     unit_rev = revenue_total / (sum(g["users"] for g in group_stats) or 1)
     be_users = int(total_cost / (unit_rev or 1))
 
-    # [10] 전략 제언
+    # [11] 전략 제언
     recommendations = ""
     if profit < 0:
         recommendations += "비용구조 개선, 단가 조정, 프리미엄 비중 확대 필요"
