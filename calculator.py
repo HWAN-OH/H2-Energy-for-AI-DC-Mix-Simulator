@@ -41,7 +41,7 @@ def calculate_business_case(
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. Calculate TRUE P&L and Cost based on USAGE potential (for Sections 1, 2, 4) ---
+    # --- 3. Calculate TRUE P&L and Cost based on USAGE potential (for Sections 2, 4) ---
     total_paid_token_usage_ratio = sum(tier_info['ratio'] for tier_name, tier_info in tiers_conf.items() if tier_name != 'free')
     usage_based_revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * total_paid_token_usage_ratio
 
