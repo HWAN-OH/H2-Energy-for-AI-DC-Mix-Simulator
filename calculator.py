@@ -1,4 +1,4 @@
-# calculator.py (v13.0 - Definitive Logic Fix)
+# calculator.py (v14.0 - Cash Flow Payback)
 import yaml
 import pandas as pd
 
@@ -24,7 +24,7 @@ def calculate_business_case(
     tiers_conf = model_conf['tiers']
 
     HOURS_PER_YEAR = 8760
-    PAYBACK_YEARS = 5
+    PAYBACK_YEARS_TARGET = 5
     high_perf_gpu_ratio /= 100.0
 
     # --- 1. CAPEX & GPU ---
@@ -41,9 +41,8 @@ def calculate_business_case(
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. Overall P&L (Based on USAGE, which is affected by architecture efficiency) ---
+    # --- 3. Overall P&L (Based on USAGE) ---
     total_paid_token_usage_ratio = sum(tier_info['ratio'] for tier_name, tier_info in tiers_conf.items() if tier_name != 'free')
-    # This 'usage_based_revenue' now correctly reflects the power of the intelligent architecture.
     usage_based_revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * total_paid_token_usage_ratio
 
     it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
@@ -55,7 +54,6 @@ def calculate_business_case(
     cost_of_revenue = power_cost + maintenance_cost + personnel_cost
     
     sgna_rate = op_conf['sgna_as_percent_of_revenue'] / 100.0
-    # SG&A should be based on the actual potential revenue of the architecture.
     sg_and_a = usage_based_revenue * sgna_rate
     
     dc_depreciation = dc_construction_cost / inv_conf['amortization_years']['datacenter']
@@ -63,11 +61,12 @@ def calculate_business_case(
     rd_amortization = (rd_conf['total_model_development_cost'] / rd_conf['global_datacenter_count_for_cost_allocation']) / inv_conf['amortization_years']['research_and_development']
     d_and_a = dc_depreciation + it_depreciation
     
-    # This is the true total operating cost based on the architecture's potential.
     total_operating_cost = cost_of_revenue + sg_and_a + d_and_a + rd_amortization
-    # This is the true operating profit based on the architecture's potential.
     operating_profit = usage_based_revenue - total_operating_cost
-
+    
+    # [NEW] Cash Flow Calculation
+    annual_cash_flow = operating_profit + d_and_a
+    
     # --- 4. Per-User Monthly Metrics Calculation ---
     total_users = model_conf['total_users_for_100mw'] * (dc_size_mw / 100.0)
     total_token_demand_ratio = sum(t['ratio'] * t['monthly_token_usage_m'] for t in tiers_conf.values())
@@ -76,43 +75,30 @@ def calculate_business_case(
     for tier_name, tier_info in tiers_conf.items():
         num_users_in_tier = total_users * tier_info['ratio']
         if num_users_in_tier == 0: continue
-
         token_usage_ratio = (tier_info['ratio'] * tier_info['monthly_token_usage_m']) / total_token_demand_ratio if total_token_demand_ratio > 0 else 0
-        
         tier_revenue_annual_usage_based = (serviced_tokens * token_usage_ratio / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
-        tier_cost_annual = total_operating_cost * token_usage_ratio # Cost is allocated based on the true total cost
-        
+        tier_cost_annual = total_operating_cost * token_usage_ratio
         revenue_per_user_annual = tier_revenue_annual_usage_based / num_users_in_tier if num_users_in_tier > 0 else 0
         cost_per_user_annual = tier_cost_annual / num_users_in_tier if num_users_in_tier > 0 else 0
-        
         fixed_fee = 0
-        if tier_name == 'standard':
-            fixed_fee = standard_fee
-        elif tier_name == 'premium':
-            fixed_fee = premium_fee
-        
+        if tier_name == 'standard': fixed_fee = standard_fee
+        elif tier_name == 'premium': fixed_fee = premium_fee
         new_profit_per_user = fixed_fee - (cost_per_user_annual / 12.0)
         opportunity_cost = (revenue_per_user_annual / 12.0) - fixed_fee
-
         segment_narrative_data.append({
-            "tier_name_key": f"tier_{tier_name}",
-            "num_users": num_users_in_tier,
-            "revenue_per_user": revenue_per_user_annual / 12.0,
-            "cost_per_user": cost_per_user_annual / 12.0,
+            "tier_name_key": f"tier_{tier_name}", "num_users": num_users_in_tier,
+            "revenue_per_user": revenue_per_user_annual / 12.0, "cost_per_user": cost_per_user_annual / 12.0,
             "profit_per_user": (revenue_per_user_annual - cost_per_user_annual) / 12.0,
-            "fixed_fee": fixed_fee,
-            "new_profit_per_user": new_profit_per_user,
+            "fixed_fee": fixed_fee, "new_profit_per_user": new_profit_per_user,
             "opportunity_cost": opportunity_cost,
         })
 
     # --- 5. Recommended Pricing Calculation ---
     total_operating_cost_before_sgna = cost_of_revenue + d_and_a + rd_amortization
-    target_annual_op_profit = total_investment / PAYBACK_YEARS
+    target_annual_op_profit = total_investment / PAYBACK_YEARS_TARGET
     required_annual_revenue = (target_annual_op_profit + total_operating_cost_before_sgna) / (1 - sgna_rate)
-    
     total_potential_revenue = sum(s['revenue_per_user'] * 12 * s['num_users'] for s in segment_narrative_data if s['tier_name_key'] != 'tier_free')
     price_ratio = required_annual_revenue / total_potential_revenue if total_potential_revenue > 0 else 1
-
     recommended_standard_fee = segment_narrative_data[1]['revenue_per_user'] * price_ratio
     recommended_premium_fee = segment_narrative_data[2]['revenue_per_user'] * price_ratio
     
@@ -123,17 +109,12 @@ def calculate_business_case(
     }
 
     # --- 6. Final Results ---
-    # [DEFINITIVE FIX] The pnl_annual for display MUST be based on the architecture's potential (usage-based),
-    # NOT the what-if fixed fees from the sidebar.
     pnl_annual = {
-        'revenue': usage_based_revenue, 
-        'cost_of_revenue': cost_of_revenue, 
-        'gross_profit': usage_based_revenue - cost_of_revenue,
-        'sg_and_a': sg_and_a, 
-        'd_and_a': d_and_a, 
-        'it_depreciation': it_depreciation,
-        'rd_amortization': rd_amortization, 
-        'operating_profit': operating_profit,
+        'revenue': usage_based_revenue, 'cost_of_revenue': cost_of_revenue,
+        'gross_profit': usage_based_revenue - cost_of_revenue, 'sg_and_a': sg_and_a,
+        'd_and_a': d_and_a, 'it_depreciation': it_depreciation,
+        'rd_amortization': rd_amortization, 'operating_profit': operating_profit,
+        'annual_cash_flow': annual_cash_flow, # Add cash flow to results
     }
 
     results = {
