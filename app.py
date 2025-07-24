@@ -1,12 +1,11 @@
 import streamlit as st
-import pandas as pd
 from calculator import calculate_business_case
 from localization import t
 
 # --- 1. Page Configuration ---
 st.set_page_config(page_title="AI Datacenter Business Simulator", page_icon="💡", layout="wide")
 
-# --- 2. Custom CSS for Polished Design ---
+# --- 2. Custom CSS ---
 st.markdown("""
 <style>
     .main .block-container { padding: 2rem 5rem; }
@@ -17,7 +16,6 @@ st.markdown("""
     .footer { position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: #6b7280; text-align: center; padding: 12px; font-size: 0.85rem; border-top: 1px solid #e5e7eb; }
     .pnl-table { margin-top: 1rem; }
     .pnl-table .row { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid #f3f4f6; }
-    .pnl-table .row.header { font-weight: 600; color: #1f2937; }
     .pnl-table .row.total { font-weight: 700; border-top: 2px solid #d1d5db; }
     .pnl-table .label { text-align: left; }
     .pnl-table .value { text-align: right; font-family: 'Roboto Mono', monospace; }
@@ -43,11 +41,10 @@ with st.sidebar:
     utilization_rate = st.slider(t("utilization_rate", st.session_state.lang), 40, 100, 60, 5)
     power_option = st.selectbox(t("power_type", st.session_state.lang), [t("power_conventional", st.session_state.lang), t("power_renewable", st.session_state.lang)])
     use_clean_power = "Renewable" if power_option == t("power_renewable", st.session_state.lang) else "Conventional"
-    apply_mirrormind = st.checkbox(t("apply_mirrormind", st.session_state.lang), value=True)
+    apply_mirrormind = st.checkbox(t("apply_mirrormind", st.session_state.lang), value=False)
     
     st.markdown("---")
-    paid_tier_fee = st.slider(t("paid_tier_fee", st.session_state.lang), 5.0, 50.0, 20.0, 1.0)
-    premium_tier_multiplier = st.slider(t("premium_tier_multiplier", st.session_state.lang), 2.0, 20.0, 10.0, 0.5)
+    market_price_per_m_tokens = st.slider(t("market_price", st.session_state.lang), 0.5, 5.0, 1.5, 0.1)
 
 # --- 5. Main Page ---
 st.title(t("app_title", st.session_state.lang))
@@ -56,7 +53,7 @@ st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', 
 if st.button(t("run_button", st.session_state.lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
         st.session_state.results = calculate_business_case(
-            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, paid_tier_fee, premium_tier_multiplier, st.session_state.lang
+            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, st.session_state.lang
         )
 
 if st.session_state.results:
@@ -64,44 +61,29 @@ if st.session_state.results:
     lang = st.session_state.lang
     pnl = res['pnl_annual']
     
-    # --- Section 1: Overall P&L ---
     st.header(t("section_1_title", lang))
+    
+    # Assumptions
     st.subheader(t("assumptions_title", lang))
     cols1 = st.columns(4)
     cols1[0].metric(t("assump_gpu_mix", lang), res["assumptions"]["gpu_mix_string"])
     cols1[1].metric(t("assump_utilization", lang), f"{res['assumptions']['utilization_rate']}%")
-    cols1[2].metric(t("assump_users", lang), f"{res['assumptions']['supported_users']:,.0f}")
-    cols1[3].metric(t("assump_tokens", lang), f"{res['assumptions']['serviced_tokens_t']:,.2f} T")
-
-    st.subheader(t("pnl_annual_title", lang))
+    cols1[2].metric(t("assump_tokens", lang), f"{res['assumptions']['serviced_tokens_t']:,.2f}")
+    
+    # P&L Display
     st.html(f"""
         <div class="pnl-table">
             <div class="row"><div class="label">{t('pnl_revenue', lang)}</div><div class="value">${pnl['revenue']:,.0f}</div></div>
             <div class="row"><div class="label">{t('pnl_cost_of_revenue', lang)}</div><div class="value">(${pnl['cost_of_revenue']:,.0f})</div></div>
             <div class="row total"><div class="label">{t('pnl_gross_profit', lang)}</div><div class="value">${pnl['gross_profit']:,.0f}</div></div>
             <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_sg_and_a', lang)}</div><div class="value">(${pnl['sg_and_a']:,.0f})</div></div>
-            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl['d_and_a']:,.0f})</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl['it_depreciation']:,.0f})</div></div>
             <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_rd_amortization', lang)}</div><div class="value">(${pnl['rd_amortization']:,.0f})</div></div>
             <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl['operating_profit']:,.0f}</div></div>
         </div>
     """)
 
-    # --- Section 2: Per-User P&L ---
-    st.header(t("section_2_title", lang))
-    
-    segment_data = []
-    tier_name_map = {"free": t("tier_free", lang), "standard": t("tier_standard", lang), "premium": t("tier_premium", lang)}
-    for tier in ["free", "standard", "premium"]:
-        data = res["pnl_segments"][tier]
-        segment_data.append({
-            t("col_segment", lang): tier_name_map[tier],
-            t("col_total_revenue", lang): f"{data['total_revenue']:,.0f}",
-            t("col_total_cost", lang): f"{data['total_cost']:,.0f}",
-            t("col_total_profit", lang): f"{data['total_profit']:,.0f}",
-        })
-    segment_df = pd.DataFrame(segment_data)
-    st.dataframe(segment_df, hide_index=True, use_container_width=True)
-
+    # Payback
     st.subheader(t("payback_title", lang))
     payback = res["payback_years"]
     payback_display = f"{payback:.1f} {t('years_suffix', lang)}" if payback != float('inf') else t("unrecoverable", lang)
