@@ -1,4 +1,4 @@
-# calculator.py (v15.1 - KeyError Hotfix)
+# calculator.py (v15.2 - Final P&L Logic Fix)
 import yaml
 import pandas as pd
 
@@ -41,7 +41,7 @@ def calculate_business_case(
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. [LOGIC FIX] Calculate TRUE Operating Cost based on USAGE potential ---
+    # --- 3. Calculate TRUE P&L and Cost based on USAGE potential ---
     total_paid_token_usage_ratio = sum(tier_info['ratio'] for tier_name, tier_info in tiers_conf.items() if tier_name != 'free')
     usage_based_revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * total_paid_token_usage_ratio
 
@@ -62,6 +62,8 @@ def calculate_business_case(
     d_and_a = dc_depreciation + it_depreciation
     
     true_total_operating_cost = cost_of_revenue + sg_and_a_usage_based + d_and_a + rd_amortization
+    true_operating_profit = usage_based_revenue - true_total_operating_cost
+    true_annual_cash_flow = true_operating_profit + d_and_a
     
     # --- 4. Per-User Monthly Metrics Calculation (Using TRUE cost) ---
     total_users = model_conf['total_users_for_100mw'] * (dc_size_mw / 100.0)
@@ -112,23 +114,19 @@ def calculate_business_case(
         "is_achievable": recommended_premium_fee < 500 and recommended_standard_fee < 100
     }
 
-    # --- 6. Final P&L for Display (Based on user-defined FIXED-FEE scenario) ---
-    fixed_fee_revenue = (segment_narrative_data[1]['num_users'] * standard_fee + segment_narrative_data[2]['num_users'] * premium_fee) * 12
-    fixed_fee_sg_and_a = fixed_fee_revenue * sgna_rate
-    fixed_fee_operating_profit = fixed_fee_revenue - (cost_of_revenue + fixed_fee_sg_and_a + d_and_a + rd_amortization)
-    fixed_fee_cash_flow = fixed_fee_operating_profit + d_and_a
-
-    # [KEYERROR FIX] Add all necessary keys to the pnl_annual dictionary
+    # --- 6. Final P&L for Display (Based on the TRUE USAGE-BASED potential) ---
+    # [FINAL LOGIC FIX] The pnl_annual for display MUST be based on the architecture's potential (usage-based),
+    # NOT the what-if fixed fees from the sidebar.
     pnl_annual = {
-        'revenue': fixed_fee_revenue, 
+        'revenue': usage_based_revenue, 
         'cost_of_revenue': cost_of_revenue, 
-        'gross_profit': fixed_fee_revenue - cost_of_revenue,
-        'sg_and_a': fixed_fee_sg_and_a, 
+        'gross_profit': usage_based_revenue - cost_of_revenue,
+        'sg_and_a': sg_and_a_usage_based, 
         'd_and_a': d_and_a, 
-        'it_depreciation': it_depreciation, # Added missing key
-        'rd_amortization': rd_amortization, # Added missing key
-        'operating_profit': fixed_fee_operating_profit,
-        'annual_cash_flow': fixed_fee_cash_flow,
+        'it_depreciation': it_depreciation,
+        'rd_amortization': rd_amortization,
+        'operating_profit': true_operating_profit,
+        'annual_cash_flow': true_annual_cash_flow,
     }
 
     results = {
