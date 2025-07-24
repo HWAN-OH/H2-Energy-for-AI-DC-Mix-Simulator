@@ -1,4 +1,4 @@
-# config_v12.yml
+# config.yml (v13.0)
 
 # 기본 데이터센터 설정
 dc_defaults:
@@ -13,6 +13,7 @@ dc_defaults:
 # LLM 토큰 처리 효율
 token_processing:
   token_per_kwh: 2000
+  # 지능형 아키텍처 적용 시 효율 개선 배수
   mirrormind_efficiency: 1.25
 
 # 사용자 분포 및 사용량
@@ -20,15 +21,12 @@ tiers:
   free:
     ratio: 0.6
     monthly_token_usage: 30000
-    price_per_million_token: 0
   standard:
     ratio: 0.3
     monthly_token_usage: 300000
-    price_per_million_token: 0.8
   premium:
     ratio: 0.1
     monthly_token_usage: 3000000
-    price_per_million_token: 5.0
 
 # 일반 설정
 assumptions:
