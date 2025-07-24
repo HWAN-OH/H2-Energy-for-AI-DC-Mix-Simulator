@@ -1,96 +1,98 @@
-import yaml
-import pandas as pd
+# calculator.py (패치버전)
 
-def calculate_business_case(dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, lang):
-    with open("config.yml", "r", encoding="utf-8") as f:
+import yaml
+
+def calculate_business_case(dc_size_mw, power_type, target_irr, apply_mirrormind, lang_code):
+    # config 로딩
+    with open("config.yml", "r") as f:
         config = yaml.safe_load(f)
 
-    # --- 1. Unpack Config ---
-    inv_conf = config["investment"]
-    hw_conf = config["hardware"]
-    op_conf = config["operating_expenses"]
-    rd_conf = config["research_and_development"]
-    model_conf = config["model_and_market"]
-    tiers_conf = model_conf["tiers"]
+    # [1] 기본 파라미터
+    dc_conf = config["dc_defaults"]
+    token_conf = config["token_processing"]
+    tiers_conf = config["tiers"]
+    users_total = config["assumptions"]["users_total"]
+    HOURS_PER_YEAR = 8760
 
-    # --- 2. Calculate Hardware Mix & Max Capacity ---
-    it_budget = inv_conf["it_budget_per_mw"] * dc_size_mw
-    high_perf_budget = it_budget * (high_perf_gpu_ratio / 100.0)
-    standard_budget = it_budget * (1 - high_perf_gpu_ratio / 100.0)
+    # [2] 토큰/효율/전력 파라미터
+    EFFICIENCY = token_conf["mirrormind_efficiency"] if apply_mirrormind else 1.0
+    TOKENS_PER_KWH = token_conf.get("tokens_per_kwh", 50000)
+    power_cost_kwh = dc_conf["power_cost_kwh"][power_type]
 
-    h_gpu = hw_conf["high_perf_gpu"]
-    s_gpu = hw_conf["standard_gpu"]
-    num_high_perf_gpus = high_perf_budget / h_gpu["cost"] if h_gpu["cost"] > 0 else 0
-    num_standard_gpus = standard_budget / s_gpu["cost"] if s_gpu["cost"] > 0 else 0
-    
-    max_token_capacity_m = ((num_high_perf_gpus * h_gpu["m_tokens_per_hour"]) + \
-                            (num_standard_gpus * s_gpu["m_tokens_per_hour"])) * 8760
-    
-    # --- 3. Apply Real-World Constraints ---
-    util_rate = utilization_rate / 100.0
-    EFFICIENCY = model_conf["intelligent_arch_efficiency"] if apply_mirrormind else 1.0
-    effective_tokens_serviced_m = max_token_capacity_m * util_rate * EFFICIENCY
+    # [3] 전체 토큰처리량(캐파) & 연간 전력량
+    total_power_kwh = dc_size_mw * 1000 * HOURS_PER_YEAR
+    total_token_capacity = total_power_kwh * TOKENS_PER_KWH * EFFICIENCY
 
-    # --- 4. Build Complete P&L ---
-    pnl = {}
-    pnl['revenue'] = effective_tokens_serviced_m * market_price_per_m_tokens
+    # [4] 연간 고객군별 토큰 수요 계산
+    tiers = ["free", "standard", "premium"]
+    group_stats = []
+    token_demand_total = 0
+    for t in tiers:
+        ratio = tiers_conf[t]["ratio"]
+        month_token = tiers_conf[t]["monthly_token_usage"]
+        group_tokens = ratio * users_total * month_token * 12  # 1년간
+        token_demand_total += group_tokens
+        group_stats.append({
+            "tier": t,
+            "ratio": ratio,
+            "users": int(users_total * ratio),
+            "annual_tokens": group_tokens
+        })
 
-    power_consumed_kwh = (effective_tokens_serviced_m / EFFICIENCY) * 1000000 / 2000 
-    power_cost_kwh = 0.18 if use_clean_power == "Renewable" else 0.12
-    annual_power_cost = power_consumed_kwh * power_cost_kwh
-    annual_maintenance_cost = op_conf["maintenance_and_cooling_per_mw"] * dc_size_mw
-    annual_personnel_cost = op_conf["personnel_and_other_per_mw"] * dc_size_mw
-    pnl['cost_of_revenue'] = annual_power_cost + annual_maintenance_cost + annual_personnel_cost
-    pnl['gross_profit'] = pnl['revenue'] - pnl['cost_of_revenue']
+    # [5] 실사용자 scaling (처리 한계 이상이면 자동 축소)
+    scale = min(1.0, total_token_capacity / token_demand_total) if token_demand_total > 0 else 0
+    for g in group_stats:
+        g["users"] = int(g["users"] * scale)
+        g["annual_tokens"] = g["annual_tokens"] * scale
 
-    dc_capex = inv_conf["dc_capex_per_mw"] * dc_size_mw
-    pnl['dc_depreciation'] = dc_capex / inv_conf["amortization_years"]["datacenter"]
-    pnl['it_depreciation'] = it_budget / inv_conf["amortization_years"]["it_hardware"]
-    pnl['rd_amortization'] = (rd_conf["total_model_development_cost"] / rd_conf["global_datacenter_count_for_cost_allocation"]) / inv_conf["amortization_years"]["research_and_development"]
-    pnl['sg_and_a'] = pnl['revenue'] * (op_conf["sgna_as_percent_of_revenue"] / 100.0)
-    pnl['operating_expenses'] = pnl['dc_depreciation'] + pnl['it_depreciation'] + pnl['rd_amortization'] + pnl['sg_and_a']
-    pnl['operating_profit'] = pnl['gross_profit'] - pnl['operating_expenses']
-    
-    total_annual_cost = pnl['cost_of_revenue'] + pnl['operating_expenses']
+    # [6] 매출, 비용, 이익 (고객군별/전체)
+    revenue_total = 0
+    power_cost_total = 0
+    per_group_table = []
+    for g in group_stats:
+        tier = g["tier"]
+        price_per_mtoken = tiers_conf[tier]["price_per_million_token"]
+        annual_revenue = (g["annual_tokens"] / 1_000_000) * price_per_mtoken
+        annual_power_kwh = g["annual_tokens"] / TOKENS_PER_KWH
+        group_power_cost = annual_power_kwh * power_cost_kwh
+        margin = annual_revenue - group_power_cost
 
-    # --- 5. Per-User Segment P&L (NEWLY ADDED) ---
-    pnl_segments = {}
-    total_token_usage_by_users = 0
-    # First, find the total token usage based on the user mix
-    for tier, tier_conf in tiers_conf.items():
-        total_token_usage_by_users += tier_conf['monthly_token_usage_m'] * 12 * tier_conf['ratio']
+        per_group_table.append({
+            "Tier": tier.title(),
+            "Users": g["users"],
+            "Annual_Tokens": int(g["annual_tokens"]),
+            "Revenue($)": round(annual_revenue, 2),
+            "PowerCost($)": round(group_power_cost, 2),
+            "Margin($)": round(margin, 2),
+            "UnitCost($/Mtoken)": round(group_power_cost / (g["annual_tokens"] / 1_000_000), 4) if g["annual_tokens"] > 0 else 0,
+            "UnitPrice($/Mtoken)": price_per_mtoken
+        })
+        revenue_total += annual_revenue
+        power_cost_total += group_power_cost
 
-    # Scale factor to match serviced tokens to user demand profile
-    scaling_factor = effective_tokens_serviced_m / total_token_usage_by_users if total_token_usage_by_users > 0 else 0
+    # [7] 연간 CAPEX/OPEX/감가상각 등
+    opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
+    capex = dc_conf["capex_per_mw"] * dc_size_mw / dc_conf["amortization_years"]
 
-    for tier, tier_conf in tiers_conf.items():
-        # This tier's share of total token consumption
-        token_share_ratio = (tier_conf['monthly_token_usage_m'] * tier_conf['ratio']) / (total_token_usage_by_users / 12) if total_token_usage_by_users > 0 else 0
-        
-        # Calculate revenue and cost based on this share
-        revenue_segment = pnl['revenue'] * token_share_ratio
-        cost_segment = total_annual_cost * token_share_ratio
-        profit_segment = revenue_segment - cost_segment
-        
-        pnl_segments[tier] = {
-            "total_revenue": revenue_segment,
-            "total_cost": cost_segment,
-            "total_profit": profit_segment
-        }
+    # [8] 요약 손익
+    total_cost = power_cost_total + opex + capex
+    profit = revenue_total - total_cost
+    summary = f"총 매출: ${revenue_total:,.0f}, 총 비용: ${total_cost:,.0f}, 손익: ${profit:,.0f}"
 
-    # --- 6. Payback Period ---
-    total_investment = dc_capex + it_budget
-    annual_cash_flow = pnl['operating_profit'] + pnl['dc_depreciation'] + pnl['it_depreciation'] + pnl['rd_amortization']
-    payback_years = total_investment / annual_cash_flow if annual_cash_flow > 0 else float('inf')
+    # [9] 손익분기점 (연간 기준)
+    unit_rev = revenue_total / (sum(g["users"] for g in group_stats) or 1)
+    be_users = int(total_cost / (unit_rev or 1))
+
+    # [10] 전략 제언
+    recommendations = ""
+    if profit < 0:
+        recommendations += "비용구조 개선, 단가 조정, 프리미엄 비중 확대 필요"
+    else:
+        recommendations += "현 구조에서 수익성 확보, 추가 효율화 여지 검토"
 
     return {
-        "assumptions": {
-            "dc_size": dc_size_mw,
-            "utilization_rate": utilization_rate,
-            "gpu_mix_string": f"{int(num_high_perf_gpus):,} H / {int(num_standard_gpus):,} S",
-            "serviced_tokens_t": effective_tokens_serviced_m / 1_000_000,
-        },
-        "pnl_annual": pnl,
-        "pnl_segments": pnl_segments,
-        "payback_years": payback_years
+        "summary": summary,
+        "per_group_table": per_group_table,
+        "break_even_msg": f"손익분기점 연간 사용자: {be_users:,}명",
+        "recommendations": recommendations
     }
