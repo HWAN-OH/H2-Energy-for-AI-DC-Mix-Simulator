@@ -1,4 +1,4 @@
-# localization.py (v18.0)
+# localization.py (v19.0 - Narrative Report)
 
 loc_strings = {
     "en": {
@@ -16,7 +16,6 @@ loc_strings = {
         "apply_mirrormind": "Apply Intelligent Architecture",
         "market_price": "Market Price per 1M Tokens ($)",
         "run_button": "🚀 Run Analysis",
-        "results_header": "Analysis Results",
         "initial_prompt": "Set your scenario variables in the sidebar and click 'Run Analysis'.",
         "section_1_title": "1. Overall Business P&L (Annual)",
         "assumptions_title": "Key Assumptions & Capacity",
@@ -26,16 +25,11 @@ loc_strings = {
         "pnl_revenue": "Revenue",
         "pnl_cost_of_revenue": "Cost of Revenue",
         "pnl_gross_profit": "Gross Profit",
-        "pnl_operating_expenses": "Operating Expenses",
         "pnl_sg_and_a": "  - SG&A",
         "pnl_d_and_a": "  - D&A (DC & HW)",
         "pnl_rd_amortization": "  - R&D Amortization",
         "pnl_operating_profit": "Operating Profit",
-        "section_2_title": "2. P&L by Customer Segment",
-        "col_segment": "Customer Segment",
-        "col_total_revenue": "Total Revenue",
-        "col_total_cost": "Total Cost",
-        "col_total_profit": "Total Profit",
+        "section_2_title": "2. P&L by Customer Segment (Per User, Annual)",
         "tier_free": "Free Users",
         "tier_standard": "Paid Users",
         "tier_premium": "Premium Users",
@@ -44,6 +38,11 @@ loc_strings = {
         "unrecoverable": "Unrecoverable",
         "power_conventional": "Conventional",
         "power_renewable": "Renewable",
+        # [NEW] Narrative report strings
+        "narrative_users": "Number of Users",
+        "narrative_revenue_per_user": "Revenue per User",
+        "narrative_cost_per_user": "Cost per User",
+        "narrative_profit_per_user": "Profit per User",
     },
     "ko": {
         "app_title": "AI 데이터센터 사업성 시뮬레이터",
@@ -60,7 +59,6 @@ loc_strings = {
         "apply_mirrormind": "지능형 아키텍처 적용",
         "market_price": "토큰당 시장 판매가 ($ / 1M)",
         "run_button": "🚀 분석 실행",
-        "results_header": "분석 결과",
         "initial_prompt": "사이드바에서 시나리오 변수를 설정한 후 '분석 실행' 버튼을 눌러 결과를 확인하세요.",
         "section_1_title": "1. 전체 사업 손익 (연간 P&L)",
         "assumptions_title": "주요 가정 및 생산량",
@@ -70,16 +68,11 @@ loc_strings = {
         "pnl_revenue": "매출",
         "pnl_cost_of_revenue": "매출원가",
         "pnl_gross_profit": "매출총이익",
-        "pnl_operating_expenses": "영업비용",
         "pnl_sg_and_a": "  - 판매관리비",
         "pnl_d_and_a": "  - 유형자산상각비 (DC, HW)",
         "pnl_rd_amortization": "  - 무형자산상각비 (R&D)",
         "pnl_operating_profit": "영업이익",
-        "section_2_title": "2. 고객 그룹별 손익 분석 (P&L)",
-        "col_segment": "고객 그룹",
-        "col_total_revenue": "그룹 전체 매출",
-        "col_total_cost": "그룹 전체 비용",
-        "col_total_profit": "그룹 전체 손익",
+        "section_2_title": "2. 고객 그룹별 손익 분석 (인당, 연간)",
         "tier_free": "무료 사용자",
         "tier_standard": "유료 사용자",
         "tier_premium": "프리미엄 사용자",
@@ -88,6 +81,11 @@ loc_strings = {
         "unrecoverable": "회수 불가",
         "power_conventional": "일반 전력망",
         "power_renewable": "재생에너지",
+        # [NEW] Narrative report strings
+        "narrative_users": "사용자 수",
+        "narrative_revenue_per_user": "인당 매출",
+        "narrative_cost_per_user": "인당 원가",
+        "narrative_profit_per_user": "인당 이익",
     }
 }
 
