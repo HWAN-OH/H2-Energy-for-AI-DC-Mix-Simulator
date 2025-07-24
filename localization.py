@@ -1,4 +1,4 @@
-# localization.py (v15.0)
+# localization.py (v16.0)
 
 loc_strings = {
     "en": {
@@ -11,6 +11,7 @@ loc_strings = {
         "lang_selector": "Language",
         "dc_capacity": "Data Center Size (MW)",
         "high_perf_gpu_ratio": "High-Performance GPU Budget Ratio (%)",
+        "utilization_rate": "Datacenter Average Utilization Rate (%)",
         "power_type": "Power Source",
         "apply_mirrormind": "Apply Intelligent Architecture",
         "paid_tier_fee": "Paid Tier Monthly Fee ($)",
@@ -21,9 +22,9 @@ loc_strings = {
         "section_1_title": "1. Overall Business P&L (Annual)",
         "assumptions_title": "Key Assumptions & Capacity",
         "assump_gpu_mix": "GPU Configuration",
+        "assump_utilization": "Utilization Rate",
         "assump_users": "Supported Users",
         "assump_tokens": "Tokens Serviced",
-        "assump_power": "Power Consumed",
         "pnl_annual_title": "Annual P&L",
         "pnl_revenue": "Revenue",
         "pnl_cost_of_revenue": "Cost of Revenue (Power, OPEX)",
@@ -54,6 +55,7 @@ loc_strings = {
         "lang_selector": "언어",
         "dc_capacity": "데이터센터 용량 (MW)",
         "high_perf_gpu_ratio": "고성능 GPU 예산 비중 (%)",
+        "utilization_rate": "데이터센터 평균 가동률 (%)",
         "power_type": "전력 종류",
         "apply_mirrormind": "지능형 아키텍처 적용",
         "paid_tier_fee": "유료 사용자 월 요금 ($)",
@@ -64,9 +66,9 @@ loc_strings = {
         "section_1_title": "1. 전체 사업 손익 (연간 기준)",
         "assumptions_title": "주요 가정 및 생산량",
         "assump_gpu_mix": "그래픽카드 구성",
+        "assump_utilization": "평균 가동률",
         "assump_users": "서비스 가능 고객",
         "assump_tokens": "처리 토큰 총량",
-        "assump_power": "소비 전력 총량",
         "pnl_annual_title": "연간 손익계산서",
         "pnl_revenue": "매출",
         "pnl_cost_of_revenue": "매출원가 (전력비, 운영비)",
