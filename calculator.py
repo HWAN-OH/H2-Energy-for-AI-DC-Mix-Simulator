@@ -1,17 +1,15 @@
-# calculator.py (v18.0 - Final Rollback & Separation)
+# calculator.py (v20.0 - Core Engine)
+# This module is the core engine, calculating the usage-based business potential.
 import yaml
 import pandas as pd
 
-def calculate_business_case(
+def calculate_core_business_case(
     dc_size_mw,
     use_clean_power,
     apply_mirrormind,
     high_perf_gpu_ratio,
     utilization_rate,
-    market_price_per_m_tokens,
-    standard_fee,
-    premium_fee,
-    lang
+    market_price_per_m_tokens
 ):
     with open("config.yml", "r") as f:
         config = yaml.safe_load(f)
@@ -41,7 +39,7 @@ def calculate_business_case(
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. Calculate TRUE P&L and Cost based on USAGE potential (This is the baseline for Sections 1, 2, 4) ---
+    # --- 3. Calculate TRUE P&L and Cost based on USAGE potential ---
     total_paid_token_usage_ratio = sum(tier_info['ratio'] for tier_name, tier_info in tiers_conf.items() if tier_name != 'free')
     usage_based_revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * total_paid_token_usage_ratio
 
@@ -76,33 +74,21 @@ def calculate_business_case(
 
         token_usage_ratio = (tier_info['ratio'] * tier_info['monthly_token_usage_m']) / total_token_demand_ratio if total_token_demand_ratio > 0 else 0
         
-        # --- 4.1. Usage-Based Scenario (for Section 2) ---
         tier_revenue_annual_usage_based = (serviced_tokens * token_usage_ratio / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
         revenue_per_user_annual = tier_revenue_annual_usage_based / num_users_in_tier if num_users_in_tier > 0 else 0
         
         tier_cost_annual_usage_based = true_total_operating_cost * token_usage_ratio
         cost_per_user_annual_usage_based = tier_cost_annual_usage_based / num_users_in_tier if num_users_in_tier > 0 else 0
-        
-        # --- 4.2. Fixed-Fee Scenario (for Section 3 - completely separate calculation) ---
-        fixed_fee = 0
-        if tier_name == 'standard': fixed_fee = standard_fee
-        elif tier_name == 'premium': fixed_fee = premium_fee
-        
-        # The cost per user for the fixed-fee scenario should still be based on their usage profile (token_usage_ratio) of the TRUE total cost.
-        new_profit_per_user = fixed_fee - (cost_per_user_annual_usage_based / 12.0)
-        opportunity_cost = (revenue_per_user_annual / 12.0) - fixed_fee
 
         segment_narrative_data.append({
-            "tier_name_key": f"tier_{tier_name}", "num_users": num_users_in_tier,
+            "tier_name_key": f"tier_{tier_name}",
+            "num_users": num_users_in_tier,
             "revenue_per_user": revenue_per_user_annual / 12.0,
             "cost_per_user": cost_per_user_annual_usage_based / 12.0,
             "profit_per_user": (revenue_per_user_annual - cost_per_user_annual_usage_based) / 12.0,
-            "fixed_fee": fixed_fee,
-            "new_profit_per_user": new_profit_per_user,
-            "opportunity_cost": opportunity_cost,
         })
 
-    # --- 5. Recommended Pricing Calculation (Based on Usage Potential) ---
+    # --- 5. Recommended Pricing Calculation ---
     base_operating_cost = cost_of_revenue + d_and_a + rd_amortization
     target_annual_op_profit = total_investment / PAYBACK_YEARS_TARGET
     required_annual_revenue = (target_annual_op_profit + base_operating_cost) / (1 - sgna_rate)
@@ -119,7 +105,7 @@ def calculate_business_case(
         "is_achievable": recommended_premium_fee < 500 and recommended_standard_fee < 100
     }
 
-    # --- 6. Final P&L for Display (Section 1 - ALWAYS based on the TRUE USAGE-BASED potential) ---
+    # --- 6. Final P&L for Display ---
     pnl_annual = {
         'revenue': usage_based_revenue, 
         'cost_of_revenue': cost_of_revenue, 
