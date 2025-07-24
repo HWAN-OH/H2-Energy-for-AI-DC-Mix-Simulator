@@ -4,12 +4,14 @@
 business_assumptions:
   analysis_years: 10
   corporate_tax_rate: 0.25
+  # 매출의 몇 %를 판매비/관리비(영업, 마케팅 등)로 사용하는가
+  sgna_as_percent_of_revenue: 20.0
 
 # ===============================================
 # Infrastructure & Hardware Assumptions
 # ===============================================
 infrastructure_assumptions:
-  dc_size_mw: 100 # 데이터센터 규모 (MW)
+  dc_size_mw: 100
   dc_construction_cost_per_mw: 10000000
   it_hardware_budget_per_mw: 7000000
   building_depreciation_years: 40
@@ -36,7 +38,7 @@ advanced_architecture:
 # Research & Development (R&D) Assumptions
 # ===============================================
 research_and_development:
-  total_model_development_cost: 500000000 # 5억 달러
+  total_model_development_cost: 500000000
   model_amortization_years: 3
   global_datacenter_count_for_cost_allocation: 10
 
@@ -56,9 +58,12 @@ user_model:
 # Operating Costs & Scenarios
 # ===============================================
 operating_scenarios:
+  # 데이터센터의 평균 가동률 (100%는 비현실적)
+  datacenter_utilization_rate: 60.0
   maintenance_rate_of_construction_capex: 0.02
   pue: 1.5
   watts_per_dollar_of_it_hardware: 0.025
   electricity_pricing:
     standard_grid: 0.13 # $/kWh
     net_zero_ppa: 0.20  # $/kWh
+
