@@ -1,14 +1,11 @@
-# config.yml (v17.0 - 최종 완성본)
+# config.yml (v18.0 - User-centric metrics)
 
 # ===============================================
 # 투자 및 자산 (Investment & Assets)
 # ===============================================
 investment:
-  # 데이터센터 규모(MW)당 건설 비용 (CAPEX)
   dc_capex_per_mw: 10000000
-  # 데이터센터 규모(MW)당 IT 하드웨어 예산 (CAPEX)
   it_budget_per_mw: 12500000
-  # 자산 상각 기간 (년)
   amortization_years:
     datacenter: 40
     it_hardware: 5
@@ -29,21 +26,10 @@ hardware:
 # 운영 비용 (Operating Expenses)
 # ===============================================
 operating_expenses:
-  # 데이터센터 규모(MW)당 연간 비용
   maintenance_and_cooling_per_mw: 250000
   personnel_and_other_per_mw: 350000
-  # 판매 및 일반관리비 (매출 대비 비율)
   sgna_as_percent_of_revenue: 15.0
-  # 전력 효율 지수 (PUE)
   pue: 1.5
-
-dc_defaults:
-  capex_per_mw: 1200000
-  opex_per_mw_per_year: 120000
-  amortization_years: 5
-  power_cost_kwh:
-    Conventional: 0.12
-    Renewable: 0.18
 
 # ===============================================
 # 연구개발 (R&D)
@@ -56,10 +42,10 @@ research_and_development:
 # AI 모델 및 시장 가격
 # ===============================================
 model_and_market:
-  # 지능형 아키텍처 적용 시 효율 개선 배수
   intelligent_arch_efficiency: 1.25
-  # 시장의 평균 토큰 판매 단가 ($ / 1M tokens)
   market_price_per_million_tokens: 1.5
+  # [NEW] 100MW DC 기준, 총 사용자 수 (인당 지표 계산용)
+  total_users_for_100mw: 1000000
   # 사용자 그룹별 분포 및 월간 토큰 사용량 (백만 개)
   tiers:
     free:
@@ -71,3 +57,4 @@ model_and_market:
     premium:
       ratio: 0.1
       monthly_token_usage_m: 25.0
+
