@@ -1,69 +1,35 @@
-# ===============================================
-# Business & Financial Assumptions
-# ===============================================
-business_assumptions:
-  analysis_years: 10
-  corporate_tax_rate: 0.25
-  # 매출의 몇 %를 판매비/관리비(영업, 마케팅 등)로 사용하는가
-  sgna_as_percent_of_revenue: 20.0
+# config_v12.yml
 
-# ===============================================
-# Infrastructure & Hardware Assumptions
-# ===============================================
-infrastructure_assumptions:
-  dc_size_mw: 100
-  dc_construction_cost_per_mw: 10000000
-  it_hardware_budget_per_mw: 7000000
-  building_depreciation_years: 40
-  it_hw_depreciation_years: 5
+# 기본 데이터센터 설정
+dc_defaults:
+  size_mw: 100
+  amortization_years: 5
+  capex_per_mw: 1000000         # USD
+  opex_per_mw_per_year: 150000  # USD
+  power_cost_kwh:
+    Conventional: 0.12          # USD
+    Renewable: 0.18
 
-# ===============================================
-# Hardware Performance Specs
-# ===============================================
-hardware_specs:
-  high_perf_gpu:
-    cost_per_unit: 35000
-    m_tokens_per_hour_per_unit: 5.0
-  low_cost_gpu:
-    cost_per_unit: 1200
-    m_tokens_per_hour_per_unit: 0.5
+# LLM 토큰 처리 효율
+token_processing:
+  token_per_kwh: 2000
+  mirrormind_efficiency: 1.25
 
-# ===============================================
-# Advanced Architecture (e.g., MirrorMind)
-# ===============================================
-advanced_architecture:
-  workload_efficiency_factor: 0.2 # 80% workload reduction
+# 사용자 분포 및 사용량
+tiers:
+  free:
+    ratio: 0.6
+    monthly_token_usage: 30000
+    price_per_million_token: 0
+  standard:
+    ratio: 0.3
+    monthly_token_usage: 300000
+    price_per_million_token: 0.8
+  premium:
+    ratio: 0.1
+    monthly_token_usage: 3000000
+    price_per_million_token: 5.0
 
-# ===============================================
-# Research & Development (R&D) Assumptions
-# ===============================================
-research_and_development:
-  total_model_development_cost: 500000000
-  model_amortization_years: 3
-  global_datacenter_count_for_cost_allocation: 10
-
-# ===============================================
-# User & Pricing Model
-# ===============================================
-user_model:
-  user_set_composition:
-    free: { ratio: 70, monthly_token_usage_millions: 0.1 }
-    paid: { ratio: 25, monthly_token_usage_millions: 2.0 }
-    premium: { ratio: 5, monthly_token_usage_millions: 10.0 }
-  pricing:
-    paid_tier_fee: 20.0
-    premium_tier_fee: 100.0
-
-# ===============================================
-# Operating Costs & Scenarios
-# ===============================================
-operating_scenarios:
-  # 데이터센터의 평균 가동률 (100%는 비현실적)
-  datacenter_utilization_rate: 60.0
-  maintenance_rate_of_construction_capex: 0.02
-  pue: 1.5
-  watts_per_dollar_of_it_hardware: 0.025
-  electricity_pricing:
-    standard_grid: 0.13 # $/kWh
-    net_zero_ppa: 0.20  # $/kWh
-
+# 일반 설정
+assumptions:
+  users_total: 1000000
