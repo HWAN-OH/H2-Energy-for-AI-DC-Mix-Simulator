@@ -1,4 +1,4 @@
-# calculator.py (v9.0 - Pricing Strategy Analysis)
+# calculator.py (v10.0 - Final Recommendation)
 import yaml
 import pandas as pd
 
@@ -9,8 +9,8 @@ def calculate_business_case(
     high_perf_gpu_ratio,
     utilization_rate,
     market_price_per_m_tokens,
-    standard_fee, # New input
-    premium_fee,  # New input
+    standard_fee,
+    premium_fee,
     lang
 ):
     with open("config.yml", "r") as f:
@@ -24,6 +24,7 @@ def calculate_business_case(
     tiers_conf = model_conf['tiers']
 
     HOURS_PER_YEAR = 8760
+    PAYBACK_YEARS = 5
     high_perf_gpu_ratio /= 100.0
 
     # --- 1. CAPEX & GPU ---
@@ -40,14 +41,12 @@ def calculate_business_case(
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. Overall P&L (based on new fixed-fee pricing) ---
+    # --- 3. Overall P&L (based on user-defined fixed-fee) ---
     total_users = model_conf['total_users_for_100mw'] * (dc_size_mw / 100.0)
     standard_users = total_users * tiers_conf['standard']['ratio']
     premium_users = total_users * tiers_conf['premium']['ratio']
     
-    # [MODIFIED] Calculate revenue based on the new fixed fees
     revenue = (standard_users * standard_fee + premium_users * premium_fee) * 12 
-
     it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
     total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
     power_cost_kwh_rate = 0.18 if use_clean_power == 'Renewable' else 0.12
@@ -55,32 +54,36 @@ def calculate_business_case(
     maintenance_cost = op_conf['maintenance_and_cooling_per_mw'] * dc_size_mw
     personnel_cost = op_conf['personnel_and_other_per_mw'] * dc_size_mw
     cost_of_revenue = power_cost + maintenance_cost + personnel_cost
-    sg_and_a = revenue * (op_conf['sgna_as_percent_of_revenue'] / 100.0)
+    sgna_rate = op_conf['sgna_as_percent_of_revenue'] / 100.0
+    sg_and_a = revenue * sgna_rate
     dc_depreciation = dc_construction_cost / inv_conf['amortization_years']['datacenter']
     it_depreciation = it_hw_budget / inv_conf['amortization_years']['it_hardware']
     rd_amortization = (rd_conf['total_model_development_cost'] / rd_conf['global_datacenter_count_for_cost_allocation']) / inv_conf['amortization_years']['research_and_development']
     d_and_a = dc_depreciation + it_depreciation
-    total_operating_cost = cost_of_revenue + sg_and_a + d_and_a + rd_amortization
-    gross_profit = revenue - cost_of_revenue
-    operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
-
+    
     # --- 4. Per-User Monthly Metrics Calculation ---
+    total_operating_cost_before_sgna = cost_of_revenue + d_and_a + rd_amortization
     total_token_demand_ratio = sum(t['ratio'] * t['monthly_token_usage_m'] for t in tiers_conf.values())
     
     segment_narrative_data = []
     for tier_name, tier_info in tiers_conf.items():
+        # ... (This part is unchanged)
         num_users_in_tier = total_users * tier_info['ratio']
         if num_users_in_tier == 0: continue
-
         token_usage_ratio = (tier_info['ratio'] * tier_info['monthly_token_usage_m']) / total_token_demand_ratio if total_token_demand_ratio > 0 else 0
-        
         tier_revenue_annual = (serviced_tokens * token_usage_ratio / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
-        tier_cost_annual = total_operating_cost * token_usage_ratio
         
+        # Cost allocation needs to consider SG&A which depends on revenue
+        # For simplicity in this per-user view, we allocate non-SG&A costs by usage, and SG&A is a company-wide burden.
+        # Let's calculate total operating cost for the per-user analysis based on usage-based revenue
+        usage_based_revenue_total = (serviced_tokens / 1e6) * market_price_per_m_tokens * (1-tiers_conf['free']['ratio'])
+        usage_based_sgna = usage_based_revenue_total * sgna_rate
+        usage_based_total_op_cost = total_operating_cost_before_sgna + usage_based_sgna
+        
+        tier_cost_annual = usage_based_total_op_cost * token_usage_ratio
         revenue_per_user_annual = tier_revenue_annual / num_users_in_tier
         cost_per_user_annual = tier_cost_annual / num_users_in_tier
         
-        # [NEW] Add pricing strategy analysis
         fixed_fee = 0
         if tier_name == 'standard': fixed_fee = standard_fee
         elif tier_name == 'premium': fixed_fee = premium_fee
@@ -99,11 +102,36 @@ def calculate_business_case(
             "opportunity_cost": opportunity_cost,
         })
 
-    # --- 5. Final Results ---
+    # --- 5. [NEW] Recommended Pricing Calculation for 5-Year Payback ---
+    target_annual_op_profit = total_investment / PAYBACK_YEARS
+    # op_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
+    # op_profit = (revenue - cost_of_revenue) - (revenue * sgna_rate) - d_and_a - rd_amortization
+    # op_profit = revenue * (1 - sgna_rate) - cost_of_revenue - d_and_a - rd_amortization
+    # target_op_profit = required_revenue * (1 - sgna_rate) - total_operating_cost_before_sgna
+    required_annual_revenue = (target_annual_op_profit + total_operating_cost_before_sgna) / (1 - sgna_rate)
+    
+    # Allocate required revenue to user tiers based on their usage-based revenue potential
+    standard_revenue_ratio = segment_narrative_data[1]['revenue_per_user'] / (segment_narrative_data[1]['revenue_per_user'] + segment_narrative_data[2]['revenue_per_user'])
+    premium_revenue_ratio = 1 - standard_revenue_ratio
+
+    required_standard_revenue = required_annual_revenue * standard_revenue_ratio
+    required_premium_revenue = required_annual_revenue * premium_revenue_ratio
+
+    recommended_standard_fee = (required_standard_revenue / standard_users) / 12 if standard_users > 0 else 0
+    recommended_premium_fee = (required_premium_revenue / premium_users) / 12 if premium_users > 0 else 0
+    
+    recommendation = {
+        "standard_fee": recommended_standard_fee,
+        "premium_fee": recommended_premium_fee,
+        "is_achievable": recommended_premium_fee < 500 # Lyn's Check: Is the price reasonable?
+    }
+
+    # --- 6. Final Results ---
+    final_op_profit = revenue * (1-sgna_rate) - total_operating_cost_before_sgna
     pnl_annual = {
-        'revenue': revenue, 'cost_of_revenue': cost_of_revenue, 'gross_profit': gross_profit,
-        'sg_and_a': sg_and_a, 'd_and_a': d_and_a, 'it_depreciation': it_depreciation,
-        'rd_amortization': rd_amortization, 'operating_profit': operating_profit,
+        'revenue': revenue, 'cost_of_revenue': cost_of_revenue, 'gross_profit': revenue - cost_of_revenue,
+        'sg_and_a': revenue * sgna_rate, 'd_and_a': d_and_a, 'it_depreciation': it_depreciation,
+        'rd_amortization': rd_amortization, 'operating_profit': final_op_profit,
     }
 
     results = {
@@ -115,5 +143,6 @@ def calculate_business_case(
             "utilization_rate": utilization_rate,
             "serviced_tokens_t": serviced_tokens / 1e12,
         },
+        "recommendation": recommendation, # Add recommendation to results
     }
     return results
