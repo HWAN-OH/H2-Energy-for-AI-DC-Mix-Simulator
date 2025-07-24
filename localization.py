@@ -1,9 +1,11 @@
-# localization.py (v23.0 - Final Version)
+# localization.py (v24.0 - Final Clarification)
 
 loc_strings = {
     "en": {
         "app_title": "AI Datacenter Business Simulator",
         "app_subtitle": "A strategic tool to analyze the real-world P&L of AI services.",
+        # [NEW]
+        "model_clarification": "Note: The core financial model (Sections 1, 2, 4) is based on a **usage-based pricing system** to show the full potential of the selected strategy.",
         "sidebar_guide_title": "📖 How to Use",
         "sidebar_guide_text": "Adjust the variables below and click 'Run Analysis' to see the financial forecast.",
         "copyright_text": "© 2025, Oh Sunghwan. All rights reserved.",
@@ -37,15 +39,14 @@ loc_strings = {
         "narrative_revenue_per_user": "Usage-Based Revenue",
         "narrative_cost_per_user": "Cost per User",
         "narrative_profit_per_user": "Usage-Based Profit",
-        "sidebar_pricing_title": "💰 Pricing Strategy",
+        "sidebar_pricing_title": "💰 Pricing Strategy (for Section 3)",
         "pricing_standard_fee": "Standard Tier Monthly Fee ($)",
         "pricing_premium_fee": "Premium Tier Monthly Fee ($)",
-        "section_3_title": "3. Pricing Strategy Analysis (Per User, Monthly)",
+        "section_3_title": "3. 'What-If' Analysis: Fixed-Fee Pricing",
         "narrative_pricing_title": "Analysis for",
         "narrative_fixed_fee_revenue": "Fixed-Fee Revenue",
         "narrative_opportunity_cost": "Opportunity Cost (vs. Usage-Based)",
         "narrative_new_profit_per_user": "New Profit (Fixed-Fee)",
-        # [MODIFIED] Final Section
         "section_4_title": "4. Final Summary & Payback Analysis",
         "payback_analysis_intro": "Based on the current strategy, the realistic payback period is calculated as follows:",
         "annual_cash_flow": "Annual Operating Cash Flow (Profit + D&A)",
@@ -59,6 +60,8 @@ loc_strings = {
     "ko": {
         "app_title": "AI 데이터센터 사업성 시뮬레이터",
         "app_subtitle": "AI 서비스의 현실적인 손익(P&L)을 분석하는 전략 도구입니다.",
+        # [NEW]
+        "model_clarification": "참고: 아래 재무 모델(섹션 1, 2, 4)은 선택된 전략의 최대 잠재력을 보여주기 위해 **사용량 기반 요금제**를 기준으로 분석합니다.",
         "sidebar_guide_title": "📖 사용 방법",
         "sidebar_guide_text": "아래 변수를 조절하고 '분석 실행'을 클릭하여 재무 예측을 확인하세요.",
         "copyright_text": "© 2025, Oh Sunghwan. All rights reserved.",
@@ -92,15 +95,14 @@ loc_strings = {
         "narrative_revenue_per_user": "사용량 기반 매출",
         "narrative_cost_per_user": "인당 원가",
         "narrative_profit_per_user": "사용량 기반 이익",
-        "sidebar_pricing_title": "💰 요금제 전략 설정",
+        "sidebar_pricing_title": "💰 요금제 전략 설정 (섹션 3 분석용)",
         "pricing_standard_fee": "유료 사용자 월 요금 ($)",
         "pricing_premium_fee": "프리미엄 사용자 월 요금 ($)",
-        "section_3_title": "3. 요금제 전략 분석 (인당, 월간)",
+        "section_3_title": "3. 'What-If' 분석: 고정 요금제 적용 시",
         "narrative_pricing_title": "분석 대상",
         "narrative_fixed_fee_revenue": "고정 요금제 매출",
         "narrative_opportunity_cost": "기회비용 (vs 사용량 기반)",
         "narrative_new_profit_per_user": "최종 이익 (고정 요금제)",
-        # [MODIFIED] Final Section
         "section_4_title": "4. 최종 요약 및 투자 회수 기간 분석",
         "payback_analysis_intro": "현재 전략을 기준으로, 현실적인 투자 회수 기간은 다음과 같이 계산됩니다:",
         "annual_cash_flow": "연간 영업 현금흐름 (영업이익 + 감가상각비)",
