@@ -1,4 +1,4 @@
-# localization.py (v19.0 - Narrative Report)
+# localization.py (v20.0 - Monthly Report)
 
 loc_strings = {
     "en": {
@@ -29,7 +29,8 @@ loc_strings = {
         "pnl_d_and_a": "  - D&A (DC & HW)",
         "pnl_rd_amortization": "  - R&D Amortization",
         "pnl_operating_profit": "Operating Profit",
-        "section_2_title": "2. P&L by Customer Segment (Per User, Annual)",
+        # [MODIFIED]
+        "section_2_title": "2. P&L by Customer Segment (Per User, Monthly)",
         "tier_free": "Free Users",
         "tier_standard": "Paid Users",
         "tier_premium": "Premium Users",
@@ -38,7 +39,6 @@ loc_strings = {
         "unrecoverable": "Unrecoverable",
         "power_conventional": "Conventional",
         "power_renewable": "Renewable",
-        # [NEW] Narrative report strings
         "narrative_users": "Number of Users",
         "narrative_revenue_per_user": "Revenue per User",
         "narrative_cost_per_user": "Cost per User",
@@ -72,7 +72,8 @@ loc_strings = {
         "pnl_d_and_a": "  - 유형자산상각비 (DC, HW)",
         "pnl_rd_amortization": "  - 무형자산상각비 (R&D)",
         "pnl_operating_profit": "영업이익",
-        "section_2_title": "2. 고객 그룹별 손익 분석 (인당, 연간)",
+        # [MODIFIED]
+        "section_2_title": "2. 고객 그룹별 손익 분석 (인당, 월간)",
         "tier_free": "무료 사용자",
         "tier_standard": "유료 사용자",
         "tier_premium": "프리미엄 사용자",
@@ -81,7 +82,6 @@ loc_strings = {
         "unrecoverable": "회수 불가",
         "power_conventional": "일반 전력망",
         "power_renewable": "재생에너지",
-        # [NEW] Narrative report strings
         "narrative_users": "사용자 수",
         "narrative_revenue_per_user": "인당 매출",
         "narrative_cost_per_user": "인당 원가",
