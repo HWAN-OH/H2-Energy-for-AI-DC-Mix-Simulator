@@ -21,6 +21,7 @@ st.markdown("""
     .pnl-table .value { text-align: right; font-family: 'Roboto Mono', monospace; }
     .narrative-block { background-color: #f9fafb; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1rem; }
     .narrative-block h3 { margin-top: 0; }
+    .recommendation-block { background-color: #eef2ff; border: 1px solid #c7d2fe; border-radius: 0.5rem; padding: 1.5rem; margin-top: 2rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -48,7 +49,6 @@ with st.sidebar:
     st.markdown("---")
     market_price_per_m_tokens = st.slider(t("market_price", st.session_state.lang), 0.5, 5.0, 1.5, 0.1)
 
-    # [NEW] Pricing Strategy Inputs
     st.markdown("---")
     st.subheader(t("sidebar_pricing_title", st.session_state.lang))
     standard_fee = st.number_input(t("pricing_standard_fee", st.session_state.lang), min_value=0.0, value=20.0, step=1.0)
@@ -65,7 +65,7 @@ if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
         st.session_state.results = calculate_business_case(
             dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens,
-            standard_fee, premium_fee, # Pass new inputs
+            standard_fee, premium_fee,
             lang
         )
 
@@ -75,7 +75,6 @@ if st.session_state.results:
     
     st.header(t("section_1_title", lang))
     st.subheader(t("assumptions_title", lang))
-    # ... (rest of section 1 is unchanged)
     
     st.html(f"""
         <div class="pnl-table">
@@ -104,12 +103,10 @@ if st.session_state.results:
             </div>
             """, unsafe_allow_html=True)
             
-    # [NEW] Section 3: Pricing Strategy Analysis
     st.header(t("section_3_title", lang))
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
             if segment['tier_name_key'] in ['tier_standard', 'tier_premium']:
-                # Lyn's suggestion: Highlight negative profit in red
                 profit_color = "red" if segment['new_profit_per_user'] < 0 else "green"
                 
                 st.markdown(f"""
@@ -123,15 +120,19 @@ if st.session_state.results:
                 </div>
                 """, unsafe_allow_html=True)
 
-    st.subheader(t('payback_title', lang))
-    # ... (rest of the page is unchanged)
-    operating_profit = res['pnl_annual']['operating_profit']
-    if operating_profit > 0:
-        payback_period = res['total_investment'] / operating_profit
-        payback_text = f"{payback_period:.2f}"
-    else:
-        payback_text = t('unrecoverable', lang)
-    st.metric(label=t('payback_years', lang), value=payback_text)
+    # [NEW] Section 4: Final Recommendation
+    st.header(t("section_4_title", lang))
+    if 'recommendation' in res:
+        reco = res['recommendation']
+        st.markdown(f'<div class="recommendation-block">', unsafe_allow_html=True)
+        if reco['is_achievable']:
+            st.write(t('recommendation_intro', lang))
+            r_cols = st.columns(2)
+            r_cols[0].metric(label=t('recommended_standard_fee', lang), value=f"${reco['standard_fee']:.2f}")
+            r_cols[1].metric(label=t('recommended_premium_fee', lang), value=f"${reco['premium_fee']:.2f}")
+        else:
+            st.warning(t('recommendation_unachievable', lang))
+        st.markdown(f'</div>', unsafe_allow_html=True)
 
 
 else:
