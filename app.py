@@ -5,26 +5,21 @@ from calculator import calculate_business_case
 from localization import loc_strings
 
 # --- 1. Page Configuration and Data Loading ---
-st.set_page_config(page_title="AI Service Business Case Simulator", page_icon="💡", layout="wide")
+st.set_page_config(page_title="AI Datacenter Business Case Simulator", page_icon="💡", layout="wide")
 
 @st.cache_data
 def load_data():
-    """Loads data and configuration files."""
-    try:
-        demand_df = pd.read_csv('demand_profile.csv')
-    except Exception as e:
-        st.error(f"Error loading 'demand_profile.csv': {e}")
-        return None, None
+    """Loads configuration files."""
     try:
         with open('config.yml', 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
     except Exception as e:
         st.error(f"Error loading 'config.yml': {e}")
-        return None, None
-    return demand_df, config
+        return None
+    return config
 
-demand_profile, config = load_data()
-if config is None or demand_profile is None:
+config = load_data()
+if config is None:
     st.stop()
 
 # --- 2. Language and State Management ---
@@ -36,19 +31,10 @@ def t(key, **kwargs):
 
 # --- 3. UI: Sidebar ---
 st.sidebar.title(t('sidebar_title'))
-st.sidebar.header(t('section_2_header'))
-high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 100, 5, help=t('hw_ratio_help'))
-electricity_scenario = st.sidebar.radio(
-    t('electricity_label'),
-    ['standard_grid', 'net_zero_ppa'],
-    format_func=lambda x: t(x),
-    help=t('electricity_help')
+st.sidebar.header(t('section_hw_header'))
+high_perf_hw_ratio = st.sidebar.slider(
+    t('hw_ratio_label'), 0, 100, 50, 5, help=t('hw_ratio_help')
 )
-apply_advanced_arch = st.sidebar.toggle(t('arch_toggle_label'), value=False, help=t('arch_toggle_help'))
-
-st.sidebar.header(t('section_3_header'))
-paid_tier_fee = st.sidebar.slider(t('paid_tier_fee_label'), 5.0, 50.0, 20.0, 1.0, help=t('paid_tier_fee_help'))
-premium_tier_fee = st.sidebar.slider(t('premium_tier_fee_label'), 50.0, 200.0, 100.0, 5.0, help=t('premium_tier_fee_help'))
 
 # --- 4. Main Page ---
 st.title(t('app_title'))
@@ -59,62 +45,39 @@ selected_lang_display = st.radio(
 )
 st.session_state.lang = 'ko' if selected_lang_display == '한국어' else 'en'
 
-
 if st.button(t('run_button_label'), use_container_width=True, type="primary"):
     with st.spinner(t('spinner_text')):
-        user_inputs = {
-            'demand_profile': demand_profile,
-            'apply_advanced_arch': apply_advanced_arch,
-            'high_perf_hw_ratio': high_perf_hw_ratio,
-            'paid_tier_fee': paid_tier_fee,
-            'premium_tier_fee': premium_tier_fee,
-            'electricity_price': config.get('electricity_pricing_scenarios', {}).get(electricity_scenario, {}).get('price_per_kwh', 0.13)
-        }
+        user_inputs = {'high_perf_hw_ratio': high_perf_hw_ratio}
         summary = calculate_business_case(config, user_inputs)
-        pnl = summary.get('pnl', {})
-        unit_pnl = summary.get('unit_pnl', {})
 
     # --- 4.1. Display Results ---
     st.markdown("---")
     st.header(t('results_header'))
 
-    # --- Output Section A: Annual P&L Table ---
-    st.subheader(t('output_section_A_title'))
-    
-    pnl_data = {
-        '항목': [
-            t('pnl_revenue'),
-            t('pnl_cost_of_revenue'),
-            t('pnl_gross_profit'),
-            t('pnl_operating_expenses'),
-            t('pnl_operating_profit')
-        ],
-        '금액 ($)': [
-            f"{pnl.get('revenue', 0):,.0f}",
-            f"{pnl.get('cost_of_revenue', 0):,.0f}",
-            f"{pnl.get('gross_profit', 0):,.0f}",
-            f"{pnl.get('operating_expenses', 0):,.0f}",
-            f"{pnl.get('operating_profit', 0):,.0f}"
-        ]
-    }
-    pnl_df = pd.DataFrame(pnl_data)
-    st.dataframe(pnl_df, hide_index=True, use_container_width=True)
+    # --- Section A: Performance ---
+    st.subheader(t('section_A_title'))
+    col_a1, col_a2, col_a3 = st.columns(3)
+    col_a1.metric(t('metric_hw_investment'), f"${summary.get('hw_investment', 0):,.0f}")
+    col_a2.metric(t('metric_performance_score'), f"{summary.get('total_performance_score', 0):,.0f}")
+    col_a3.metric(t('metric_token_capacity'), f"{summary.get('annual_token_capacity', 0) / 1e6:,.1f} T") # In Trillions
 
+    # --- Section B: Cost ---
+    st.subheader(t('section_B_title'))
+    col_b1, col_b2 = st.columns(2)
+    col_b1.metric(t('metric_annual_cost'), f"${summary.get('total_annual_cost', 0):,.0f}")
+    col_b2.metric(t('metric_cost_per_token'), f"${summary.get('cost_per_million_tokens', 0):.4f}")
 
-    # --- Output Section B: Per-User P&L ---
-    st.subheader(t('output_section_B_title'))
-    cols = st.columns(len(unit_pnl))
-    tier_names = {'free': t('free_tier'), 'paid': t('paid_tier'), 'premium': t('premium_tier')}
-    
-    for i, (tier_name, data) in enumerate(unit_pnl.items()):
-        with cols[i]:
-            with st.container(border=True):
-                st.markdown(f"**{tier_names.get(tier_name)}**")
-                st.metric(label=t('pnl_user_revenue'), value=f"${data.get('revenue', 0):.2f}")
-                st.metric(label=t('pnl_user_cost'), value=f"${data.get('cost', 0):.2f}")
-                profit = data.get('profit', 0)
-                st.metric(label=t('pnl_user_profit'), value=f"${profit:.2f}",
-                            delta="수익" if profit >= 0 else "손실")
+    # --- Section C: Profitability ---
+    st.subheader(t('section_C_title'))
+    col_c1, col_c2, col_c3 = st.columns(3)
+    col_c1.metric(t('metric_users_supported'), f"{summary.get('total_users_supported', 0):,.0f}")
+    col_c2.metric(t('metric_annual_revenue'), f"${summary.get('annual_revenue', 0):,.0f}")
+    op_profit = summary.get('operating_profit', 0)
+    col_c3.metric(
+        t('metric_operating_profit'),
+        f"${op_profit:,.0f}",
+        delta="수익" if op_profit >= 0 else "손실"
+    )
 
 else:
     st.info(t('initial_prompt'))
