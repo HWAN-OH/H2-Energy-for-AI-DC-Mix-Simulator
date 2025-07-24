@@ -2,31 +2,50 @@
 # Business & Financial Assumptions
 # ===============================================
 business_assumptions:
-  # 100MW급 데이터센터를 짓는 데 필요한 총 투자 예산 (IT 하드웨어 제외)
-  dc_construction_budget: 1000000000 # 10억 달러
-  # IT 하드웨어에 투자할 총 예산
-  it_hardware_budget: 700000000 # 7억 달러
+  analysis_years: 10
+  corporate_tax_rate: 0.25
 
 # ===============================================
-# Performance & Cost Assumptions
+# Infrastructure & Hardware Assumptions
 # ===============================================
-performance_assumptions:
-  # 고성능 GPU (예: H100)
+infrastructure_assumptions:
+  # 100MW급 데이터센터를 짓는 데 필요한 총 투자 예산
+  dc_construction_cost_per_mw: 10000000
+  # IT 하드웨어에 투자할 총 예산
+  it_hardware_budget_per_mw: 7000000
+  # 감가상각 기간 (년)
+  building_depreciation_years: 40
+  it_hw_depreciation_years: 5
+  # 데이터센터 전력효율지수 (PUE)
+  pue: 1.5
+  # IT 장비의 전력 소모량 (와트 / 달러 기준)
+  watts_per_dollar_of_it_hardware: 0.025
+  # 연간 유지보수비 비율 (건설비 기준)
+  maintenance_rate_of_construction_capex: 0.02
+
+# ===============================================
+# Hardware Performance Specs
+# ===============================================
+hardware_specs:
   high_perf_gpu:
     cost_per_unit: 35000
-    performance_score_per_unit: 100 # 상대적 성능 점수
-  # 저비용 GPU (예: A4000)
+    # 이 GPU 1대가 1시간에 처리하는 토큰의 양 (백만 개 단위)
+    m_tokens_per_hour_per_unit: 5.0
   low_cost_gpu:
     cost_per_unit: 1200
-    performance_score_per_unit: 10 # 상대적 성능 점수
-  
-  # 성능 점수 1점이 1시간 동안 처리할 수 있는 토큰의 양 (백만 개 단위)
-  m_tokens_per_hour_per_performance_score: 0.05
+    m_tokens_per_hour_per_unit: 0.5
 
 # ===============================================
-# User & Pricing Model Assumptions
+# Advanced Architecture (e.g., MirrorMind)
 # ===============================================
-user_assumptions:
+advanced_architecture:
+  # 적용 시, 총 필요 연산량(토큰 처리량)을 줄여주는 효율 팩터
+  workload_efficiency_factor: 0.2 # 80% 감소 효과
+
+# ===============================================
+# User & Pricing Model
+# ===============================================
+user_model:
   # 이 사용자 조합을 '1개 사용자 세트'로 정의
   user_set_composition:
     free:
@@ -43,20 +62,4 @@ user_assumptions:
   pricing:
     paid_tier_fee: 20.0
     premium_tier_fee: 100.0
-
-# ===============================================
-# Other Operating Assumptions
-# ===============================================
-operating_assumptions:
-  # 데이터센터 건설비에 대한 연간 유지보수비 비율
-  maintenance_rate_of_construction_capex: 0.02
-  # 감가상각 기간 (년)
-  building_depreciation_years: 40
-  it_hw_depreciation_years: 5
-  # 전력 비용 ($/kWh)
-  electricity_price_per_kwh: 0.13
-  # 데이터센터 전력효율지수 (PUE)
-  pue: 1.5
-  # IT 장비의 전력 소모량 (와트 / 달러 기준)
-  watts_per_dollar_of_it_hardware: 0.025
 
