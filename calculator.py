@@ -1,4 +1,6 @@
+# calculator.py (수정된 코드)
 import yaml
+import numpy_financial as npf
 
 def calculate_business_case(
     dc_size_mw,
@@ -9,107 +11,78 @@ def calculate_business_case(
     market_price_per_m_tokens,
     lang
 ):
-    # [1] config 로딩
+    # [1] config.yml 로드
     with open("config.yml", "r") as f:
         config = yaml.safe_load(f)
 
-    dc_conf = config["dc_defaults"]
-    token_conf = config["token_processing"]
-    tiers_conf = config["tiers"]
-    users_total = config["assumptions"]["users_total"]
+    # --- 설정 값 추출 ---
+    inv_conf = config['investment']
+    hw_conf = config['hardware']
+    op_conf = config['operating_expenses']
+    rd_conf = config['research_and_development']
+    model_conf = config['model_and_market']
+
     HOURS_PER_YEAR = 8760
+    high_perf_gpu_ratio /= 100.0  # Convert percentage to ratio
 
-    # [2] 토큰/효율/전력 파라미터
-    EFFICIENCY = token_conf["mirrormind_efficiency"] if apply_mirrormind else 1.0
-    TOKENS_PER_KWH = token_conf.get("tokens_per_kwh", 50000)
-    power_cost_kwh = dc_conf["power_cost_kwh"][use_clean_power]
+    # --- 1. CAPEX (초기 투자비) 계산 ---
+    dc_construction_cost = inv_conf['dc_capex_per_mw'] * dc_size_mw
+    it_hw_budget = inv_conf['it_budget_per_mw'] * dc_size_mw
 
-    # [3] GPU mix (high_perf_gpu_ratio) 적용
-    high_perf_ratio = high_perf_gpu_ratio
-    standard_ratio = 1 - high_perf_ratio
-    n_gpu = int(dc_size_mw * 30)  # 임의: MW 1당 30대
-    n_high = int(n_gpu * high_perf_ratio)
-    n_std = n_gpu - n_high
+    # GPU 댓수 계산
+    num_high_perf_gpus = (it_hw_budget * high_perf_gpu_ratio) // hw_conf['high_perf_gpu']['cost']
+    num_standard_gpus = (it_hw_budget * (1 - high_perf_gpu_ratio)) // hw_conf['standard_gpu']['cost']
+    total_investment = dc_construction_cost + it_hw_budget
 
-    # [4] 전체 연간 토큰 처리량 계산 (고성능/표준 구분)
-    tokens_per_high = token_conf.get("tokens_per_gpu_high_perf", 1_200_000_000)
-    tokens_per_std = token_conf.get("tokens_per_gpu_standard", 500_000_000)
-    total_token_capacity = (
-        n_high * tokens_per_high +
-        n_std * tokens_per_std
-    ) * utilization_rate * EFFICIENCY
+    # --- 2. 연간 토큰 처리량 (Capacity) 계산 ---
+    arch_efficiency = model_conf['intelligent_arch_efficiency'] if apply_mirrormind else 1.0
+    
+    tokens_from_high_perf = num_high_perf_gpus * hw_conf['high_perf_gpu']['m_tokens_per_hour'] * 1e6 * HOURS_PER_YEAR
+    tokens_from_standard = num_standard_gpus * hw_conf['standard_gpu']['m_tokens_per_hour'] * 1e6 * HOURS_PER_YEAR
+    
+    total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
+    serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # [5] 고객군별 연간 토큰 수요 계산
-    tiers = ["free", "standard", "premium"]
-    group_stats = []
-    token_demand_total = 0
-    for t in tiers:
-        ratio = tiers_conf[t]["ratio"]
-        month_token = tiers_conf[t]["monthly_token_usage"]
-        group_tokens = ratio * users_total * month_token * 12
-        token_demand_total += group_tokens
-        group_stats.append({
-            "tier": t,
-            "ratio": ratio,
-            "users": int(users_total * ratio),
-            "annual_tokens": group_tokens
-        })
+    # --- 3. P&L (손익계산서) 계산 ---
+    # 3.1. 매출 (Revenue)
+    revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens
 
-    # [6] 실사용자 scaling (처리 한계 초과시 축소)
-    scale = min(1.0, total_token_capacity / token_demand_total) if token_demand_total > 0 else 0
-    for g in group_stats:
-        g["users"] = int(g["users"] * scale)
-        g["annual_tokens"] = g["annual_tokens"] * scale
+    # 3.2. 매출 원가 (Cost of Revenue)
+    it_power_consumption_mw = (serviced_tokens / total_token_capacity if total_token_capacity > 0 else 0) * (dc_size_mw * (utilization_rate/100))
+    total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
+    power_cost = total_power_consumption_mw * HOURS_PER_YEAR * 1000 * (0.18 if use_clean_power == 'Renewable' else 0.12) # MWh -> kWh
+    cost_of_revenue = power_cost + (op_conf['maintenance_and_cooling_per_mw'] * dc_size_mw)
+    
+    gross_profit = revenue - cost_of_revenue
 
-    # [7] 매출, 전력비, 이익 (고객군별/전체)
-    revenue_total = 0
-    power_cost_total = 0
-    per_group_table = []
-    for g in group_stats:
-        tier = g["tier"]
-        price_per_mtoken = tiers_conf[tier]["price_per_million_token"]
-        annual_revenue = (g["annual_tokens"] / 1_000_000) * price_per_mtoken
-        annual_power_kwh = g["annual_tokens"] / TOKENS_PER_KWH
-        group_power_cost = annual_power_kwh * power_cost_kwh
-        margin = annual_revenue - group_power_cost
+    # 3.3. 영업 비용 (Operating Expenses)
+    sg_and_a = revenue * (op_conf['sgna_as_percent_of_revenue'] / 100.0)
+    dc_depreciation = dc_construction_cost / inv_conf['amortization_years']['datacenter']
+    it_depreciation = it_hw_budget / inv_conf['amortization_years']['it_hardware']
+    rd_amortization = (rd_conf['total_model_development_cost'] / rd_conf['global_datacenter_count_for_cost_allocation']) / inv_conf['amortization_years']['research_and_development']
+    d_and_a = dc_depreciation + it_depreciation
 
-        per_group_table.append({
-            "Tier": tier.title(),
-            "Users": g["users"],
-            "Annual_Tokens": int(g["annual_tokens"]),
-            "Revenue($)": round(annual_revenue, 2),
-            "PowerCost($)": round(group_power_cost, 2),
-            "Margin($)": round(margin, 2),
-            "UnitCost($/Mtoken)": round(group_power_cost / (g["annual_tokens"] / 1_000_000), 4) if g["annual_tokens"] > 0 else 0,
-            "UnitPrice($/Mtoken)": price_per_mtoken
-        })
-        revenue_total += annual_revenue
-        power_cost_total += group_power_cost
+    operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
 
-    # [8] 연간 OPEX/CAPEX/감가상각 등 (DC config)
-    opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
-    capex = dc_conf["capex_per_mw"] * dc_size_mw / dc_conf["amortization_years"]
-    # (필요시 SG&A, 감가상각 등도 config에서 추가 가능)
-
-    # [9] 연간 손익
-    total_cost = power_cost_total + opex + capex
-    profit = revenue_total - total_cost
-    summary = f"총 매출: ${revenue_total:,.0f}, 총 비용: ${total_cost:,.0f}, 손익: ${profit:,.0f}"
-
-    # [10] 손익분기점
-    unit_rev = revenue_total / (sum(g["users"] for g in group_stats) or 1)
-    be_users = int(total_cost / (unit_rev or 1))
-
-    # [11] 전략 제언
-    recommendations = ""
-    if profit < 0:
-        recommendations += "비용구조 개선, 단가 조정, 프리미엄 비중 확대 필요"
-    else:
-        recommendations += "현 구조에서 수익성 확보, 추가 효율화 여지 검토"
-
-    return {
-        "summary": summary,
-        "per_group_table": per_group_table,
-        "break_even_msg": f"손익분기점 연간 사용자: {be_users:,}명",
-        "recommendations": recommendations
+    # --- 4. 결과 정리 ---
+    pnl_annual = {
+        'revenue': revenue,
+        'cost_of_revenue': cost_of_revenue,
+        'gross_profit': gross_profit,
+        'sg_and_a': sg_and_a,
+        'd_and_a': d_and_a,
+        'it_depreciation': it_depreciation, # 상세 표기를 위해 별도 전달
+        'rd_amortization': rd_amortization,
+        'operating_profit': operating_profit,
     }
+
+    results = {
+        "pnl_annual": pnl_annual,
+        "assumptions": {
+            "gpu_mix_string": f"H_GPU: {int(num_high_perf_gpus)}, S_GPU: {int(num_standard_gpus)}",
+            "utilization_rate": utilization_rate,
+            "serviced_tokens_t": serviced_tokens / 1e12, # 조 단위
+        },
+    }
+
+    return results
