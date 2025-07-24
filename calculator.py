@@ -1,7 +1,6 @@
-# calculator.py (v6.0 - Final Refactor)
+# calculator.py (v7.0 - Narrative First)
 import yaml
 import pandas as pd
-from localization import t # localization.py에서 t 함수를 직접 임포트
 
 def calculate_business_case(
     dc_size_mw,
@@ -10,13 +9,11 @@ def calculate_business_case(
     high_perf_gpu_ratio,
     utilization_rate,
     market_price_per_m_tokens,
-    lang # 현재 언어 설정을 받음
+    lang
 ):
-    # [1] config.yml 로드
     with open("config.yml", "r") as f:
         config = yaml.safe_load(f)
 
-    # --- 설정 값 추출 ---
     inv_conf = config['investment']
     hw_conf = config['hardware']
     op_conf = config['operating_expenses']
@@ -27,37 +24,22 @@ def calculate_business_case(
     HOURS_PER_YEAR = 8760
     high_perf_gpu_ratio /= 100.0
 
-    # --- 1. CAPEX 및 GPU 구성 ---
+    # --- 1. CAPEX & GPU ---
     dc_construction_cost = inv_conf['dc_capex_per_mw'] * dc_size_mw
     it_hw_budget = inv_conf['it_budget_per_mw'] * dc_size_mw
     total_investment = dc_construction_cost + it_hw_budget
     num_high_perf_gpus = (it_hw_budget * high_perf_gpu_ratio) // hw_conf['high_perf_gpu']['cost'] if hw_conf['high_perf_gpu']['cost'] > 0 else 0
     num_standard_gpus = (it_hw_budget * (1 - high_perf_gpu_ratio)) // hw_conf['standard_gpu']['cost'] if hw_conf['standard_gpu']['cost'] > 0 else 0
 
-    # --- 2. 연간 토큰 처리량 (Capacity) ---
+    # --- 2. Capacity ---
     arch_efficiency = model_conf['intelligent_arch_efficiency'] if apply_mirrormind else 1.0
     tokens_from_high_perf = num_high_perf_gpus * hw_conf['high_perf_gpu']['m_tokens_per_hour'] * 1e6 * HOURS_PER_YEAR
     tokens_from_standard = num_standard_gpus * hw_conf['standard_gpu']['m_tokens_per_hour'] * 1e6 * HOURS_PER_YEAR
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. 고객 그룹별 토큰 및 매출 계산 ---
-    segment_data = []
-    total_token_demand_ratio = sum(t['ratio'] * t['monthly_token_usage_m'] for t in tiers_conf.values())
-
-    for tier_name, tier_info in tiers_conf.items():
-        token_usage_ratio = (tier_info['ratio'] * tier_info['monthly_token_usage_m']) / total_token_demand_ratio if total_token_demand_ratio > 0 else 0
-        segment_tokens = serviced_tokens * token_usage_ratio
-        segment_revenue = (segment_tokens / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
-        
-        segment_data.append({
-            "tier_key": f"tier_{tier_name}", # 현지화를 위한 키
-            "token_usage_ratio": token_usage_ratio,
-            "total_revenue": segment_revenue,
-        })
-
-    # --- 4. 통합 손익계산서 (P&L) 계산 ---
-    revenue = sum(s['total_revenue'] for s in segment_data)
+    # --- 3. Overall P&L ---
+    revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * (1 - tiers_conf['free']['ratio']) # Free users generate no revenue
     it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
     total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
     power_cost_kwh_rate = 0.18 if use_clean_power == 'Renewable' else 0.12
@@ -74,21 +56,34 @@ def calculate_business_case(
     gross_profit = revenue - cost_of_revenue
     operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
 
-    # --- 5. [FINAL FIX] 현지화까지 완료된 최종 데이터프레임 생성 ---
-    pnl_by_segment_data = []
-    for s in segment_data:
-        segment_cost = total_operating_cost * s['token_usage_ratio']
-        segment_profit = s['total_revenue'] - segment_cost
-        pnl_by_segment_data.append({
-            t('col_segment', lang): t(s['tier_key'], lang), # 여기서 직접 현지화
-            t('col_total_revenue', lang): s['total_revenue'],
-            t('col_total_cost', lang): segment_cost,
-            t('col_total_profit', lang): segment_profit
-        })
+    # --- 4. [NEW] Per-User Metrics Calculation ---
+    total_users = model_conf['total_users_for_100mw'] * (dc_size_mw / 100.0)
+    total_token_demand_ratio = sum(t['ratio'] * t['monthly_token_usage_m'] for t in tiers_conf.values())
     
-    pnl_by_segment_df = pd.DataFrame(pnl_by_segment_data)
+    segment_narrative_data = []
+    for tier_name, tier_info in tiers_conf.items():
+        num_users_in_tier = total_users * tier_info['ratio']
+        if num_users_in_tier == 0: continue
 
-    # --- 6. 결과 정리 ---
+        token_usage_ratio = (tier_info['ratio'] * tier_info['monthly_token_usage_m']) / total_token_demand_ratio if total_token_demand_ratio > 0 else 0
+        
+        # Calculate per-user metrics
+        tier_revenue = (serviced_tokens * token_usage_ratio / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
+        tier_cost = total_operating_cost * token_usage_ratio
+        
+        revenue_per_user = tier_revenue / num_users_in_tier
+        cost_per_user = tier_cost / num_users_in_tier
+        profit_per_user = revenue_per_user - cost_per_user
+
+        segment_narrative_data.append({
+            "tier_name_key": f"tier_{tier_name}",
+            "num_users": num_users_in_tier,
+            "revenue_per_user": revenue_per_user,
+            "cost_per_user": cost_per_user,
+            "profit_per_user": profit_per_user,
+        })
+
+    # --- 5. Final Results ---
     pnl_annual = {
         'revenue': revenue, 'cost_of_revenue': cost_of_revenue, 'gross_profit': gross_profit,
         'sg_and_a': sg_and_a, 'd_and_a': d_and_a, 'it_depreciation': it_depreciation,
@@ -97,7 +92,7 @@ def calculate_business_case(
 
     results = {
         "pnl_annual": pnl_annual,
-        "pnl_by_segment_df": pnl_by_segment_df, # 완벽하게 준비된 DF 반환
+        "segment_narratives": segment_narrative_data,
         "total_investment": total_investment,
         "assumptions": {
             "gpu_mix_string": f"H:{int(num_high_perf_gpus)} / S:{int(num_standard_gpus)}",
@@ -105,5 +100,4 @@ def calculate_business_case(
             "serviced_tokens_t": serviced_tokens / 1e12,
         },
     }
-
     return results
