@@ -1,4 +1,4 @@
-# calculator.py (v8.0 - Monthly Metrics)
+# calculator.py (v9.0 - Pricing Strategy Analysis)
 import yaml
 import pandas as pd
 
@@ -9,6 +9,8 @@ def calculate_business_case(
     high_perf_gpu_ratio,
     utilization_rate,
     market_price_per_m_tokens,
+    standard_fee, # New input
+    premium_fee,  # New input
     lang
 ):
     with open("config.yml", "r") as f:
@@ -38,8 +40,14 @@ def calculate_business_case(
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. Overall P&L ---
-    revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * (1 - tiers_conf['free']['ratio'])
+    # --- 3. Overall P&L (based on new fixed-fee pricing) ---
+    total_users = model_conf['total_users_for_100mw'] * (dc_size_mw / 100.0)
+    standard_users = total_users * tiers_conf['standard']['ratio']
+    premium_users = total_users * tiers_conf['premium']['ratio']
+    
+    # [MODIFIED] Calculate revenue based on the new fixed fees
+    revenue = (standard_users * standard_fee + premium_users * premium_fee) * 12 
+
     it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
     total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
     power_cost_kwh_rate = 0.18 if use_clean_power == 'Renewable' else 0.12
@@ -56,8 +64,7 @@ def calculate_business_case(
     gross_profit = revenue - cost_of_revenue
     operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
 
-    # --- 4. [MODIFIED] Per-User Monthly Metrics Calculation ---
-    total_users = model_conf['total_users_for_100mw'] * (dc_size_mw / 100.0)
+    # --- 4. Per-User Monthly Metrics Calculation ---
     total_token_demand_ratio = sum(t['ratio'] * t['monthly_token_usage_m'] for t in tiers_conf.values())
     
     segment_narrative_data = []
@@ -72,15 +79,24 @@ def calculate_business_case(
         
         revenue_per_user_annual = tier_revenue_annual / num_users_in_tier
         cost_per_user_annual = tier_cost_annual / num_users_in_tier
-        profit_per_user_annual = revenue_per_user_annual - cost_per_user_annual
+        
+        # [NEW] Add pricing strategy analysis
+        fixed_fee = 0
+        if tier_name == 'standard': fixed_fee = standard_fee
+        elif tier_name == 'premium': fixed_fee = premium_fee
+        
+        new_profit_per_user = fixed_fee - (cost_per_user_annual / 12.0)
+        opportunity_cost = (revenue_per_user_annual / 12.0) - fixed_fee
 
         segment_narrative_data.append({
             "tier_name_key": f"tier_{tier_name}",
             "num_users": num_users_in_tier,
-            # Divide annual figures by 12 to get monthly metrics
             "revenue_per_user": revenue_per_user_annual / 12.0,
             "cost_per_user": cost_per_user_annual / 12.0,
-            "profit_per_user": profit_per_user_annual / 12.0,
+            "profit_per_user": (revenue_per_user_annual - cost_per_user_annual) / 12.0,
+            "fixed_fee": fixed_fee,
+            "new_profit_per_user": new_profit_per_user,
+            "opportunity_cost": opportunity_cost,
         })
 
     # --- 5. Final Results ---
