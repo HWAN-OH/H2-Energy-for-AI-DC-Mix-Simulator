@@ -1,86 +1,68 @@
-# calculator_v12.py
+# calculator_v12.py (with config loading)
+
+import yaml
+
+with open("config.yml", "r") as f:
+    config = yaml.safe_load(f)
 
 def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirrormind, lang):
     """
-    Calculate AI DC business performance based on key variables.
+    Calculate AI DC business performance based on config values and user inputs.
     """
-    # Constants (placeholder - later from config)
     HOURS_PER_YEAR = 8760
-    TOKEN_PER_KWH = 2000  # 예시: 1kWh당 처리 가능한 토큰 수
-    POWER_COST_PER_KWH = 0.12 if use_clean_power == "Conventional" else 0.18
-    CAPEX_PER_MW = 1000000  # USD
-    OPEX_PER_MW = 150000  # USD/year
-    AMORT_YEARS = 5
 
-    # Usage assumptions
-    token_usage_per_user = {
-        "free": 1000 * 30,    # 월 1천 토큰 x 30일
-        "standard": 10000 * 30,
-        "premium": 100000 * 30
-    }
-    user_ratio = {"free": 0.6, "standard": 0.3, "premium": 0.1}
-    total_users = 1000000  # 기본 시나리오
+    dc_conf = config["dc_defaults"]
+    token_conf = config["token_processing"]
+    tiers_conf = config["tiers"]
+    assumptions = config["assumptions"]
 
-    # Efficiency factor
-    efficiency = 1.0
-    if apply_mirrormind:
-        efficiency *= 1.25
+    TOKEN_PER_KWH = token_conf["token_per_kwh"]
+    EFFICIENCY = token_conf["mirrormind_efficiency"] if apply_mirrormind else 1.0
 
-    # Power and token capacity
+    power_cost = dc_conf["power_cost_kwh"][use_clean_power]
+    capex = dc_conf["capex_per_mw"] * dc_size_mw / dc_conf["amortization_years"]
+    opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
+
     total_power_kwh = dc_size_mw * 1000 * HOURS_PER_YEAR
-    total_token_capacity = total_power_kwh * TOKEN_PER_KWH * efficiency
+    total_token_capacity = total_power_kwh * TOKEN_PER_KWH * EFFICIENCY
 
-    # Token demand
-    token_demand = sum([
-        token_usage_per_user[tier] * user_ratio[tier] * total_users
-        for tier in user_ratio
-    ])
+    token_demand = 0
+    for tier in tiers_conf:
+        tier_conf = tiers_conf[tier]
+        token_demand += tier_conf["monthly_token_usage"] * 12 * tier_conf["ratio"] * assumptions["users_total"]
 
-    # Scale factor (수용가능한 사용자 수)
     scale_ratio = min(1.0, total_token_capacity / token_demand)
-    actual_users = int(total_users * scale_ratio)
+    actual_users = int(assumptions["users_total"] * scale_ratio)
 
-    # 단가 가정 (후에 역산으로 변경 가능)
-    price_per_million_tokens = {
-        "free": 0,
-        "standard": 0.8,
-        "premium": 5.0
-    }
-
-    # 매출 계산
     revenue = 0
     user_level_table = []
+
     for tier in ["free", "standard", "premium"]:
-        users = int(actual_users * user_ratio[tier])
-        usage = token_usage_per_user[tier] * users
-        unit_price = price_per_million_tokens[tier] / 1e6
+        tier_conf = tiers_conf[tier]
+        users = int(actual_users * tier_conf["ratio"])
+        usage = tier_conf["monthly_token_usage"] * 12 * users
+        unit_price = tier_conf["price_per_million_token"] / 1e6
         tier_revenue = usage * unit_price
         revenue += tier_revenue
 
-        cost = (usage / TOKEN_PER_KWH) * POWER_COST_PER_KWH
+        cost = (usage / TOKEN_PER_KWH) * power_cost
         margin = tier_revenue - cost
 
         user_level_table.append({
             "Tier": tier.title(),
             "Users": users,
-            "Monthly_Tokens": token_usage_per_user[tier],
+            "Monthly_Tokens": tier_conf["monthly_token_usage"],
             "Revenue": round(tier_revenue, 2),
             "Cost": round(cost, 2),
             "Margin": round(margin, 2)
         })
 
-    # 비용
-    annual_opex = OPEX_PER_MW * dc_size_mw
-    annual_capex = CAPEX_PER_MW * dc_size_mw / AMORT_YEARS
-    total_cost = annual_opex + annual_capex
-
+    total_cost = capex + opex
     profit = revenue - total_cost
 
-    # 손익분기점 사용자 계산
     avg_rev_per_user = revenue / actual_users if actual_users else 0.01
     break_even_users = int(total_cost / avg_rev_per_user) if avg_rev_per_user else 0
 
-    # 제언
     recommendations = f"* 요금 인상 또는 프리미엄 사용자 비율 확대 고려\n"
     if apply_mirrormind:
         recommendations += "* 미러마인드 적용으로 토큰 효율 개선 효과 반영됨\n"
