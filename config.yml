@@ -9,13 +9,11 @@ business_assumptions:
 # Infrastructure & Hardware Assumptions
 # ===============================================
 infrastructure_assumptions:
+  dc_size_mw: 100 # 데이터센터 규모 (MW)
   dc_construction_cost_per_mw: 10000000
   it_hardware_budget_per_mw: 7000000
   building_depreciation_years: 40
   it_hw_depreciation_years: 5
-  pue: 1.5
-  watts_per_dollar_of_it_hardware: 0.025
-  maintenance_rate_of_construction_capex: 0.02
 
 # ===============================================
 # Hardware Performance Specs
@@ -32,7 +30,15 @@ hardware_specs:
 # Advanced Architecture (e.g., MirrorMind)
 # ===============================================
 advanced_architecture:
-  workload_efficiency_factor: 0.2
+  workload_efficiency_factor: 0.2 # 80% workload reduction
+
+# ===============================================
+# Research & Development (R&D) Assumptions
+# ===============================================
+research_and_development:
+  total_model_development_cost: 500000000 # 5억 달러
+  model_amortization_years: 3
+  global_datacenter_count_for_cost_allocation: 10
 
 # ===============================================
 # User & Pricing Model
@@ -47,11 +53,12 @@ user_model:
     premium_tier_fee: 100.0
 
 # ===============================================
-# Electricity Pricing Scenarios
+# Operating Costs & Scenarios
 # ===============================================
-electricity_scenarios:
-  standard_grid:
-    price_per_kwh: 0.20
-  net_zero_ppa:
-    price_per_kwh: 0.25 # Premium for 100% renewable
-
+operating_scenarios:
+  maintenance_rate_of_construction_capex: 0.02
+  pue: 1.5
+  watts_per_dollar_of_it_hardware: 0.025
+  electricity_pricing:
+    standard_grid: 0.13 # $/kWh
+    net_zero_ppa: 0.20  # $/kWh
