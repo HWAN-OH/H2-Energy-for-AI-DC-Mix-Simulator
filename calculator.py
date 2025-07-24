@@ -1,4 +1,4 @@
- calculator.py (v13.0 - Definitive Logic Fix)
+# calculator.py (v13.0 - Definitive Logic Fix)
 import yaml
 import pandas as pd
 
@@ -86,8 +86,10 @@ def calculate_business_case(
         cost_per_user_annual = tier_cost_annual / num_users_in_tier if num_users_in_tier > 0 else 0
         
         fixed_fee = 0
-        if tier_name == 'standard': fixed_fee = standard_fee
-        elif tier_name == 'premium': fixed_fee = premium_fee
+        if tier_name == 'standard':
+            fixed_fee = standard_fee
+        elif tier_name == 'premium':
+            fixed_fee = premium_fee
         
         new_profit_per_user = fixed_fee - (cost_per_user_annual / 12.0)
         opportunity_cost = (revenue_per_user_annual / 12.0) - fixed_fee
