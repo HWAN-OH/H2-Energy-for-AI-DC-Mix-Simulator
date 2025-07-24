@@ -1,4 +1,4 @@
-# localization.py (v21.0 - Pricing Strategy)
+# localization.py (v22.0 - Final Recommendation)
 
 loc_strings = {
     "en": {
@@ -42,7 +42,6 @@ loc_strings = {
         "narrative_revenue_per_user": "Usage-Based Revenue",
         "narrative_cost_per_user": "Cost per User",
         "narrative_profit_per_user": "Usage-Based Profit",
-        # [NEW] Pricing Strategy Section
         "sidebar_pricing_title": "💰 Pricing Strategy",
         "pricing_standard_fee": "Standard Tier Monthly Fee ($)",
         "pricing_premium_fee": "Premium Tier Monthly Fee ($)",
@@ -51,6 +50,12 @@ loc_strings = {
         "narrative_fixed_fee_revenue": "Fixed-Fee Revenue",
         "narrative_opportunity_cost": "Opportunity Cost (vs. Usage-Based)",
         "narrative_new_profit_per_user": "New Profit (Fixed-Fee)",
+        # [NEW] Final Recommendation Section
+        "section_4_title": "4. Recommended Pricing for 5-Year Payback",
+        "recommendation_intro": "To achieve a 5-year payback for the total investment, the following monthly pricing is recommended:",
+        "recommended_standard_fee": "Recommended Standard Fee",
+        "recommended_premium_fee": "Recommended Premium Fee",
+        "recommendation_unachievable": "With the current cost structure, achieving a 5-year payback is not feasible. A fundamental review of the hardware or architectural strategy is required.",
     },
     "ko": {
         "app_title": "AI 데이터센터 사업성 시뮬레이터",
@@ -93,7 +98,6 @@ loc_strings = {
         "narrative_revenue_per_user": "사용량 기반 매출",
         "narrative_cost_per_user": "인당 원가",
         "narrative_profit_per_user": "사용량 기반 이익",
-        # [NEW] Pricing Strategy Section
         "sidebar_pricing_title": "💰 요금제 전략 설정",
         "pricing_standard_fee": "유료 사용자 월 요금 ($)",
         "pricing_premium_fee": "프리미엄 사용자 월 요금 ($)",
@@ -102,6 +106,12 @@ loc_strings = {
         "narrative_fixed_fee_revenue": "고정 요금제 매출",
         "narrative_opportunity_cost": "기회비용 (vs 사용량 기반)",
         "narrative_new_profit_per_user": "최종 이익 (고정 요금제)",
+        # [NEW] Final Recommendation Section
+        "section_4_title": "4. 5년 내 투자금 회수를 위한 최적 요금제 제안",
+        "recommendation_intro": "총 투자금을 5년 내에 회수하기 위해, 다음과 같은 월간 요금제를 제안합니다:",
+        "recommended_standard_fee": "권장 유료 요금",
+        "recommended_premium_fee": "권장 프리미엄 요금",
+        "recommendation_unachievable": "현재 비용 구조에서는 5년 내 투자금 회수가 현실적으로 어렵습니다. 하드웨어 또는 아키텍처 전략의 근본적인 재검토가 필요합니다.",
     }
 }
 
