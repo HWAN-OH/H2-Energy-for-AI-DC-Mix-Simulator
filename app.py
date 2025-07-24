@@ -10,7 +10,6 @@ st.set_page_config(page_title="AI Datacenter Business Simulator", page_icon="�
 st.markdown("""
 <style>
     .main .block-container { padding: 2rem 5rem; }
-    .st-emotion-cache-16txtl3 { background-color: #f9fafb; }
     h1, h2, h3 { font-weight: 700; color: #111827; }
     h2 { border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-top: 2rem;}
     .stMetric { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem; }
@@ -20,6 +19,8 @@ st.markdown("""
     .pnl-table .row.total { font-weight: 700; border-top: 2px solid #d1d5db; }
     .pnl-table .label { text-align: left; }
     .pnl-table .value { text-align: right; font-family: 'Roboto Mono', monospace; }
+    .narrative-block { background-color: #f9fafb; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1rem; }
+    .narrative-block h3 { margin-top: 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -55,7 +56,6 @@ st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', 
 
 if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
-        # [FINAL FIX] lang을 직접 전달하여 계산 모듈이 모든 것을 처리하도록 함
         st.session_state.results = calculate_business_case(
             dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, lang
         )
@@ -86,23 +86,20 @@ if st.session_state.results:
     
     st.header(t("section_2_title", lang))
     
-    # [FINAL FIX] 데이터 가공 로직을 모두 제거하고, 준비된 데이터프레임을 그대로 표시
-    if 'pnl_by_segment_df' in res and not res['pnl_by_segment_df'].empty:
-        segment_df = res['pnl_by_segment_df']
-        
-        # 컬럼 이름이 이미 현지화되어 있으므로, 포맷만 지정
-        st.dataframe(
-            segment_df,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                t('col_total_revenue', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
-                t('col_total_cost', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
-                t('col_total_profit', lang): st.column_config.NumberColumn(format="$ {:,.0f}")
-            }
-        )
-    else:
-        st.warning("고객 그룹별 손익 데이터를 계산할 수 없습니다.")
+    # [FINAL FIX] Display results in a narrative format instead of a table
+    if 'segment_narratives' in res:
+        for segment in res['segment_narratives']:
+            st.markdown(f"""
+            <div class="narrative-block">
+                <h3>{t(segment['tier_name_key'], lang)}</h3>
+                <ul>
+                    <li><b>{t('narrative_users', lang)}:</b> {segment['num_users']:,.0f}</li>
+                    <li><b>{t('narrative_revenue_per_user', lang)}:</b> ${segment['revenue_per_user']:,.2f}</li>
+                    <li><b>{t('narrative_cost_per_user', lang)}:</b> ${segment['cost_per_user']:,.2f}</li>
+                    <li><b>{t('narrative_profit_per_user', lang)}:</b> ${segment['profit_per_user']:,.2f}</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.subheader(t('payback_title', lang))
     operating_profit = res['pnl_annual']['operating_profit']
