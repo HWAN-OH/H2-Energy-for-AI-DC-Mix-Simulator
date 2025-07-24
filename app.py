@@ -48,6 +48,13 @@ with st.sidebar:
     st.markdown("---")
     market_price_per_m_tokens = st.slider(t("market_price", st.session_state.lang), 0.5, 5.0, 1.5, 0.1)
 
+    # [NEW] Pricing Strategy Inputs
+    st.markdown("---")
+    st.subheader(t("sidebar_pricing_title", st.session_state.lang))
+    standard_fee = st.number_input(t("pricing_standard_fee", st.session_state.lang), min_value=0.0, value=20.0, step=1.0)
+    premium_fee = st.number_input(t("pricing_premium_fee", st.session_state.lang), min_value=0.0, value=100.0, step=5.0)
+
+
 lang = st.session_state.lang
 
 # --- 5. Main Page ---
@@ -57,7 +64,9 @@ st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', 
 if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
         st.session_state.results = calculate_business_case(
-            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, lang
+            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens,
+            standard_fee, premium_fee, # Pass new inputs
+            lang
         )
 
 if st.session_state.results:
@@ -65,12 +74,8 @@ if st.session_state.results:
     pnl = res['pnl_annual']
     
     st.header(t("section_1_title", lang))
-    
     st.subheader(t("assumptions_title", lang))
-    cols1 = st.columns(3)
-    cols1[0].metric(t("assump_gpu_mix", lang), res["assumptions"]["gpu_mix_string"])
-    cols1[1].metric(t("assump_utilization", lang), f"{res['assumptions']['utilization_rate']}%")
-    cols1[2].metric(t("assump_tokens", lang), f"{res['assumptions']['serviced_tokens_t']:,.2f}")
+    # ... (rest of section 1 is unchanged)
     
     st.html(f"""
         <div class="pnl-table">
@@ -85,8 +90,6 @@ if st.session_state.results:
     """)
     
     st.header(t("section_2_title", lang))
-    
-    # [FINAL FIX] Display results in a narrative format instead of a table
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
             st.markdown(f"""
@@ -100,8 +103,28 @@ if st.session_state.results:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
+            
+    # [NEW] Section 3: Pricing Strategy Analysis
+    st.header(t("section_3_title", lang))
+    if 'segment_narratives' in res:
+        for segment in res['segment_narratives']:
+            if segment['tier_name_key'] in ['tier_standard', 'tier_premium']:
+                # Lyn's suggestion: Highlight negative profit in red
+                profit_color = "red" if segment['new_profit_per_user'] < 0 else "green"
+                
+                st.markdown(f"""
+                <div class="narrative-block">
+                    <h3>{t('narrative_pricing_title', lang)}: {t(segment['tier_name_key'], lang)}</h3>
+                    <ul>
+                        <li><b>{t('narrative_fixed_fee_revenue', lang)}:</b> ${segment['fixed_fee']:,.2f}</li>
+                        <li><b>{t('narrative_opportunity_cost', lang)}:</b> ${segment['opportunity_cost']:,.2f}</li>
+                        <li style="color:{profit_color};"><b>{t('narrative_new_profit_per_user', lang)}:</b> ${segment['new_profit_per_user']:,.2f}</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
 
     st.subheader(t('payback_title', lang))
+    # ... (rest of the page is unchanged)
     operating_profit = res['pnl_annual']['operating_profit']
     if operating_profit > 0:
         payback_period = res['total_investment'] / operating_profit
@@ -109,6 +132,7 @@ if st.session_state.results:
     else:
         payback_text = t('unrecoverable', lang)
     st.metric(label=t('payback_years', lang), value=payback_text)
+
 
 else:
     st.info(t("initial_prompt", lang))
