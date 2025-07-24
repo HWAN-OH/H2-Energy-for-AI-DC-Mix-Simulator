@@ -11,14 +11,16 @@ st.markdown("""
 <style>
     .main .block-container { padding: 2rem 5rem; }
     .st-emotion-cache-16txtl3 { background-color: #f9fafb; }
-    h1 { color: #1e3a8a; font-weight: 700; }
-    h2 { border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; color: #111827; margin-top: 2rem;}
-    h3 { color: #1f2937; }
+    h1, h2, h3 { font-weight: 700; color: #111827; }
+    h2 { border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-top: 2rem;}
     .stMetric { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem; }
     .footer { position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: #6b7280; text-align: center; padding: 12px; font-size: 0.85rem; border-top: 1px solid #e5e7eb; }
-    .dataframe th { text-align: center !important; background-color: #f3f4f6; font-weight: 600; color: #1f2937; }
-    .dataframe td:first-child { text-align: center !important; font-weight: 500; }
-    .dataframe td:not(:first-child) { text-align: left !important; font-family: 'Roboto Mono', monospace; }
+    .pnl-table { margin-top: 1rem; }
+    .pnl-table .row { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid #f3f4f6; }
+    .pnl-table .row.header { font-weight: 600; color: #1f2937; }
+    .pnl-table .row.total { font-weight: 700; border-top: 2px solid #d1d5db; }
+    .pnl-table .label { text-align: left; }
+    .pnl-table .value { text-align: right; font-family: 'Roboto Mono', monospace; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -59,6 +61,7 @@ if st.button(t("run_button", st.session_state.lang), use_container_width=True, t
 if st.session_state.results:
     res = st.session_state.results
     lang = st.session_state.lang
+    pnl = res['pnl_annual']
     
     # --- Section 1: Overall P&L ---
     st.header(t("section_1_title", lang))
@@ -69,12 +72,18 @@ if st.session_state.results:
     cols1[2].metric(t("assump_tokens", lang), f"{res['assumptions']['serviced_tokens_t']:,.2f} T")
     cols1[3].metric(t("assump_power", lang), f"{res['assumptions']['consumed_power_gwh']:,.1f} GWh")
 
-    st.subheader(t("pnl_table_title", lang))
-    pnl_df = pd.DataFrame({
-        t("pnl_item", lang): [t("pnl_revenue", lang), t("pnl_cost", lang), t("pnl_profit", lang)],
-        t("pnl_amount", lang): [f"{res['pnl_annual']['revenue']:,.0f}", f"{res['pnl_annual']['cost']:,.0f}", f"{res['pnl_annual']['profit']:,.0f}"]
-    })
-    st.dataframe(pnl_df, hide_index=True, use_container_width=True)
+    st.subheader(t("pnl_annual_title", lang))
+    st.html(f"""
+        <div class="pnl-table">
+            <div class="row"><div class="label">{t('pnl_revenue', lang)}</div><div class="value">${pnl['revenue']:,.0f}</div></div>
+            <div class="row"><div class="label">{t('pnl_cost_of_revenue', lang)}</div><div class="value">(${pnl['cost_of_revenue']:,.0f})</div></div>
+            <div class="row total"><div class="label">{t('pnl_gross_profit', lang)}</div><div class="value">${pnl['gross_profit']:,.0f}</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_sg_and_a', lang)}</div><div class="value">(${pnl['sg_and_a']:,.0f})</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl['d_and_a']:,.0f})</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_rd_amortization', lang)}</div><div class="value">(${pnl['rd_amortization']:,.0f})</div></div>
+            <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl['operating_profit']:,.0f}</div></div>
+        </div>
+    """)
 
     # --- Section 2: Per-User P&L ---
     st.header(t("section_2_title", lang))
@@ -88,9 +97,6 @@ if st.session_state.results:
             t("col_total_revenue", lang): f"{data['total_revenue']:,.0f}",
             t("col_total_cost", lang): f"{data['total_cost']:,.0f}",
             t("col_total_profit", lang): f"{data['total_profit']:,.0f}",
-            t("col_per_user_revenue", lang): f"{data['per_user_revenue']:,.2f}",
-            t("col_per_user_cost", lang): f"{data['per_user_cost']:,.2f}",
-            t("col_per_user_profit", lang): f"{data['per_user_profit']:,.2f}"
         })
     segment_df = pd.DataFrame(segment_data)
     st.dataframe(segment_df, hide_index=True, use_container_width=True)
