@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from calculator import calculate_business_case
 from localization import t
 
@@ -19,6 +20,9 @@ st.markdown("""
     .pnl-table .row.total { font-weight: 700; border-top: 2px solid #d1d5db; }
     .pnl-table .label { text-align: left; }
     .pnl-table .value { text-align: right; font-family: 'Roboto Mono', monospace; }
+    .dataframe th { text-align: center !important; background-color: #f3f4f6; font-weight: 600; color: #1f2937; }
+    .dataframe td:first-child { text-align: center !important; font-weight: 500; }
+    .dataframe td:not(:first-child) { text-align: left !important; font-family: 'Roboto Mono', monospace; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -82,6 +86,21 @@ if st.session_state.results:
             <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl['operating_profit']:,.0f}</div></div>
         </div>
     """)
+
+    # --- Section 2: P&L by Customer Segment ---
+    st.header(t("section_2_title", lang))
+    segment_data = []
+    tier_name_map = {"free": t("tier_free", lang), "standard": t("tier_standard", lang), "premium": t("tier_premium", lang)}
+    for tier in ["free", "standard", "premium"]:
+        data = res["pnl_segments"][tier]
+        segment_data.append({
+            t("col_segment", lang): tier_name_map[tier],
+            t("col_total_revenue", lang): f"{data['total_revenue']:,.0f}",
+            t("col_total_cost", lang): f"{data['total_cost']:,.0f}",
+            t("col_total_profit", lang): f"{data['total_profit']:,.0f}",
+        })
+    segment_df = pd.DataFrame(segment_data)
+    st.dataframe(segment_df, hide_index=True, use_container_width=True)
 
     # Payback
     st.subheader(t("payback_title", lang))
