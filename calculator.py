@@ -20,14 +20,13 @@ def calculate_business_case(dc_size_mw, use_clean_power, apply_mirrormind, high_
     h_gpu = hw_conf["high_perf_gpu"]
     s_gpu = hw_conf["standard_gpu"]
 
-    num_high_perf_gpus = high_perf_budget / h_gpu["cost"]
-    num_standard_gpus = standard_budget / s_gpu["cost"]
+    num_high_perf_gpus = high_perf_budget / h_gpu["cost"] if h_gpu["cost"] > 0 else 0
+    num_standard_gpus = standard_budget / s_gpu["cost"] if s_gpu["cost"] > 0 else 0
     
     total_token_capacity_m = ((num_high_perf_gpus * h_gpu["m_tokens_per_hour"]) + \
                               (num_standard_gpus * s_gpu["m_tokens_per_hour"])) * HOURS_PER_YEAR
     
-    # Estimate power consumption based on number of GPUs (assuming 700W for H100, 400W for A100)
-    total_it_power_kw = (num_high_perf_gpus * 0.7 + num_standard_gpus * 0.4)
+    total_it_power_kw = (num_high_perf_gpus * 0.7 + num_standard_gpus * 0.4) # Simplified power estimation
     total_dc_power_kw = total_it_power_kw * dc_conf["total_watts_per_it_watt"]
     total_power_kwh_consumed = total_dc_power_kw * HOURS_PER_YEAR
 
@@ -68,15 +67,23 @@ def calculate_business_case(dc_size_mw, use_clean_power, apply_mirrormind, high_
 
     total_profit = total_revenue - total_cost
 
-    # Distribute total cost for segment P&L
+    # Distribute total cost and calculate per-user metrics
     for tier in segment_pnl:
-        user_ratio = (segment_pnl[tier]['users'] / actual_users_total) if actual_users_total > 0 else 0
+        users_in_tier = segment_pnl[tier]['users']
+        user_ratio = (users_in_tier / actual_users_total) if actual_users_total > 0 else 0
         cost_share = total_cost * user_ratio
+        
         segment_pnl[tier]['total_cost'] = cost_share
         segment_pnl[tier]['total_profit'] = segment_pnl[tier]['total_revenue'] - cost_share
+        
+        # --- THIS IS THE FIX ---
+        segment_pnl[tier]['per_user_revenue'] = (segment_pnl[tier]['total_revenue'] / users_in_tier) if users_in_tier > 0 else 0
+        segment_pnl[tier]['per_user_cost'] = (cost_share / users_in_tier) if users_in_tier > 0 else 0
+        segment_pnl[tier]['per_user_profit'] = (segment_pnl[tier]['total_profit'] / users_in_tier) if users_in_tier > 0 else 0
+        # --- END OF FIX ---
 
     # --- 5. Payback Period ---
-    annual_cash_flow = total_profit + annual_capex_dc + annual_capex_it # Profit + Depreciation
+    annual_cash_flow = total_profit + annual_capex_dc + annual_capex_it
     total_investment = (dc_conf["capex_per_mw"] * dc_size_mw) + it_budget
     payback_years = total_investment / annual_cash_flow if annual_cash_flow > 0 else float('inf')
 
