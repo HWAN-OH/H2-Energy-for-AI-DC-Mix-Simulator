@@ -37,6 +37,14 @@ operating_expenses:
   # 전력 효율 지수 (PUE)
   pue: 1.5
 
+dc_defaults:
+  capex_per_mw: 1200000
+  opex_per_mw_per_year: 120000
+  amortization_years: 5
+  power_cost_kwh:
+    Conventional: 0.12
+    Renewable: 0.18
+
 # ===============================================
 # 연구개발 (R&D)
 # ===============================================
