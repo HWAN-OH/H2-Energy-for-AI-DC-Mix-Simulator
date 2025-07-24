@@ -1,4 +1,4 @@
-# localization.py (v17.0)
+# localization.py (v18.0)
 
 loc_strings = {
     "en": {
@@ -18,7 +18,7 @@ loc_strings = {
         "run_button": "🚀 Run Analysis",
         "results_header": "Analysis Results",
         "initial_prompt": "Set your scenario variables in the sidebar and click 'Run Analysis'.",
-        "section_1_title": "Annual P&L",
+        "section_1_title": "1. Overall Business P&L (Annual)",
         "assumptions_title": "Key Assumptions & Capacity",
         "assump_gpu_mix": "GPU Configuration",
         "assump_utilization": "Utilization Rate",
@@ -31,6 +31,14 @@ loc_strings = {
         "pnl_d_and_a": "  - D&A (DC & HW)",
         "pnl_rd_amortization": "  - R&D Amortization",
         "pnl_operating_profit": "Operating Profit",
+        "section_2_title": "2. P&L by Customer Segment",
+        "col_segment": "Customer Segment",
+        "col_total_revenue": "Total Revenue",
+        "col_total_cost": "Total Cost",
+        "col_total_profit": "Total Profit",
+        "tier_free": "Free Users",
+        "tier_standard": "Paid Users",
+        "tier_premium": "Premium Users",
         "payback_title": "Investment Payback Period",
         "payback_years": "Estimated Payback Years",
         "unrecoverable": "Unrecoverable",
@@ -54,7 +62,7 @@ loc_strings = {
         "run_button": "🚀 분석 실행",
         "results_header": "분석 결과",
         "initial_prompt": "사이드바에서 시나리오 변수를 설정한 후 '분석 실행' 버튼을 눌러 결과를 확인하세요.",
-        "section_1_title": "연간 손익계산서 (P&L)",
+        "section_1_title": "1. 전체 사업 손익 (연간 P&L)",
         "assumptions_title": "주요 가정 및 생산량",
         "assump_gpu_mix": "그래픽카드 구성",
         "assump_utilization": "평균 가동률",
@@ -67,6 +75,14 @@ loc_strings = {
         "pnl_d_and_a": "  - 유형자산상각비 (DC, HW)",
         "pnl_rd_amortization": "  - 무형자산상각비 (R&D)",
         "pnl_operating_profit": "영업이익",
+        "section_2_title": "2. 고객 그룹별 손익 분석 (P&L)",
+        "col_segment": "고객 그룹",
+        "col_total_revenue": "그룹 전체 매출",
+        "col_total_cost": "그룹 전체 비용",
+        "col_total_profit": "그룹 전체 손익",
+        "tier_free": "무료 사용자",
+        "tier_standard": "유료 사용자",
+        "tier_premium": "프리미엄 사용자",
         "payback_title": "투자금 회수 기간",
         "payback_years": "예상 회수 기간 (년)",
         "unrecoverable": "회수 불가",
