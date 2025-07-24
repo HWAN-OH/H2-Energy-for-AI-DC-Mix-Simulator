@@ -47,19 +47,21 @@ with st.sidebar:
     st.markdown("---")
     market_price_per_m_tokens = st.slider(t("market_price", st.session_state.lang), 0.5, 5.0, 1.5, 0.1)
 
-# --- 5. Main Page ---
-st.title(t("app_title", st.session_state.lang))
-st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', st.session_state.lang)}</p>", unsafe_allow_html=True)
+# [FIX] lang 변수를 최상단에서 정의하여 스크립트 전체에서 접근 가능하도록 수정
+lang = st.session_state.lang
 
-if st.button(t("run_button", st.session_state.lang), use_container_width=True, type="primary"):
+# --- 5. Main Page ---
+st.title(t("app_title", lang))
+st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', lang)}</p>", unsafe_allow_html=True)
+
+if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
         st.session_state.results = calculate_business_case(
-            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, st.session_state.lang
+            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, lang
         )
 
 if st.session_state.results:
     res = st.session_state.results
-    lang = st.session_state.lang
     pnl = res['pnl_annual']
     
     st.header(t("section_1_title", lang))
@@ -84,11 +86,9 @@ if st.session_state.results:
     
     st.header(t("section_2_title", lang))
     
-    # --- START: ROBUST DATAFRAME DISPLAY LOGIC ---
     if res.get('pnl_by_segment') and len(res['pnl_by_segment']) > 0:
         segment_df = pd.DataFrame(res['pnl_by_segment'])
 
-        # [FIX] 데이터 표시 전, 숫자형이어야 할 열들의 데이터 타입을 명시적으로 변환
         numeric_cols = ['total_revenue', 'total_cost', 'total_profit']
         for col in numeric_cols:
             segment_df[col] = pd.to_numeric(segment_df[col], errors='coerce').fillna(0)
@@ -125,8 +125,7 @@ if st.session_state.results:
             column_config=column_config
         )
     else:
-        st.warning("고객 그룹별 손익 데이터를 계산할 수 없습니다.")
-    # --- END: ROBUST DATAFRAME DISPLAY LOGIC ---
+        st.warning(t("Could not calculate P&L data by customer segment.", lang))
 
     st.subheader(t('payback_title', lang))
     operating_profit = res['pnl_annual']['operating_profit']
@@ -138,7 +137,7 @@ if st.session_state.results:
     st.metric(label=t('payback_years', lang), value=payback_text)
 
 else:
-    st.info(t("initial_prompt", st.session_state.lang))
+    st.info(t("initial_prompt", lang))
 
 # --- Footer ---
 st.markdown(f'<div class="footer"><p>{t("copyright_text", lang)} | {t("contact_text", lang)}</p></div>', unsafe_allow_html=True)
