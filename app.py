@@ -49,10 +49,8 @@ st.markdown(t('app_subtitle'))
 st.session_state.lang = 'ko' if st.radio(t('lang_selector_label'), ['한국어', 'English'], index=0, horizontal=True) == '한국어' else 'en'
 
 if st.button(t('run_button_label'), use_container_width=True, type="primary"):
-    # Determine electricity price based on scenario
-    elec_price = config['operating_assumptions']['electricity_price_per_kwh']
-    if electricity_scenario == 'net_zero_ppa':
-        elec_price *= 1.5 # Assume 50% premium for net-zero
+    # BUG FIX: Correctly read electricity price from the new config structure
+    elec_price = config.get('electricity_scenarios', {}).get(electricity_scenario, {}).get('price_per_kwh', 0.13)
 
     user_inputs = {
         'high_perf_hw_ratio': high_perf_hw_ratio,
