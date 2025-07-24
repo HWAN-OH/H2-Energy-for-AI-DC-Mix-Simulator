@@ -1,101 +1,84 @@
 import pandas as pd
 import numpy as np
-import numpy_financial as npf
 
 def calculate_business_case(config, user_inputs):
     """
-    Calculates a full P&L for the entire business and for a single user.
+    Calculates P&L based on a unit-cost structure linked to hardware performance.
     """
     # --- 1. Unpack all inputs & assumptions ---
-    demand_profile = user_inputs['demand_profile']
-    apply_advanced_arch = user_inputs['apply_advanced_arch']
     high_perf_hw_ratio = user_inputs['high_perf_hw_ratio'] / 100.0
-    paid_tier_fee = user_inputs['paid_tier_fee']
-    premium_tier_fee = user_inputs['premium_tier_fee']
-    electricity_price = user_inputs['electricity_price']
-
+    
+    biz_config = config.get('business_assumptions', {})
+    perf_config = config.get('performance_assumptions', {})
     user_config = config.get('user_assumptions', {})
-    infra_config = config.get('infrastructure_assumptions', {})
-    arch_config = config.get('advanced_architecture_assumptions', {})
-    rd_config = config.get('research_and_development_assumptions', {})
-    analysis_years = config.get('business_assumptions', {}).get('analysis_years', 10)
+    op_config = config.get('operating_assumptions', {})
 
-    # --- 2. Determine Effective DC Size and Costs ---
-    workload_factor = arch_config.get('workload_efficiency_factor', 1.0) if apply_advanced_arch else 1.0
-    adj_demand_profile = demand_profile.copy()
-    adj_demand_profile['demand_mwh'] *= workload_factor
+    # --- 2. Hardware Investment & Performance Analysis ---
+    it_budget = biz_config.get('it_hardware_budget', 0)
+    budget_for_high_perf = it_budget * high_perf_hw_ratio
+    budget_for_low_cost = it_budget * (1 - high_perf_hw_ratio)
+
+    h_gpu = perf_config.get('high_perf_gpu', {})
+    l_gpu = perf_config.get('low_cost_gpu', {})
+
+    num_high_gpu = budget_for_high_perf / h_gpu.get('cost_per_unit', 1)
+    num_low_gpu = budget_for_low_cost / l_gpu.get('cost_per_unit', 1)
+
+    total_performance_score = (num_high_gpu * h_gpu.get('performance_score_per_unit', 0)) + \
+                              (num_low_gpu * l_gpu.get('performance_score_per_unit', 0))
+
+    # --- 3. Capacity Calculation ---
+    m_tokens_per_hour = total_performance_score * perf_config.get('m_tokens_per_hour_per_performance_score', 0)
+    total_annual_token_capacity_millions = m_tokens_per_hour * 24 * 365
+
+    # --- 4. Cost Structure & Unit Cost Analysis ---
+    # Annual Costs
+    dc_construction_capex = biz_config.get('dc_construction_budget', 0)
+    it_hardware_capex = it_budget
+
+    annual_dc_depreciation = dc_construction_capex / op_config.get('building_depreciation_years', 40)
+    annual_it_depreciation = it_hardware_capex / op_config.get('it_hw_depreciation_years', 5)
     
-    original_final_peak_demand_mw = demand_profile['peak_demand_mw'].iloc[-1]
-    effective_dc_size_mw = adj_demand_profile['peak_demand_mw'].iloc[-1]
+    total_it_power_watts = it_hardware_capex * op_config.get('watts_per_dollar_of_it_hardware', 0)
+    total_dc_power_watts = total_it_power_watts * op_config.get('pue', 1.5)
+    total_annual_kwh = (total_dc_power_watts * 24 * 365) / 1000
+    annual_electricity_cost = total_annual_kwh * op_config.get('electricity_price_per_kwh', 0)
 
-    # --- 3. Calculate CAPEX and Annual P&L (using Year 5 as representative) ---
-    dc_construction_capex = infra_config.get('dc_construction_cost_per_mw', 10) * effective_dc_size_mw
+    annual_maintenance_cost = dc_construction_capex * op_config.get('maintenance_rate_of_construction_capex', 0)
+
+    total_annual_cost = annual_dc_depreciation + annual_it_depreciation + annual_electricity_cost + annual_maintenance_cost
     
-    h_gpu = infra_config.get('high_perf_gpu', {})
-    l_gpu = infra_config.get('low_cost_gpu', {})
-    base_total_performance_units = (effective_dc_size_mw / 100) * 2000 * h_gpu.get('performance_unit', 10)
-    num_high_gpu = (base_total_performance_units * high_perf_hw_ratio) / h_gpu.get('performance_unit', 1)
-    num_low_gpu = (base_total_performance_units * (1 - high_perf_hw_ratio)) / l_gpu.get('performance_unit', 1)
-    it_hardware_capex = (num_high_gpu * h_gpu.get('cost_per_unit', 0)) + \
-                        (num_low_gpu * l_gpu.get('cost_per_unit', 0))
+    # Unit Cost
+    cost_per_million_tokens = total_annual_cost / total_annual_token_capacity_millions if total_annual_token_capacity_millions > 0 else 0
 
-    initial_investment = dc_construction_capex + it_hardware_capex
-    it_reinvestment_capex = it_hardware_capex
-
-    # P&L Calculation
-    pnl = {}
-    year_5_demand = adj_demand_profile.iloc[4]
-    
-    total_users = user_config.get('total_users_for_100mw', 0) * (original_final_peak_demand_mw / 100)
-    paid_users = total_users * user_config.get('tiers', {}).get('paid', {}).get('ratio', 0)
-    premium_users = total_users * user_config.get('tiers', {}).get('premium', {}).get('ratio', 0)
-    pnl['revenue'] = (paid_users * paid_tier_fee + premium_users * premium_tier_fee) * 12
-
-    pnl['cost_of_revenue'] = year_5_demand['demand_mwh'] * 1000 * electricity_price + \
-                             dc_construction_capex * infra_config.get('maintenance_rate_of_construction_capex', 0.02)
-    
-    pnl['gross_profit'] = pnl['revenue'] - pnl['cost_of_revenue']
-
-    pnl['depreciation_amortization_asset'] = (dc_construction_capex / infra_config.get('building_depreciation_years', 40)) + \
-                                             (it_hardware_capex / infra_config.get('it_hw_depreciation_years', 5))
-    
-    model_dev_cost = rd_config.get('total_model_development_cost', 0)
-    model_amort_years = rd_config.get('model_amortization_years', 3)
-    global_dcs = rd_config.get('global_datacenter_count', 1)
-    pnl['depreciation_amortization_rd'] = (model_dev_cost / global_dcs) / model_amort_years if model_amort_years > 0 and global_dcs > 0 else 0
-    
-    pnl['operating_expenses'] = pnl['depreciation_amortization_asset'] + pnl['depreciation_amortization_rd']
-    pnl['operating_profit'] = pnl['gross_profit'] - pnl['operating_expenses']
-
-    # --- 4. Per-User P&L ---
-    total_annual_tokens_millions = sum([
-        (total_users * tier_data['ratio']) * tier_data['monthly_token_usage_millions'] * 12
-        for tier_name, tier_data in user_config.get('tiers', {}).items()
+    # --- 5. Profitability Analysis (P&L) ---
+    user_set = user_config.get('user_set_composition', {})
+    tokens_per_user_set_monthly = sum([
+        tier['ratio'] * tier['monthly_token_usage_millions']
+        for tier in user_set.values()
     ])
+    tokens_per_user_set_annually = tokens_per_user_set_monthly * 12
+
+    num_user_sets_supported = total_annual_token_capacity_millions / tokens_per_user_set_annually if tokens_per_user_set_annually > 0 else 0
     
-    total_annual_cost = pnl['cost_of_revenue'] + pnl['operating_expenses']
-    fully_loaded_cost_per_million_tokens = total_annual_cost / total_annual_tokens_millions if total_annual_tokens_millions > 0 else 0
+    total_users_supported = num_user_sets_supported * sum(tier['ratio'] for tier in user_set.values())
+    paid_users = num_user_sets_supported * user_set.get('paid', {}).get('ratio', 0)
+    premium_users = num_user_sets_supported * user_set.get('premium', {}).get('ratio', 0)
 
-    unit_pnl = {}
-    tier_fees = {'free': 0, 'paid': paid_tier_fee, 'premium': premium_tier_fee}
-    for tier_name, tier_data in user_config.get('tiers', {}).items():
-        monthly_tokens = tier_data.get('monthly_token_usage_millions', 0)
-        
-        user_revenue = tier_fees.get(tier_name, 0)
-        user_cost = monthly_tokens * fully_loaded_cost_per_million_tokens
-        user_op_profit = user_revenue - user_cost
-        
-        unit_pnl[tier_name] = {
-            'revenue': user_revenue,
-            'cost': user_cost,
-            'profit': user_op_profit,
-        }
+    pricing = user_config.get('pricing', {})
+    annual_revenue = (paid_users * pricing.get('paid_tier_fee', 0) + premium_users * pricing.get('premium_tier_fee', 0)) * 12
 
-    # --- 5. Payback Period Calculation ---
-    payback_period = float('inf') # Placeholder, as P&L is now the focus
+    operating_profit = annual_revenue - total_annual_cost
 
-    return {
-        "pnl": pnl,
-        "unit_pnl": unit_pnl,
-        "payback_period": payback_period
+    # --- 6. Prepare Summary ---
+    summary = {
+        'hw_investment': it_budget,
+        'total_performance_score': total_performance_score,
+        'annual_token_capacity': total_annual_token_capacity_millions,
+        'total_annual_cost': total_annual_cost,
+        'cost_per_million_tokens': cost_per_million_tokens,
+        'total_users_supported': total_users_supported,
+        'annual_revenue': annual_revenue,
+        'operating_profit': operating_profit,
     }
+    return summary
