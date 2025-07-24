@@ -1,4 +1,4 @@
-# calculator.py (v11.0 - Architecture Efficiency Bugfix)
+# calculator.py (v12.0 - Recommendation Logic Fix)
 import yaml
 import pandas as pd
 
@@ -35,7 +35,6 @@ def calculate_business_case(
     num_standard_gpus = (it_hw_budget * (1 - high_perf_gpu_ratio)) // hw_conf['standard_gpu']['cost'] if hw_conf['standard_gpu']['cost'] > 0 else 0
 
     # --- 2. Capacity ---
-    # [FIX] arch_efficiency is now correctly applied to total_token_capacity
     arch_efficiency = model_conf['intelligent_arch_efficiency'] if apply_mirrormind else 1.0
     tokens_from_high_perf = num_high_perf_gpus * hw_conf['high_perf_gpu']['m_tokens_per_hour'] * 1e6 * HOURS_PER_YEAR
     tokens_from_standard = num_standard_gpus * hw_conf['standard_gpu']['m_tokens_per_hour'] * 1e6 * HOURS_PER_YEAR
@@ -43,7 +42,6 @@ def calculate_business_case(
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
     # --- 3. Overall P&L (Based on USAGE, not fixed fees) ---
-    # [FIX] The main revenue is now calculated based on token usage, re-linking the architecture efficiency.
     total_paid_token_usage_ratio = sum(tier_info['ratio'] for tier_name, tier_info in tiers_conf.items() if tier_name != 'free')
     revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * total_paid_token_usage_ratio
 
@@ -101,25 +99,21 @@ def calculate_business_case(
             "opportunity_cost": opportunity_cost,
         })
 
-    # --- 5. Recommended Pricing Calculation for 5-Year Payback ---
+    # --- 5. [FINAL FIX] Recommended Pricing Calculation ---
     total_operating_cost_before_sgna = cost_of_revenue + d_and_a + rd_amortization
     target_annual_op_profit = total_investment / PAYBACK_YEARS
     required_annual_revenue = (target_annual_op_profit + total_operating_cost_before_sgna) / (1 - sgna_rate)
     
-    usage_revenue_standard = segment_narrative_data[1]['revenue_per_user'] * 12 * segment_narrative_data[1]['num_users']
-    usage_revenue_premium = segment_narrative_data[2]['revenue_per_user'] * 12 * segment_narrative_data[2]['num_users']
-    total_usage_revenue = usage_revenue_standard + usage_revenue_premium
+    # Calculate the total potential revenue at market price (this changes with architecture)
+    total_potential_revenue = sum(s['revenue_per_user'] * 12 * s['num_users'] for s in segment_narrative_data if s['tier_name_key'] != 'tier_free')
 
-    standard_revenue_ratio = usage_revenue_standard / total_usage_revenue if total_usage_revenue > 0 else 0.5
-    
-    required_standard_revenue = required_annual_revenue * standard_revenue_ratio
-    required_premium_revenue = required_annual_revenue * (1 - standard_revenue_ratio)
+    # Calculate the ratio of required revenue to potential revenue
+    # This ratio will be lower if the architecture is more efficient
+    price_ratio = required_annual_revenue / total_potential_revenue if total_potential_revenue > 0 else 1
 
-    standard_users = segment_narrative_data[1]['num_users']
-    premium_users = segment_narrative_data[2]['num_users']
-
-    recommended_standard_fee = (required_standard_revenue / standard_users) / 12 if standard_users > 0 else 0
-    recommended_premium_fee = (required_premium_revenue / premium_users) / 12 if premium_users > 0 else 0
+    # Apply this ratio to the usage-based revenue for each tier to get the recommended fee
+    recommended_standard_fee = segment_narrative_data[1]['revenue_per_user'] * price_ratio
+    recommended_premium_fee = segment_narrative_data[2]['revenue_per_user'] * price_ratio
     
     recommendation = {
         "standard_fee": recommended_standard_fee,
@@ -128,10 +122,21 @@ def calculate_business_case(
     }
 
     # --- 6. Final Results ---
+    # Recalculate P&L based on user-defined fees for Section 1 display
+    final_revenue = (segment_narrative_data[1]['num_users'] * standard_fee + segment_narrative_data[2]['num_users'] * premium_fee) * 12
+    final_sg_and_a = final_revenue * sgna_rate
+    final_operating_cost = cost_of_revenue + final_sg_and_a + d_and_a + rd_amortization
+    final_operating_profit = final_revenue - final_operating_cost
+
     pnl_annual = {
-        'revenue': revenue, 'cost_of_revenue': cost_of_revenue, 'gross_profit': revenue - cost_of_revenue,
-        'sg_and_a': sg_and_a, 'd_and_a': d_and_a, 'it_depreciation': it_depreciation,
-        'rd_amortization': rd_amortization, 'operating_profit': operating_profit,
+        'revenue': final_revenue, 
+        'cost_of_revenue': cost_of_revenue, 
+        'gross_profit': final_revenue - cost_of_revenue,
+        'sg_and_a': final_sg_and_a, 
+        'd_and_a': d_and_a, 
+        'it_depreciation': it_depreciation,
+        'rd_amortization': rd_amortization, 
+        'operating_profit': final_operating_profit,
     }
 
     results = {
