@@ -1,10 +1,9 @@
-# localization.py (v24.0 - Final Clarification)
+# localization.py (v25.0 - Final Version with Explanations)
 
 loc_strings = {
     "en": {
         "app_title": "AI Datacenter Business Simulator",
         "app_subtitle": "A strategic tool to analyze the real-world P&L of AI services.",
-        # [NEW]
         "model_clarification": "Note: The core financial model (Sections 1, 2, 4) is based on a **usage-based pricing system** to show the full potential of the selected strategy.",
         "sidebar_guide_title": "📖 How to Use",
         "sidebar_guide_text": "Adjust the variables below and click 'Run Analysis' to see the financial forecast.",
@@ -15,7 +14,9 @@ loc_strings = {
         "high_perf_gpu_ratio": "High-Performance GPU Budget Ratio (%)",
         "utilization_rate": "Datacenter Average Utilization Rate (%)",
         "power_type": "Power Source",
-        "apply_mirrormind": "Apply Intelligent Architecture",
+        # [MODIFIED]
+        "apply_mirrormind_label": "Apply Intelligent Architecture (e.g., MirrorMind)",
+        "apply_mirrormind_help": "This technology applies a superior control architecture to the LLM, achieving higher token processing efficiency (increased throughput) with the same hardware. This boosts the potential for total revenue and profit, enabling investment recovery with a more competitive (lower) recommended pricing.",
         "market_price": "Market Price per 1M Tokens ($)",
         "run_button": "🚀 Run Analysis",
         "initial_prompt": "Set your scenario variables in the sidebar and click 'Run Analysis'.",
@@ -56,11 +57,13 @@ loc_strings = {
         "recommended_standard_fee": "Recommended Standard Fee",
         "recommended_premium_fee": "Recommended Premium Fee",
         "recommendation_unachievable": "With the current cost structure, achieving a 5-year payback is not feasible. If the calculated payback period above is longer than your target, a fundamental review of the hardware or architectural strategy is required.",
+        # [NEW]
+        "arch_explanation_title": "What is an Intelligent Architecture?",
+        "arch_explanation_text": "It's an approach that maximizes performance-to-cost by designing a superior system to efficiently control and utilize the LLM, rather than simply increasing the LLM model's size. The efficiency gains in this simulator are based on the mathematical proof of the **MirrorMind architecture**.\\n\\n- [View MirrorMind Efficiency Proof Paper](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/blob/main/paper/A%20Mathematical%20Proof%20of%20the%20Computational%20and%20Energy%20Efficiency%20of%20the%20MirrorMind%20Architecture.pdf)"
     },
     "ko": {
         "app_title": "AI 데이터센터 사업성 시뮬레이터",
         "app_subtitle": "AI 서비스의 현실적인 손익(P&L)을 분석하는 전략 도구입니다.",
-        # [NEW]
         "model_clarification": "참고: 아래 재무 모델(섹션 1, 2, 4)은 선택된 전략의 최대 잠재력을 보여주기 위해 **사용량 기반 요금제**를 기준으로 분석합니다.",
         "sidebar_guide_title": "📖 사용 방법",
         "sidebar_guide_text": "아래 변수를 조절하고 '분석 실행'을 클릭하여 재무 예측을 확인하세요.",
@@ -71,7 +74,9 @@ loc_strings = {
         "high_perf_gpu_ratio": "고성능 GPU 예산 비중 (%)",
         "utilization_rate": "데이터센터 평균 가동률 (%)",
         "power_type": "전력 종류",
-        "apply_mirrormind": "지능형 아키텍처 적용",
+        # [MODIFIED]
+        "apply_mirrormind_label": "지능형 아키텍처 적용 (예: MirrorMind)",
+        "apply_mirrormind_help": "LLM을 제어하는 상위 아키텍처를 적용하여, 동일 하드웨어에서 더 높은 토큰 처리 효율(처리량 증가)을 달성하는 기술입니다. 이는 총 매출 및 이익 잠재력을 높이고, 더 낮은 권장 요금으로도 투자 회수가 가능하게 만듭니다.",
         "market_price": "토큰당 시장 판매가 ($ / 1M)",
         "run_button": "🚀 분석 실행",
         "initial_prompt": "사이드바에서 시나리오 변수를 설정한 후 '분석 실행' 버튼을 눌러 결과를 확인하세요.",
@@ -112,8 +117,12 @@ loc_strings = {
         "recommended_standard_fee": "권장 유료 요금",
         "recommended_premium_fee": "권장 프리미엄 요금",
         "recommendation_unachievable": "현재 비용 구조에서는 5년 내 투자금 회수가 현실적으로 어렵습니다. 위 계산된 회수 기간이 목표보다 길 경우, 하드웨어 또는 아키텍처 전략의 근본적인 재검토가 필요합니다.",
+        # [NEW]
+        "arch_explanation_title": "지능형 아키텍처(Intelligent Architecture)란?",
+        "arch_explanation_text": "단순히 LLM 모델의 크기를 키우는 대신, LLM을 효율적으로 제어하고 활용하는 상위 시스템을 설계하여 비용 대비 성능을 극대화하는 접근 방식입니다. 이 시뮬레이터의 효율성 증가는 **MirrorMind 아키텍처**의 수학적 증명에 기반합니다.\\n\\n- [MirrorMind 효율성 증명 논문 보기](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/blob/main/paper/A%20Mathematical%20Proof%20of%20the%20Computational%20and%20Energy%20Efficiency%20of%20the%20MirrorMind%20Architecture.pdf)"
     }
 }
 
 def t(key, lang="ko", **kwargs):
-    return loc_strings.get(lang, {}).get(key, key).format(**kwargs)
+    # Use replace to handle markdown newlines
+    return loc_strings.get(lang, {}).get(key, key).format(**kwargs).replace('\\n', '\n')
