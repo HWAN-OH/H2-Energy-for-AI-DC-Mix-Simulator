@@ -6,7 +6,7 @@ from localization import translate
 
 # -- Language Selector --
 lang = st.sidebar.selectbox("Language", ["English", "Korean"])
-_
+_ = translate
 
 # -- Basic Inputs --
 dc_size_mw = st.sidebar.slider(translate("dc_capacity", lang), 10, 300, 100)
