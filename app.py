@@ -86,10 +86,13 @@ if st.session_state.results:
     
     # --- START: ROBUST DATAFRAME DISPLAY LOGIC ---
     if res.get('pnl_by_segment') and len(res['pnl_by_segment']) > 0:
-        # 1. Create DataFrame with original English keys from calculator.py
         segment_df = pd.DataFrame(res['pnl_by_segment'])
 
-        # 2. Map the English segment names to translated names for display
+        # [FIX] 데이터 표시 전, 숫자형이어야 할 열들의 데이터 타입을 명시적으로 변환
+        numeric_cols = ['total_revenue', 'total_cost', 'total_profit']
+        for col in numeric_cols:
+            segment_df[col] = pd.to_numeric(segment_df[col], errors='coerce').fillna(0)
+
         tier_map = {
             'Free': t('tier_free', lang),
             'Standard': t('tier_standard', lang),
@@ -97,7 +100,6 @@ if st.session_state.results:
         }
         segment_df['segment'] = segment_df['segment'].str.title().map(tier_map)
 
-        # 3. Define column configurations: Use original English keys and set translated 'label' for display
         column_config = {
             "segment": st.column_config.TextColumn(
                 label=t('col_segment', lang),
@@ -116,7 +118,6 @@ if st.session_state.results:
             )
         }
 
-        # 4. Display the DataFrame using the robust configuration
         st.dataframe(
             segment_df,
             use_container_width=True,
@@ -124,10 +125,9 @@ if st.session_state.results:
             column_config=column_config
         )
     else:
-        st.warning("고객 그룹별 손익 데이터를 계산할 수 없습니다.") # Could not calculate P&L data by customer segment.
+        st.warning("고객 그룹별 손익 데이터를 계산할 수 없습니다.")
     # --- END: ROBUST DATAFRAME DISPLAY LOGIC ---
 
-    # 투자금 회수 기간 계산 및 표시
     st.subheader(t('payback_title', lang))
     operating_profit = res['pnl_annual']['operating_profit']
     if operating_profit > 0:
@@ -142,4 +142,3 @@ else:
 
 # --- Footer ---
 st.markdown(f'<div class="footer"><p>{t("copyright_text", lang)} | {t("contact_text", lang)}</p></div>', unsafe_allow_html=True)
-
