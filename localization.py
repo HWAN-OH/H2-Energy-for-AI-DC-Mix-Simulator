@@ -1,4 +1,4 @@
-# localization.py (최종 완성본)
+# localization.py (v13.0)
 
 loc_strings = {
     "en": {
@@ -7,33 +7,48 @@ loc_strings = {
         "sidebar_guide_title": "📖 How to Use",
         "sidebar_guide_text": """
         1.  **Set Key Variables**: Adjust the sliders and options below to define your business scenario.
-        2.  **Run Analysis**: Click the 'Run Analysis' button on the main screen.
-        3.  **Review Results**: Analyze the comprehensive P&L statements for strategic insights.
+        2.  **Run Analysis**: Click the 'Run Analysis' button.
+        3.  **Review Results**: Analyze the P&L statements for strategic insights.
         """,
         "copyright_text": "© 2025, Oh Sunghwan. All rights reserved.",
         "contact_text": "Contact: hawn21@gmail.com",
+        
         "lang_selector": "Language",
         "dc_capacity": "Data Center Size (MW)",
         "power_type": "Power Source",
-        "target_irr": "Target IRR (%)",
         "apply_mirrormind": "Apply Intelligent Architecture",
+        "paid_tier_fee": "Paid Tier Monthly Fee ($)",
+        "premium_tier_multiplier": "Premium Tier Price Multiplier (vs Paid)",
+
         "run_button": "🚀 Run Analysis",
         "results_header": "Analysis Results",
-        "initial_prompt": "Set your scenario variables in the sidebar and click 'Run Analysis' to see the results.",
-        "pnl_annual_title": "Annual P&L (based on {dc_size}MW DC)",
-        "pnl_per_user_title": "Per-User Annual P&L",
+        "initial_prompt": "Set your scenario variables in the sidebar and click 'Run Analysis'.",
+
+        "section_1_title": "1. Overall Business P&L (Annual)",
+        "assumptions_title": "Key Assumptions & Capacity",
+        "assump_gpu_mix": "GPU Mix",
+        "assump_users": "Supported Users",
+        "assump_tokens": "Tokens Serviced",
+        "assump_power": "Power Consumed",
+        "pnl_table_title": "Annual P&L",
         "pnl_item": "Item",
-        "pnl_total_amount": "Total Amount ($)",
-        "pnl_per_user_amount": "Amount per User ($)",
+        "pnl_amount": "Amount ($)",
         "pnl_revenue": "Revenue",
         "pnl_cost": "Cost",
         "pnl_profit": "Profit",
-        "breakeven_title": "Break-Even Analysis",
-        "breakeven_users": "Break-Even Point (Users)",
-        "recommendations_title": "Strategic Recommendations",
+
+        "section_2_title": "2. Per-User P&L and Cost Structure",
+        "tier_free": "Free Users",
+        "tier_standard": "Paid Users",
+        "tier_premium": "Premium Users",
+        "total_pnl_by_segment": "Total P&L by Segment",
+        "per_user_pnl_by_segment": "Per-User P&L by Segment",
+        "payback_title": "Investment Payback Period",
+        "payback_years": "Estimated Payback Years",
+        "unrecoverable": "Unrecoverable",
+
         "power_conventional": "Conventional",
         "power_renewable": "Renewable",
-        "unachievable": "Unachievable"
     },
     "ko": {
         "app_title": "AI 데이터센터 사업성 시뮬레이터",
@@ -41,36 +56,49 @@ loc_strings = {
         "sidebar_guide_title": "📖 사용 방법",
         "sidebar_guide_text": """
         1.  **핵심 변수 설정**: 아래의 슬라이더와 옵션을 조절하여 비즈니스 시나리오를 정의합니다.
-        2.  **분석 실행**: 메인 화면의 '분석 실행' 버튼을 클릭합니다.
-        3.  **결과 검토**: 종합 손익계산서를 분석하여 전략적 인사이트를 얻으세요.
+        2.  **분석 실행**: '분석 실행' 버튼을 클릭합니다.
+        3.  **결과 검토**: 손익계산서를 분석하여 전략적 인사이트를 얻으세요.
         """,
         "copyright_text": "© 2025, Oh Sunghwan. All rights reserved.",
         "contact_text": "문의: hawn21@gmail.com",
         "lang_selector": "언어",
         "dc_capacity": "데이터센터 용량 (MW)",
         "power_type": "전력 종류",
-        "target_irr": "목표 IRR (%)",
         "apply_mirrormind": "지능형 아키텍처 적용",
+        "paid_tier_fee": "유료 사용자 월 요금 ($)",
+        "premium_tier_multiplier": "프리미엄 요금 배수 (유료 대비)",
+
         "run_button": "🚀 분석 실행",
         "results_header": "분석 결과",
         "initial_prompt": "사이드바에서 시나리오 변수를 설정한 후 '분석 실행' 버튼을 눌러 결과를 확인하세요.",
-        "pnl_annual_title": "연간 손익계산서 ({dc_size}MW 데이터센터 기준)",
-        "pnl_per_user_title": "사용자 1인당 연간 손익계산서",
+
+        "section_1_title": "1. 전체 사업 손익 (연간 기준)",
+        "assumptions_title": "주요 가정 및 생산량",
+        "assump_gpu_mix": "그래픽카드 구성",
+        "assump_users": "서비스 가능 고객",
+        "assump_tokens": "처리 토큰 총량",
+        "assump_power": "소비 전력 총량",
+        "pnl_table_title": "연간 손익계산서",
         "pnl_item": "항목",
-        "pnl_total_amount": "총 금액 ($)",
-        "pnl_per_user_amount": "사용자당 금액 ($)",
+        "pnl_amount": "금액 ($)",
         "pnl_revenue": "매출",
         "pnl_cost": "비용",
         "pnl_profit": "이익",
-        "breakeven_title": "손익분기점 분석",
-        "breakeven_users": "손익분기점 (사용자 수)",
-        "recommendations_title": "전략적 제언",
+
+        "section_2_title": "2. 인당 손익 및 원가 구조",
+        "tier_free": "무료 사용자",
+        "tier_standard": "유료 사용자",
+        "tier_premium": "프리미엄 사용자",
+        "total_pnl_by_segment": "고객 그룹별 전체 손익",
+        "per_user_pnl_by_segment": "고객 1인당 손익",
+        "payback_title": "투자금 회수 기간",
+        "payback_years": "예상 회수 기간 (년)",
+        "unrecoverable": "회수 불가",
+
         "power_conventional": "일반 전력망",
         "power_renewable": "재생에너지",
-        "unachievable": "달성 불가"
     }
 }
 
 def t(key, lang="ko", **kwargs):
-    """Translates a key for a given language and formats it."""
     return loc_strings.get(lang, {}).get(key, key).format(**kwargs)
