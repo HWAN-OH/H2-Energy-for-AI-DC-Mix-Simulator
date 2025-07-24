@@ -22,6 +22,7 @@ st.markdown("""
     .narrative-block { background-color: #f9fafb; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1rem; }
     .narrative-block h3 { margin-top: 0; }
     .recommendation-block { background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 1.5rem; margin-top: 2rem; }
+    .clarification-box { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -60,6 +61,10 @@ lang = st.session_state.lang
 # --- 5. Main Page ---
 st.title(t("app_title", lang))
 st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', lang)}</p>", unsafe_allow_html=True)
+
+# [NEW] Add clarification box
+st.markdown(f"<div class='clarification-box'>{t('model_clarification', lang)}</div>", unsafe_allow_html=True)
+
 
 if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
@@ -120,12 +125,10 @@ if st.session_state.results:
                 </div>
                 """, unsafe_allow_html=True)
 
-    # [MODIFIED] Final Section
     st.header(t("section_4_title", lang))
     if 'recommendation' in res:
         st.markdown(f'<div class="recommendation-block">', unsafe_allow_html=True)
         
-        # 1. Display Realistic Payback Period
         st.write(t('payback_analysis_intro', lang))
         cash_flow = pnl.get('annual_cash_flow', 0)
         payback_period = res['total_investment'] / cash_flow if cash_flow > 0 else 0
@@ -136,7 +139,6 @@ if st.session_state.results:
         
         st.markdown("---")
 
-        # 2. Display 5-Year Target Recommendation
         st.write(f"**{t('recommendation_title', lang)}**")
         reco = res['recommendation']
         if reco['is_achievable']:
