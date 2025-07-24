@@ -40,6 +40,7 @@ with st.sidebar:
 
     dc_size_mw = st.slider(t("dc_capacity", st.session_state.lang), 10, 300, 100)
     high_perf_gpu_ratio = st.slider(t("high_perf_gpu_ratio", st.session_state.lang), 0, 100, 50, 5)
+    utilization_rate = st.slider(t("utilization_rate", st.session_state.lang), 40, 100, 60, 5)
     power_option = st.selectbox(t("power_type", st.session_state.lang), [t("power_conventional", st.session_state.lang), t("power_renewable", st.session_state.lang)])
     use_clean_power = "Renewable" if power_option == t("power_renewable", st.session_state.lang) else "Conventional"
     apply_mirrormind = st.checkbox(t("apply_mirrormind", st.session_state.lang), value=True)
@@ -55,7 +56,7 @@ st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', 
 if st.button(t("run_button", st.session_state.lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
         st.session_state.results = calculate_business_case(
-            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, paid_tier_fee, premium_tier_multiplier, st.session_state.lang
+            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, paid_tier_fee, premium_tier_multiplier, st.session_state.lang
         )
 
 if st.session_state.results:
@@ -68,9 +69,9 @@ if st.session_state.results:
     st.subheader(t("assumptions_title", lang))
     cols1 = st.columns(4)
     cols1[0].metric(t("assump_gpu_mix", lang), res["assumptions"]["gpu_mix_string"])
-    cols1[1].metric(t("assump_users", lang), f"{res['assumptions']['supported_users']:,.0f}")
-    cols1[2].metric(t("assump_tokens", lang), f"{res['assumptions']['serviced_tokens_t']:,.2f} T")
-    cols1[3].metric(t("assump_power", lang), f"{res['assumptions']['consumed_power_gwh']:,.1f} GWh")
+    cols1[1].metric(t("assump_utilization", lang), f"{res['assumptions']['utilization_rate']}%")
+    cols1[2].metric(t("assump_users", lang), f"{res['assumptions']['supported_users']:,.0f}")
+    cols1[3].metric(t("assump_tokens", lang), f"{res['assumptions']['serviced_tokens_t']:,.2f} T")
 
     st.subheader(t("pnl_annual_title", lang))
     st.html(f"""
