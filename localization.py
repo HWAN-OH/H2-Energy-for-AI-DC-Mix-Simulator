@@ -1,16 +1,16 @@
 # localization.py
-# UI 텍스트를 위한 한/영 문자열 저장소 (v9.0)
+# UI 텍스트를 위한 한/영 문자열 저장소 (v10.0)
 
 loc_strings = {
     'ko': {
-        'app_title': "💡 AI 서비스 경영 대시보드 (v9.0)",
+        'app_title': "💡 AI 서비스 경영 대시보드 (v10.0)",
         'app_subtitle': "핵심 전략 변수를 조절하여, AI 서비스의 전체 손익과 사업 타당성을 분석합니다.",
         'sidebar_title': "⚙️ 핵심 전략 변수",
         
         'section_tech_strategy': "1. 기술 전략",
         'hw_ratio_label': "고사양 GPU 예산 비중 (%)",
         'hw_ratio_help': "전체 IT 예산 중, 고성능 GPU에 투자할 비중을 결정합니다. 이는 데이터센터의 총 연산 성능과 직결됩니다.",
-        'arch_toggle_label': "지능형 아키텍처 적용 (선택사항)",
+        'arch_toggle_label': "지능형 아키텍처 적용",
         'arch_toggle_help': "AI 워크로드를 최적화하여, 동일 성능으로 더 많은 사용자를 지원하거나 비용을 절감하는 효과를 시뮬레이션합니다.",
 
         'section_financial_strategy': "2. 재무 및 운영",
@@ -27,7 +27,7 @@ loc_strings = {
 
         'section_A_title': "A. 전체 사업 손익 (연간 P&L)",
         'pnl_revenue': "총 매출",
-        'pnl_cost': "총 비용",
+        'pnl_cost': "총 비용 (운영비+상각비)",
         'pnl_profit': "영업이익",
 
         'section_B_title': "B. 고객 그룹별 손익 (인당 월간 P&L)",
@@ -56,14 +56,14 @@ loc_strings = {
         'reco_all_good': "👍 현재 전략은 모든 면에서 균형 잡혀 있습니다. 시장 상황 변화에 지속적으로 주의를 기울이세요."
     },
     'en': {
-        'app_title': "💡 AI Service Executive Dashboard (v9.0)",
+        'app_title': "💡 AI Service Executive Dashboard (v10.0)",
         'app_subtitle': "Analyze the overall P&L and business viability of your AI service by adjusting key strategic variables.",
         'sidebar_title': "⚙️ Key Strategic Variables",
         
         'section_tech_strategy': "1. Technology Strategy",
         'hw_ratio_label': "High-Performance GPU Budget Ratio (%)",
         'hw_ratio_help': "Determines the investment allocation for high-performance GPUs, directly impacting the datacenter's total computational power.",
-        'arch_toggle_label': "Apply Intelligent Architecture (Optional)",
+        'arch_toggle_label': "Apply Intelligent Architecture",
         'arch_toggle_help': "Simulates the effect of optimizing AI workloads to support more users or reduce costs with the same hardware.",
 
         'section_financial_strategy': "2. Finance & Operations",
@@ -80,7 +80,7 @@ loc_strings = {
 
         'section_A_title': "A. Overall Business P&L (Annual)",
         'pnl_revenue': "Total Revenue",
-        'pnl_cost': "Total Cost",
+        'pnl_cost': "Total Cost (OpEx + D&A)",
         'pnl_profit': "Operating Profit",
 
         'section_B_title': "B. Per-User Segment P&L (Monthly)",
@@ -88,7 +88,7 @@ loc_strings = {
         'paid_tier': "Paid Users",
         'premium_tier': "Premium Users",
         'user_pnl_usage': "Usage",
-        'user_pnl_cost': "Cost",
+        'user_pnl_cost': "Fully-Loaded Cost",
         'user_pnl_revenue': "Revenue",
         'user_pnl_profit': "Profit/Loss",
 
