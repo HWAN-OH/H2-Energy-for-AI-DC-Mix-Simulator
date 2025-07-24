@@ -9,18 +9,12 @@ business_assumptions:
 # Infrastructure & Hardware Assumptions
 # ===============================================
 infrastructure_assumptions:
-  # 100MW급 데이터센터를 짓는 데 필요한 총 투자 예산
   dc_construction_cost_per_mw: 10000000
-  # IT 하드웨어에 투자할 총 예산
   it_hardware_budget_per_mw: 7000000
-  # 감가상각 기간 (년)
   building_depreciation_years: 40
   it_hw_depreciation_years: 5
-  # 데이터센터 전력효율지수 (PUE)
   pue: 1.5
-  # IT 장비의 전력 소모량 (와트 / 달러 기준)
   watts_per_dollar_of_it_hardware: 0.025
-  # 연간 유지보수비 비율 (건설비 기준)
   maintenance_rate_of_construction_capex: 0.02
 
 # ===============================================
@@ -29,7 +23,6 @@ infrastructure_assumptions:
 hardware_specs:
   high_perf_gpu:
     cost_per_unit: 35000
-    # 이 GPU 1대가 1시간에 처리하는 토큰의 양 (백만 개 단위)
     m_tokens_per_hour_per_unit: 5.0
   low_cost_gpu:
     cost_per_unit: 1200
@@ -39,27 +32,26 @@ hardware_specs:
 # Advanced Architecture (e.g., MirrorMind)
 # ===============================================
 advanced_architecture:
-  # 적용 시, 총 필요 연산량(토큰 처리량)을 줄여주는 효율 팩터
-  workload_efficiency_factor: 0.2 # 80% 감소 효과
+  workload_efficiency_factor: 0.2
 
 # ===============================================
 # User & Pricing Model
 # ===============================================
 user_model:
-  # 이 사용자 조합을 '1개 사용자 세트'로 정의
   user_set_composition:
-    free:
-      ratio: 70
-      monthly_token_usage_millions: 0.1
-    paid:
-      ratio: 25
-      monthly_token_usage_millions: 2.0
-    premium:
-      ratio: 5
-      monthly_token_usage_millions: 10.0
-  
-  # 유료 및 프리미엄 사용자 월 요금
+    free: { ratio: 70, monthly_token_usage_millions: 0.1 }
+    paid: { ratio: 25, monthly_token_usage_millions: 2.0 }
+    premium: { ratio: 5, monthly_token_usage_millions: 10.0 }
   pricing:
     paid_tier_fee: 20.0
     premium_tier_fee: 100.0
+
+# ===============================================
+# Electricity Pricing Scenarios
+# ===============================================
+electricity_scenarios:
+  standard_grid:
+    price_per_kwh: 0.20
+  net_zero_ppa:
+    price_per_kwh: 0.25 # Premium for 100% renewable
 
