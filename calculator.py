@@ -1,4 +1,4 @@
-# calculator.py (v15.0 - Final Cost Logic Fix)
+# calculator.py (v15.1 - KeyError Hotfix)
 import yaml
 import pandas as pd
 
@@ -61,7 +61,6 @@ def calculate_business_case(
     rd_amortization = (rd_conf['total_model_development_cost'] / rd_conf['global_datacenter_count_for_cost_allocation']) / inv_conf['amortization_years']['research_and_development']
     d_and_a = dc_depreciation + it_depreciation
     
-    # This is the TRUE total operating cost, used consistently for all per-user calculations.
     true_total_operating_cost = cost_of_revenue + sg_and_a_usage_based + d_and_a + rd_amortization
     
     # --- 4. Per-User Monthly Metrics Calculation (Using TRUE cost) ---
@@ -119,12 +118,15 @@ def calculate_business_case(
     fixed_fee_operating_profit = fixed_fee_revenue - (cost_of_revenue + fixed_fee_sg_and_a + d_and_a + rd_amortization)
     fixed_fee_cash_flow = fixed_fee_operating_profit + d_and_a
 
+    # [KEYERROR FIX] Add all necessary keys to the pnl_annual dictionary
     pnl_annual = {
         'revenue': fixed_fee_revenue, 
         'cost_of_revenue': cost_of_revenue, 
         'gross_profit': fixed_fee_revenue - cost_of_revenue,
         'sg_and_a': fixed_fee_sg_and_a, 
         'd_and_a': d_and_a, 
+        'it_depreciation': it_depreciation, # Added missing key
+        'rd_amortization': rd_amortization, # Added missing key
         'operating_profit': fixed_fee_operating_profit,
         'annual_cash_flow': fixed_fee_cash_flow,
     }
