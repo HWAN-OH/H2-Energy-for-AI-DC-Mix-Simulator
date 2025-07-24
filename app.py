@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
-from calculator import calculate_business_case
+# Import both calculators
+from calculator import calculate_core_business_case
+from what_if_calculator import analyze_fixed_fee_scenario
 from localization import t
 
 # --- 1. Page Configuration ---
@@ -23,7 +25,6 @@ st.markdown("""
     .narrative-block h3 { margin-top: 0; }
     .recommendation-block { background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 1.5rem; margin-top: 2rem; }
     .clarification-box { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; }
-    /* [NEW] Style for the explanation box */
     .explanation-box { background-color: #f3f4f6; border-left: 5px solid #6b7280; padding: 1rem 1.5rem; margin-top: 3rem; }
 </style>
 """, unsafe_allow_html=True)
@@ -48,7 +49,6 @@ with st.sidebar:
     power_option = st.selectbox(t("power_type", st.session_state.lang), [t("power_conventional", st.session_state.lang), t("power_renewable", st.session_state.lang)])
     use_clean_power = "Renewable" if power_option == t("power_renewable", st.session_state.lang) else "Conventional"
     
-    # [MODIFIED] Add help tooltip to the checkbox
     apply_mirrormind = st.checkbox(
         label=t("apply_mirrormind_label", st.session_state.lang), 
         value=False, 
@@ -69,25 +69,34 @@ lang = st.session_state.lang
 # --- 5. Main Page ---
 st.title(t("app_title", lang))
 st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', lang)}</p>", unsafe_allow_html=True)
-
 st.markdown(f"<div class='clarification-box'>{t('model_clarification', lang)}</div>", unsafe_allow_html=True)
-
 
 if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
-        st.session_state.results = calculate_business_case(
-            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens,
-            standard_fee, premium_fee,
-            lang
+        # Step 1: Calculate the core business potential
+        core_results = calculate_core_business_case(
+            dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio,
+            utilization_rate, market_price_per_m_tokens
         )
+        
+        # Step 2: Run the separate 'What-If' analysis for the fixed-fee scenario
+        what_if_narratives = analyze_fixed_fee_scenario(
+            core_results['segment_narratives'],
+            standard_fee,
+            premium_fee
+        )
+        
+        # Step 3: Combine the results for display
+        core_results['segment_narratives'] = what_if_narratives
+        st.session_state.results = core_results
 
 if st.session_state.results:
     res = st.session_state.results
     pnl = res['pnl_annual']
     
-    # ... (Sections 1, 2, 3 are unchanged)
     st.header(t("section_1_title", lang))
     st.subheader(t("assumptions_title", lang))
+    
     st.html(f"""
         <div class="pnl-table">
             <div class="row"><div class="label">{t('pnl_revenue', lang)}</div><div class="value">${pnl['revenue']:,.0f}</div></div>
@@ -99,6 +108,7 @@ if st.session_state.results:
             <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl['operating_profit']:,.0f}</div></div>
         </div>
     """)
+    
     st.header(t("section_2_title", lang))
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
@@ -113,11 +123,13 @@ if st.session_state.results:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
+            
     st.header(t("section_3_title", lang))
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
             if segment['tier_name_key'] in ['tier_standard', 'tier_premium']:
                 profit_color = "red" if segment['new_profit_per_user'] < 0 else "green"
+                
                 st.markdown(f"""
                 <div class="narrative-block">
                     <h3>{t('narrative_pricing_title', lang)}: {t(segment['tier_name_key'], lang)}</h3>
@@ -150,7 +162,6 @@ if st.session_state.results:
             st.warning(t('recommendation_unachievable', lang))
         st.markdown(f'</div>', unsafe_allow_html=True)
         
-    # [NEW] Add the final explanation box
     st.markdown(f"""
     <div class="explanation-box">
         <h4>{t('arch_explanation_title', lang)}</h4>
@@ -161,7 +172,5 @@ if st.session_state.results:
 else:
     st.info(t("initial_prompt", lang))
 
-# --- Footer ---
-# Move footer to the end of the script to ensure it's always last
-st.markdown('<div style="height: 5rem;"></div>', unsafe_allow_html=True) # Add some space before the footer
+st.markdown('<div style="height: 5rem;"></div>', unsafe_allow_html=True)
 st.markdown(f'<div class="footer"><p>{t("copyright_text", lang)} | {t("contact_text", lang)}</p></div>', unsafe_allow_html=True)
