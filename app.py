@@ -35,7 +35,6 @@ high_perf_hw_ratio = st.sidebar.slider(t('hw_ratio_label'), 0, 100, 50, 5, help=
 apply_advanced_arch = st.sidebar.toggle(t('arch_toggle_label'), value=False, help=t('arch_toggle_help'))
 
 st.sidebar.header(t('section_financial_strategy'))
-target_irr = st.sidebar.slider(t('target_irr_label'), 5.0, 25.0, 8.0, 0.5, help=t('target_irr_help'))
 electricity_scenario = st.sidebar.radio(
     t('electricity_label'),
     ['standard_grid', 'net_zero_ppa'],
@@ -53,7 +52,6 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
     user_inputs = {
         'high_perf_hw_ratio': high_perf_hw_ratio,
-        'target_irr': target_irr,
         'apply_advanced_arch': apply_advanced_arch,
         'electricity_price': elec_price
     }
@@ -67,10 +65,11 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
     # --- A. Overall P&L ---
     st.subheader(t('section_A_title'))
-    col_a1, col_a2, col_a3 = st.columns(3)
+    col_a1, col_a2, col_a3, col_a4 = st.columns(4)
     col_a1.metric(t('pnl_revenue'), f"${pnl.get('revenue', 0):,.0f}")
-    col_a2.metric(t('pnl_cost'), f"${pnl.get('cost', 0):,.0f}")
-    col_a3.metric(t('pnl_profit'), f"${pnl.get('profit', 0):,.0f}", delta="수익" if pnl.get('profit', 0) >= 0 else "손실")
+    col_a2.metric(t('pnl_gross_profit'), f"${pnl.get('grossprofit', 0):,.0f}")
+    col_a3.metric(t('pnl_opex'), f"${pnl.get('opex', 0):,.0f}")
+    col_a4.metric(t('pnl_profit'), f"${pnl.get('profit', 0):,.0f}", delta="수익" if pnl.get('profit', 0) >= 0 else "손실")
 
     # --- B. Per-User P&L ---
     st.subheader(t('section_B_title'))
@@ -89,29 +88,25 @@ if st.button(t('run_button_label'), use_container_width=True, type="primary"):
 
     # --- C. Break-Even Analysis ---
     st.subheader(t('section_C_title'))
-    col_c1, col_c2 = st.columns(2)
     payback = breakeven.get('payback_period', float('inf'))
     payback_display = f"{payback:.2f} {t('years_suffix')}" if payback != float('inf') else t('payback_inf')
-    col_c1.metric(t('breakeven_payback'), payback_display)
-    
-    required_users = breakeven.get('required_users', float('inf'))
-    users_display = f"{required_users:,.0f}" if required_users != float('inf') else t('users_inf')
-    col_c2.metric(t('breakeven_users'), users_display)
+    st.metric(t('breakeven_payback'), payback_display)
 
     # --- D. Strategic Recommendations ---
     st.subheader(t('section_D_title'))
-    recommendations = []
-    if pnl.get('profit', 0) < 0:
+    if pnl.get('profit', 0) >= 0:
+        st.success(t('reco_profit_positive'), icon="👍")
+    else:
+        st.warning(t('reco_profit_negative'), icon="🔥")
+        recommendations = []
         if not apply_advanced_arch:
             recommendations.append(t('reco_arch_off'))
-        if high_perf_hw_ratio > 70:
-            recommendations.append(t('reco_hw_balance'))
+        if config.get('operating_scenarios', {}).get('datacenter_utilization_rate', 100) < 80:
+             recommendations.append(t('reco_util_low'))
         recommendations.append(t('reco_price_increase'))
-    else:
-        recommendations.append(t('reco_all_good'))
-    
-    for reco in recommendations:
-        st.info(reco, icon="💡")
+        
+        for reco in recommendations:
+            st.info(reco, icon="💡")
 
 else:
     st.info(t('initial_prompt'))
