@@ -1,15 +1,15 @@
 import yaml
 import pandas as pd
+from localization import t
 
 def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirrormind, lang):
     """
-    Calculates AI DC business performance and returns structured data for the UI.
+    Calculates AI DC business performance based on config values and user inputs.
     """
     with open("config.yml", "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     HOURS_PER_YEAR = 8760
-
     dc_conf = config["dc_defaults"]
     token_conf = config["token_processing"]
     tiers_conf = config["tiers"]
@@ -18,48 +18,40 @@ def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirro
     TOKEN_PER_KWH = token_conf["token_per_kwh"]
     EFFICIENCY = token_conf["mirrormind_efficiency"] if apply_mirrormind else 1.0
 
-    power_cost = dc_conf["power_cost_kwh"][use_clean_power]
-    
-    # Correctly apply amortization over the entire period
+    power_cost_kwh = dc_conf["power_cost_kwh"][use_clean_power]
     annual_capex = (dc_conf["capex_per_mw"] * dc_size_mw) / dc_conf["amortization_years"]
     annual_opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
 
     total_power_kwh = dc_size_mw * 1000 * HOURS_PER_YEAR
     total_token_capacity = total_power_kwh * TOKEN_PER_KWH * EFFICIENCY
 
-    token_demand = 0
-    # Calculate total token demand based on the assumption of total users
-    for tier in tiers_conf:
-        tier_conf = tiers_conf[tier]
-        token_demand += tier_conf["monthly_token_usage"] * 12 * tier_conf["ratio"] * assumptions["users_total"]
+    token_demand = sum(
+        tier_conf["monthly_token_usage"] * 12 * tier_conf["ratio"] * assumptions["users_total"]
+        for tier, tier_conf in tiers_conf.items()
+    )
 
-    # Scale down the number of users if capacity is less than demand
     scale_ratio = min(1.0, total_token_capacity / token_demand if token_demand > 0 else 1.0)
     actual_users_total = int(assumptions["users_total"] * scale_ratio)
 
     total_revenue = 0
     total_usage = 0
-    
-    # Calculate revenue based on actual supported users
-    for tier in ["free", "standard", "premium"]:
-        tier_conf = tiers_conf[tier]
+    for tier, tier_conf in tiers_conf.items():
         users_in_tier = int(actual_users_total * tier_conf["ratio"])
         usage_in_tier = tier_conf["monthly_token_usage"] * 12 * users_in_tier
         unit_price = tier_conf["price_per_million_token"] / 1_000_000
         total_revenue += usage_in_tier * unit_price
         total_usage += usage_in_tier
-        
-    # Cost is based on actual usage, not max capacity
+
     total_power_consumed_kwh = (total_usage / EFFICIENCY) / TOKEN_PER_KWH if TOKEN_PER_KWH > 0 else 0
-    total_power_cost = total_power_consumed_kwh * power_cost
+    total_power_cost = total_power_consumed_kwh * power_cost_kwh
     
     total_cost = annual_capex + annual_opex + total_power_cost
     total_profit = total_revenue - total_cost
 
     # Create Annual P&L DataFrame
     pnl_data = {
-        "Item": [t("pnl_revenue", lang), t("pnl_cost", lang), t("pnl_profit", lang)],
-        "Amount ($)": [total_revenue, total_cost, total_profit]
+        t("pnl_item", lang): [t("pnl_revenue", lang), t("pnl_cost", lang), t("pnl_profit", lang)],
+        t("pnl_total_amount", lang): [total_revenue, total_cost, total_profit]
     }
     pnl_df = pd.DataFrame(pnl_data)
 
@@ -67,8 +59,8 @@ def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirro
     per_user_pnl_df = None
     if actual_users_total > 0:
         per_user_pnl_data = {
-            "Item": [t("pnl_revenue", lang), t("pnl_cost", lang), t("pnl_profit", lang)],
-            "Amount ($)": [
+            t("pnl_item", lang): [t("pnl_revenue", lang), t("pnl_cost", lang), t("pnl_profit", lang)],
+            t("pnl_per_user_amount", lang): [
                 total_revenue / actual_users_total,
                 total_cost / actual_users_total,
                 total_profit / actual_users_total
@@ -87,12 +79,11 @@ def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirro
     # Recommendations
     recommendations = []
     if total_profit < 0:
-        recommendations.append(f"- {t('reco_price_increase', lang)}")
+        recommendations.append(f"- 요금 인상 또는 프리미엄 사용자 비율 확대를 고려해야 합니다.")
         if not apply_mirrormind:
-            recommendations.append(f"- {t('reco_efficiency_improvement', lang)}")
+            recommendations.append(f"- 지능형 아키텍처를 적용하여 토큰 처리 효율을 개선할 여지가 있습니다.")
     else:
-        recommendations.append(f"- {t('reco_profit_positive', lang)}")
-
+        recommendations.append(f"- 현재 전략은 수익성이 있습니다. 시장 변화에 맞춰 지속적으로 최적화하세요.")
 
     return {
         "pnl_df": pnl_df,
@@ -101,4 +92,3 @@ def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirro
         "recommendations": "\n".join(recommendations),
         "dc_size": dc_size_mw
     }
-
