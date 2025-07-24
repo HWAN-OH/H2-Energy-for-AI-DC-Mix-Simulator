@@ -1,54 +1,56 @@
-# config.yml (v17.0)
+# config.yml (v15.0)
 
 # ===============================================
-# 투자 및 자산 (Investment & Assets)
-# ===============================================
-investment:
-  # 데이터센터 규모(MW)당 건설 비용 (CAPEX)
-  dc_capex_per_mw: 10000000
-  # 데이터센터 규모(MW)당 IT 하드웨어 예산 (CAPEX)
-  it_budget_per_mw: 12500000 # 현실성 반영하여 증액 (100MW = $1.25B)
-  # 자산 상각 기간 (년)
-  amortization_years:
-    datacenter: 40
-    it_hardware: 5
-    research_and_development: 3
-
-# ===============================================
-# 하드웨어 스펙 (Hardware Specs)
+# 하드웨어 스펙 및 예산
 # ===============================================
 hardware:
+  it_budget_per_mw: 7000000
   high_perf_gpu:
+    name: "고성능 AI 가속기"
     cost: 35000
     m_tokens_per_hour: 5.0
   standard_gpu:
+    name: "표준 AI 가속기"
     cost: 10000
     m_tokens_per_hour: 1.5
 
 # ===============================================
-# 운영 비용 (Operating Expenses)
+# 데이터센터 기본 설정
 # ===============================================
-operating_expenses:
-  # 데이터센터 규모(MW)당 연간 비용
-  maintenance_and_cooling_per_mw: 250000 # 냉각 및 설비 유지 (현실성 반영)
-  personnel_and_other_per_mw: 350000   # 인력 및 기타 운영비 (현실성 반영)
-  # 판매 및 일반관리비 (매출 대비 비율)
-  sgna_as_percent_of_revenue: 15.0
-  # 전력 효율 지수 (PUE)
-  pue: 1.5
+datacenter:
+  amortization_years: 5
+  capex_per_mw: 10000000
+  opex_per_mw_per_year: 200000
+  power_cost_kwh:
+    Conventional: 0.12
+    Renewable: 0.18
+  total_watts_per_it_watt: 1.5
 
 # ===============================================
-# 연구개발 (R&D)
+# AI 모델, 사용자, 및 비즈니스 가정
 # ===============================================
-research_and_development:
-  total_model_development_cost: 2000000000 # 20억 달러
-  global_datacenter_count_for_cost_allocation: 20
-
-# ===============================================
-# AI 모델 및 시장 가격
-# ===============================================
-model_and_market:
+model_and_business:
   # 지능형 아키텍처 적용 시 효율 개선 배수
   intelligent_arch_efficiency: 1.25
-  # 시장의 평균 토큰 판매 단가 ($ / 1M tokens)
-  market_price_per_million_tokens: 1.5
+  
+  # 연구개발(R&D) 비용 가정
+  research_and_development:
+    total_model_development_cost: 2000000000 # 20억 달러
+    model_amortization_years: 3
+    # R&D 비용을 분담할 전 세계 데이터센터 수
+    global_datacenter_count_for_cost_allocation: 20
+
+  # 판매 및 일반관리비 (매출 대비 비율)
+  sgna_as_percent_of_revenue: 15.0
+
+  # 사용자 그룹별 분포 및 월간 토큰 사용량 (백만 개)
+  tiers:
+    free:
+      ratio: 0.6
+      monthly_token_usage_m: 0.5
+    standard:
+      ratio: 0.3
+      monthly_token_usage_m: 5.0
+    premium:
+      ratio: 0.1
+      monthly_token_usage_m: 25.0
