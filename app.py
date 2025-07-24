@@ -47,7 +47,6 @@ with st.sidebar:
     st.markdown("---")
     market_price_per_m_tokens = st.slider(t("market_price", st.session_state.lang), 0.5, 5.0, 1.5, 0.1)
 
-# [FIX] lang 변수를 최상단에서 정의하여 스크립트 전체에서 접근 가능하도록 수정
 lang = st.session_state.lang
 
 # --- 5. Main Page ---
@@ -86,12 +85,9 @@ if st.session_state.results:
     
     st.header(t("section_2_title", lang))
     
-    if res.get('pnl_by_segment') and len(res['pnl_by_segment']) > 0:
-        segment_df = pd.DataFrame(res['pnl_by_segment'])
-
-        numeric_cols = ['total_revenue', 'total_cost', 'total_profit']
-        for col in numeric_cols:
-            segment_df[col] = pd.to_numeric(segment_df[col], errors='coerce').fillna(0)
+    # [FINAL FIX] Directly use the pre-processed DataFrame from the results.
+    if 'pnl_by_segment_df' in res and not res['pnl_by_segment_df'].empty:
+        segment_df = res['pnl_by_segment_df']
 
         tier_map = {
             'Free': t('tier_free', lang),
@@ -101,21 +97,10 @@ if st.session_state.results:
         segment_df['segment'] = segment_df['segment'].str.title().map(tier_map)
 
         column_config = {
-            "segment": st.column_config.TextColumn(
-                label=t('col_segment', lang),
-            ),
-            "total_revenue": st.column_config.NumberColumn(
-                label=t('col_total_revenue', lang),
-                format="$ {:,.0f}"
-            ),
-            "total_cost": st.column_config.NumberColumn(
-                label=t('col_total_cost', lang),
-                format="$ {:,.0f}"
-            ),
-            "total_profit": st.column_config.NumberColumn(
-                label=t('col_total_profit', lang),
-                format="$ {:,.0f}"
-            )
+            "segment": st.column_config.TextColumn(label=t('col_segment', lang)),
+            "total_revenue": st.column_config.NumberColumn(label=t('col_total_revenue', lang), format="$ {:,.0f}"),
+            "total_cost": st.column_config.NumberColumn(label=t('col_total_cost', lang), format="$ {:,.0f}"),
+            "total_profit": st.column_config.NumberColumn(label=t('col_total_profit', lang), format="$ {:,.0f}")
         }
 
         st.dataframe(
@@ -125,7 +110,7 @@ if st.session_state.results:
             column_config=column_config
         )
     else:
-        st.warning(t("Could not calculate P&L data by customer segment.", lang))
+        st.warning("고객 그룹별 손익 데이터를 계산할 수 없습니다.")
 
     st.subheader(t('payback_title', lang))
     operating_profit = res['pnl_annual']['operating_profit']
