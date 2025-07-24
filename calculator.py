@@ -1,4 +1,4 @@
-# calculator.py (v4.0 - Final Corrected Logic)
+# calculator.py (v4.1 - Type Safety Fix)
 import yaml
 import pandas as pd
 
@@ -60,13 +60,11 @@ def calculate_business_case(
     revenue = sum(s['total_revenue'] for s in segment_data)
 
     # 4.2. 비용 (Costs)
-    # FIX 1: Corrected power consumption logic
     it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
     total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
     power_cost_kwh_rate = 0.18 if use_clean_power == 'Renewable' else 0.12
     power_cost = total_power_consumption_mw * HOURS_PER_YEAR * 1000 * power_cost_kwh_rate
     
-    # FIX 2: Included personnel_and_other_per_mw cost
     maintenance_cost = op_conf['maintenance_and_cooling_per_mw'] * dc_size_mw
     personnel_cost = op_conf['personnel_and_other_per_mw'] * dc_size_mw
     cost_of_revenue = power_cost + maintenance_cost + personnel_cost
@@ -88,11 +86,12 @@ def calculate_business_case(
     for s in segment_data:
         segment_cost = total_operating_cost * s['token_usage_ratio']
         segment_profit = s['total_revenue'] - segment_cost
+        # [FIX] 명시적으로 float 타입으로 변환하여 타입 안정성 확보
         pnl_by_segment.append({
             "segment": s['segment'],
-            "total_revenue": s['total_revenue'],
-            "total_cost": segment_cost,
-            "total_profit": segment_profit
+            "total_revenue": float(s['total_revenue']),
+            "total_cost": float(segment_cost),
+            "total_profit": float(segment_profit)
         })
 
     # --- 6. 결과 정리 ---
