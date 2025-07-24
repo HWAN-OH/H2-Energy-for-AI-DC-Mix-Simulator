@@ -55,6 +55,7 @@ st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', 
 
 if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
+        # [FINAL FIX] lang을 직접 전달하여 계산 모듈이 모든 것을 처리하도록 함
         st.session_state.results = calculate_business_case(
             dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, lang
         )
@@ -85,29 +86,20 @@ if st.session_state.results:
     
     st.header(t("section_2_title", lang))
     
-    # [FINAL FIX] Directly use the pre-processed DataFrame from the results.
+    # [FINAL FIX] 데이터 가공 로직을 모두 제거하고, 준비된 데이터프레임을 그대로 표시
     if 'pnl_by_segment_df' in res and not res['pnl_by_segment_df'].empty:
         segment_df = res['pnl_by_segment_df']
-
-        tier_map = {
-            'Free': t('tier_free', lang),
-            'Standard': t('tier_standard', lang),
-            'Premium': t('tier_premium', lang)
-        }
-        segment_df['segment'] = segment_df['segment'].str.title().map(tier_map)
-
-        column_config = {
-            "segment": st.column_config.TextColumn(label=t('col_segment', lang)),
-            "total_revenue": st.column_config.NumberColumn(label=t('col_total_revenue', lang), format="$ {:,.0f}"),
-            "total_cost": st.column_config.NumberColumn(label=t('col_total_cost', lang), format="$ {:,.0f}"),
-            "total_profit": st.column_config.NumberColumn(label=t('col_total_profit', lang), format="$ {:,.0f}")
-        }
-
+        
+        # 컬럼 이름이 이미 현지화되어 있으므로, 포맷만 지정
         st.dataframe(
             segment_df,
             use_container_width=True,
             hide_index=True,
-            column_config=column_config
+            column_config={
+                t('col_total_revenue', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
+                t('col_total_cost', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
+                t('col_total_profit', lang): st.column_config.NumberColumn(format="$ {:,.0f}")
+            }
         )
     else:
         st.warning("고객 그룹별 손익 데이터를 계산할 수 없습니다.")
