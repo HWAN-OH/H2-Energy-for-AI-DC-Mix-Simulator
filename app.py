@@ -49,8 +49,7 @@ st.markdown(t('app_subtitle'))
 st.session_state.lang = 'ko' if st.radio(t('lang_selector_label'), ['한국어', 'English'], index=0, horizontal=True) == '한국어' else 'en'
 
 if st.button(t('run_button_label'), use_container_width=True, type="primary"):
-    # BUG FIX: Correctly read electricity price from the new config structure
-    elec_price = config.get('electricity_scenarios', {}).get(electricity_scenario, {}).get('price_per_kwh', 0.13)
+    elec_price = config.get('operating_scenarios', {}).get('electricity_pricing', {}).get(electricity_scenario, 0.13)
 
     user_inputs = {
         'high_perf_hw_ratio': high_perf_hw_ratio,
