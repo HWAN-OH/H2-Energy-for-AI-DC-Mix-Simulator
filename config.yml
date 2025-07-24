@@ -1,4 +1,4 @@
-# config.yml (v15.0)
+# config.yml (v16.0)
 
 # ===============================================
 # 하드웨어 스펙 및 예산
@@ -30,20 +30,14 @@ datacenter:
 # AI 모델, 사용자, 및 비즈니스 가정
 # ===============================================
 model_and_business:
-  # 지능형 아키텍처 적용 시 효율 개선 배수
   intelligent_arch_efficiency: 1.25
-  
-  # 연구개발(R&D) 비용 가정
   research_and_development:
-    total_model_development_cost: 2000000000 # 20억 달러
+    total_model_development_cost: 2000000000
     model_amortization_years: 3
-    # R&D 비용을 분담할 전 세계 데이터센터 수
     global_datacenter_count_for_cost_allocation: 20
-
-  # 판매 및 일반관리비 (매출 대비 비율)
   sgna_as_percent_of_revenue: 15.0
-
-  # 사용자 그룹별 분포 및 월간 토큰 사용량 (백만 개)
+  # 데이터센터 평균 가동률 (%) - 현실적 제약 요소
+  datacenter_utilization_rate: 60.0
   tiers:
     free:
       ratio: 0.6
