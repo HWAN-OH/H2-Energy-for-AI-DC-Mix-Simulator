@@ -1,4 +1,4 @@
-# calculator.py (v3.0 - Refactored P&L Logic)
+# calculator.py (v4.0 - Final Corrected Logic)
 import yaml
 import pandas as pd
 
@@ -47,30 +47,30 @@ def calculate_business_case(
     for tier_name, tier_info in tiers_conf.items():
         token_usage_ratio = (tier_info['ratio'] * tier_info['monthly_token_usage_m']) / total_token_demand_ratio if total_token_demand_ratio > 0 else 0
         segment_tokens = serviced_tokens * token_usage_ratio
-        
-        # 그룹별 매출: Free 티어는 0, 나머지는 시장가 적용
         segment_revenue = (segment_tokens / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
         
         segment_data.append({
             "segment": tier_name.title(),
             "token_usage_ratio": token_usage_ratio,
             "total_revenue": segment_revenue,
-            "total_cost": 0, # Placeholder
-            "total_profit": 0 # Placeholder
         })
 
     # --- 4. 통합 손익계산서 (P&L) 계산 ---
-    # 4.1. 매출 (Revenue) - 세그먼트 매출의 합으로 계산하여 논리 일관성 확보
+    # 4.1. 매출 (Revenue)
     revenue = sum(s['total_revenue'] for s in segment_data)
 
     # 4.2. 비용 (Costs)
-    # 전력비는 전체 서비스된 토큰량에 기반
-    it_power_consumption_mw = (serviced_tokens / total_token_capacity if total_token_capacity > 0 else 0) * (dc_size_mw * (utilization_rate/100))
+    # FIX 1: Corrected power consumption logic
+    it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
     total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
     power_cost_kwh_rate = 0.18 if use_clean_power == 'Renewable' else 0.12
     power_cost = total_power_consumption_mw * HOURS_PER_YEAR * 1000 * power_cost_kwh_rate
     
-    cost_of_revenue = power_cost + (op_conf['maintenance_and_cooling_per_mw'] * dc_size_mw)
+    # FIX 2: Included personnel_and_other_per_mw cost
+    maintenance_cost = op_conf['maintenance_and_cooling_per_mw'] * dc_size_mw
+    personnel_cost = op_conf['personnel_and_other_per_mw'] * dc_size_mw
+    cost_of_revenue = power_cost + maintenance_cost + personnel_cost
+    
     sg_and_a = revenue * (op_conf['sgna_as_percent_of_revenue'] / 100.0)
     dc_depreciation = dc_construction_cost / inv_conf['amortization_years']['datacenter']
     it_depreciation = it_hw_budget / inv_conf['amortization_years']['it_hardware']
@@ -83,10 +83,17 @@ def calculate_business_case(
     gross_profit = revenue - cost_of_revenue
     operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
 
-    # --- 5. 그룹별 비용 및 손익 재계산 ---
+    # --- 5. 그룹별 비용 및 손익 최종 할당 ---
+    pnl_by_segment = []
     for s in segment_data:
-        s['total_cost'] = total_operating_cost * s['token_usage_ratio']
-        s['total_profit'] = s['total_revenue'] - s['total_cost']
+        segment_cost = total_operating_cost * s['token_usage_ratio']
+        segment_profit = s['total_revenue'] - segment_cost
+        pnl_by_segment.append({
+            "segment": s['segment'],
+            "total_revenue": s['total_revenue'],
+            "total_cost": segment_cost,
+            "total_profit": segment_profit
+        })
 
     # --- 6. 결과 정리 ---
     pnl_annual = {
@@ -99,9 +106,6 @@ def calculate_business_case(
         'rd_amortization': rd_amortization,
         'operating_profit': operating_profit,
     }
-    
-    # 결과 출력 전, 중간 계산에 사용된 키(token_usage_ratio) 제거
-    pnl_by_segment = [{k: v for k, v in s.items() if k != 'token_usage_ratio'} for s in segment_data]
 
     results = {
         "pnl_annual": pnl_annual,
