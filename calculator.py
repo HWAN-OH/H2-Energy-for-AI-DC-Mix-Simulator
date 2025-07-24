@@ -1,14 +1,13 @@
-# calculator_v12.py (with config loading)
-
 import yaml
-
-with open("config.yml", "r") as f:
-    config = yaml.safe_load(f)
+import pandas as pd
 
 def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirrormind, lang):
     """
-    Calculate AI DC business performance based on config values and user inputs.
+    Calculates AI DC business performance and returns structured data for the UI.
     """
+    with open("config.yml", "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+
     HOURS_PER_YEAR = 8760
 
     dc_conf = config["dc_defaults"]
@@ -20,58 +19,86 @@ def calculate_business_case(dc_size_mw, use_clean_power, target_irr, apply_mirro
     EFFICIENCY = token_conf["mirrormind_efficiency"] if apply_mirrormind else 1.0
 
     power_cost = dc_conf["power_cost_kwh"][use_clean_power]
-    capex = dc_conf["capex_per_mw"] * dc_size_mw / dc_conf["amortization_years"]
-    opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
+    
+    # Correctly apply amortization over the entire period
+    annual_capex = (dc_conf["capex_per_mw"] * dc_size_mw) / dc_conf["amortization_years"]
+    annual_opex = dc_conf["opex_per_mw_per_year"] * dc_size_mw
 
     total_power_kwh = dc_size_mw * 1000 * HOURS_PER_YEAR
     total_token_capacity = total_power_kwh * TOKEN_PER_KWH * EFFICIENCY
 
     token_demand = 0
+    # Calculate total token demand based on the assumption of total users
     for tier in tiers_conf:
         tier_conf = tiers_conf[tier]
         token_demand += tier_conf["monthly_token_usage"] * 12 * tier_conf["ratio"] * assumptions["users_total"]
 
-    scale_ratio = min(1.0, total_token_capacity / token_demand)
-    actual_users = int(assumptions["users_total"] * scale_ratio)
+    # Scale down the number of users if capacity is less than demand
+    scale_ratio = min(1.0, total_token_capacity / token_demand if token_demand > 0 else 1.0)
+    actual_users_total = int(assumptions["users_total"] * scale_ratio)
 
-    revenue = 0
-    user_level_table = []
-
+    total_revenue = 0
+    total_usage = 0
+    
+    # Calculate revenue based on actual supported users
     for tier in ["free", "standard", "premium"]:
         tier_conf = tiers_conf[tier]
-        users = int(actual_users * tier_conf["ratio"])
-        usage = tier_conf["monthly_token_usage"] * 12 * users
-        unit_price = tier_conf["price_per_million_token"] / 1e6
-        tier_revenue = usage * unit_price
-        revenue += tier_revenue
+        users_in_tier = int(actual_users_total * tier_conf["ratio"])
+        usage_in_tier = tier_conf["monthly_token_usage"] * 12 * users_in_tier
+        unit_price = tier_conf["price_per_million_token"] / 1_000_000
+        total_revenue += usage_in_tier * unit_price
+        total_usage += usage_in_tier
+        
+    # Cost is based on actual usage, not max capacity
+    total_power_consumed_kwh = (total_usage / EFFICIENCY) / TOKEN_PER_KWH if TOKEN_PER_KWH > 0 else 0
+    total_power_cost = total_power_consumed_kwh * power_cost
+    
+    total_cost = annual_capex + annual_opex + total_power_cost
+    total_profit = total_revenue - total_cost
 
-        cost = (usage / TOKEN_PER_KWH) * power_cost
-        margin = tier_revenue - cost
+    # Create Annual P&L DataFrame
+    pnl_data = {
+        "Item": [t("pnl_revenue", lang), t("pnl_cost", lang), t("pnl_profit", lang)],
+        "Amount ($)": [total_revenue, total_cost, total_profit]
+    }
+    pnl_df = pd.DataFrame(pnl_data)
 
-        user_level_table.append({
-            "Tier": tier.title(),
-            "Users": users,
-            "Monthly_Tokens": tier_conf["monthly_token_usage"],
-            "Revenue": round(tier_revenue, 2),
-            "Cost": round(cost, 2),
-            "Margin": round(margin, 2)
-        })
+    # Create Per-User Annual P&L DataFrame
+    per_user_pnl_df = None
+    if actual_users_total > 0:
+        per_user_pnl_data = {
+            "Item": [t("pnl_revenue", lang), t("pnl_cost", lang), t("pnl_profit", lang)],
+            "Amount ($)": [
+                total_revenue / actual_users_total,
+                total_cost / actual_users_total,
+                total_profit / actual_users_total
+            ]
+        }
+        per_user_pnl_df = pd.DataFrame(per_user_pnl_data)
 
-    total_cost = capex + opex
-    profit = revenue - total_cost
+    # Break-even analysis
+    avg_rev_per_user = total_revenue / actual_users_total if actual_users_total > 0 else 0
+    variable_cost_per_user = total_power_cost / actual_users_total if actual_users_total > 0 else 0
+    contribution_margin_per_user = avg_rev_per_user - variable_cost_per_user
+    fixed_costs = annual_capex + annual_opex
+    
+    break_even_users = int(fixed_costs / contribution_margin_per_user) if contribution_margin_per_user > 0 else float('inf')
 
-    avg_rev_per_user = revenue / actual_users if actual_users else 0.01
-    break_even_users = int(total_cost / avg_rev_per_user) if avg_rev_per_user else 0
-
-    recommendations = f"* 요금 인상 또는 프리미엄 사용자 비율 확대 고려\n"
-    if apply_mirrormind:
-        recommendations += "* 미러마인드 적용으로 토큰 효율 개선 효과 반영됨\n"
+    # Recommendations
+    recommendations = []
+    if total_profit < 0:
+        recommendations.append(f"- {t('reco_price_increase', lang)}")
+        if not apply_mirrormind:
+            recommendations.append(f"- {t('reco_efficiency_improvement', lang)}")
     else:
-        recommendations += "* 미러마인드 미적용: 효율 개선 여지 있음\n"
+        recommendations.append(f"- {t('reco_profit_positive', lang)}")
+
 
     return {
-        "summary": f"총 매출: ${revenue:,.0f}, 총 비용: ${total_cost:,.0f}, 손익: ${profit:,.0f}",
-        "user_level_table": user_level_table,
-        "break_even_msg": f"손익분기점 사용자 수: {break_even_users:,}명",
-        "recommendations": recommendations
+        "pnl_df": pnl_df,
+        "per_user_pnl_df": per_user_pnl_df,
+        "break_even_users": break_even_users,
+        "recommendations": "\n".join(recommendations),
+        "dc_size": dc_size_mw
     }
+
