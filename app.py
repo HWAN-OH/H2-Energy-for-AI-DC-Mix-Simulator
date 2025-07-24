@@ -23,6 +23,8 @@ st.markdown("""
     .narrative-block h3 { margin-top: 0; }
     .recommendation-block { background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 1.5rem; margin-top: 2rem; }
     .clarification-box { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; }
+    /* [NEW] Style for the explanation box */
+    .explanation-box { background-color: #f3f4f6; border-left: 5px solid #6b7280; padding: 1rem 1.5rem; margin-top: 3rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -45,7 +47,13 @@ with st.sidebar:
     utilization_rate = st.slider(t("utilization_rate", st.session_state.lang), 40, 100, 60, 5)
     power_option = st.selectbox(t("power_type", st.session_state.lang), [t("power_conventional", st.session_state.lang), t("power_renewable", st.session_state.lang)])
     use_clean_power = "Renewable" if power_option == t("power_renewable", st.session_state.lang) else "Conventional"
-    apply_mirrormind = st.checkbox(t("apply_mirrormind", st.session_state.lang), value=False)
+    
+    # [MODIFIED] Add help tooltip to the checkbox
+    apply_mirrormind = st.checkbox(
+        label=t("apply_mirrormind_label", st.session_state.lang), 
+        value=False, 
+        help=t("apply_mirrormind_help", st.session_state.lang)
+    )
     
     st.markdown("---")
     market_price_per_m_tokens = st.slider(t("market_price", st.session_state.lang), 0.5, 5.0, 1.5, 0.1)
@@ -62,7 +70,6 @@ lang = st.session_state.lang
 st.title(t("app_title", lang))
 st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', lang)}</p>", unsafe_allow_html=True)
 
-# [NEW] Add clarification box
 st.markdown(f"<div class='clarification-box'>{t('model_clarification', lang)}</div>", unsafe_allow_html=True)
 
 
@@ -78,9 +85,9 @@ if st.session_state.results:
     res = st.session_state.results
     pnl = res['pnl_annual']
     
+    # ... (Sections 1, 2, 3 are unchanged)
     st.header(t("section_1_title", lang))
     st.subheader(t("assumptions_title", lang))
-    
     st.html(f"""
         <div class="pnl-table">
             <div class="row"><div class="label">{t('pnl_revenue', lang)}</div><div class="value">${pnl['revenue']:,.0f}</div></div>
@@ -92,7 +99,6 @@ if st.session_state.results:
             <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl['operating_profit']:,.0f}</div></div>
         </div>
     """)
-    
     st.header(t("section_2_title", lang))
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
@@ -107,13 +113,11 @@ if st.session_state.results:
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            
     st.header(t("section_3_title", lang))
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
             if segment['tier_name_key'] in ['tier_standard', 'tier_premium']:
                 profit_color = "red" if segment['new_profit_per_user'] < 0 else "green"
-                
                 st.markdown(f"""
                 <div class="narrative-block">
                     <h3>{t('narrative_pricing_title', lang)}: {t(segment['tier_name_key'], lang)}</h3>
@@ -128,17 +132,13 @@ if st.session_state.results:
     st.header(t("section_4_title", lang))
     if 'recommendation' in res:
         st.markdown(f'<div class="recommendation-block">', unsafe_allow_html=True)
-        
         st.write(t('payback_analysis_intro', lang))
         cash_flow = pnl.get('annual_cash_flow', 0)
         payback_period = res['total_investment'] / cash_flow if cash_flow > 0 else 0
-        
         p_cols = st.columns(2)
         p_cols[0].metric(label=t('annual_cash_flow', lang), value=f"${cash_flow:,.0f}")
         p_cols[1].metric(label=t('calculated_payback_period', lang), value=f"{payback_period:.2f}" if payback_period > 0 else t('unrecoverable', lang))
-        
         st.markdown("---")
-
         st.write(f"**{t('recommendation_title', lang)}**")
         reco = res['recommendation']
         if reco['is_achievable']:
@@ -149,9 +149,19 @@ if st.session_state.results:
         else:
             st.warning(t('recommendation_unachievable', lang))
         st.markdown(f'</div>', unsafe_allow_html=True)
+        
+    # [NEW] Add the final explanation box
+    st.markdown(f"""
+    <div class="explanation-box">
+        <h4>{t('arch_explanation_title', lang)}</h4>
+        <p>{t('arch_explanation_text', lang)}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 else:
     st.info(t("initial_prompt", lang))
 
 # --- Footer ---
+# Move footer to the end of the script to ensure it's always last
+st.markdown('<div style="height: 5rem;"></div>', unsafe_allow_html=True) # Add some space before the footer
 st.markdown(f'<div class="footer"><p>{t("copyright_text", lang)} | {t("contact_text", lang)}</p></div>', unsafe_allow_html=True)
