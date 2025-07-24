@@ -1,4 +1,4 @@
-# localization.py (v13.0)
+# localization.py (v14.0)
 
 loc_strings = {
     "en": {
@@ -15,6 +15,7 @@ loc_strings = {
         
         "lang_selector": "Language",
         "dc_capacity": "Data Center Size (MW)",
+        "high_perf_gpu_ratio": "High-Performance GPU Budget Ratio (%)",
         "power_type": "Power Source",
         "apply_mirrormind": "Apply Intelligent Architecture",
         "paid_tier_fee": "Paid Tier Monthly Fee ($)",
@@ -26,7 +27,7 @@ loc_strings = {
 
         "section_1_title": "1. Overall Business P&L (Annual)",
         "assumptions_title": "Key Assumptions & Capacity",
-        "assump_gpu_mix": "GPU Mix",
+        "assump_gpu_mix": "GPU Configuration",
         "assump_users": "Supported Users",
         "assump_tokens": "Tokens Serviced",
         "assump_power": "Power Consumed",
@@ -41,8 +42,15 @@ loc_strings = {
         "tier_free": "Free Users",
         "tier_standard": "Paid Users",
         "tier_premium": "Premium Users",
-        "total_pnl_by_segment": "Total P&L by Segment",
-        "per_user_pnl_by_segment": "Per-User P&L by Segment",
+        "segment_pnl_header": "P&L by Customer Segment",
+        "col_segment": "Customer Segment",
+        "col_total_revenue": "Total Revenue",
+        "col_total_cost": "Total Cost",
+        "col_total_profit": "Total Profit",
+        "col_per_user_revenue": "Revenue/User",
+        "col_per_user_cost": "Cost/User",
+        "col_per_user_profit": "Profit/User",
+        
         "payback_title": "Investment Payback Period",
         "payback_years": "Estimated Payback Years",
         "unrecoverable": "Unrecoverable",
@@ -63,6 +71,7 @@ loc_strings = {
         "contact_text": "문의: hawn21@gmail.com",
         "lang_selector": "언어",
         "dc_capacity": "데이터센터 용량 (MW)",
+        "high_perf_gpu_ratio": "고성능 GPU 예산 비중 (%)",
         "power_type": "전력 종류",
         "apply_mirrormind": "지능형 아키텍처 적용",
         "paid_tier_fee": "유료 사용자 월 요금 ($)",
@@ -89,8 +98,15 @@ loc_strings = {
         "tier_free": "무료 사용자",
         "tier_standard": "유료 사용자",
         "tier_premium": "프리미엄 사용자",
-        "total_pnl_by_segment": "고객 그룹별 전체 손익",
-        "per_user_pnl_by_segment": "고객 1인당 손익",
+        "segment_pnl_header": "고객 그룹별 손익 분석",
+        "col_segment": "고객 그룹",
+        "col_total_revenue": "그룹 전체 매출",
+        "col_total_cost": "그룹 전체 비용",
+        "col_total_profit": "그룹 전체 손익",
+        "col_per_user_revenue": "인당 매출",
+        "col_per_user_cost": "인당 비용",
+        "col_per_user_profit": "인당 손익",
+        
         "payback_title": "투자금 회수 기간",
         "payback_years": "예상 회수 기간 (년)",
         "unrecoverable": "회수 불가",
