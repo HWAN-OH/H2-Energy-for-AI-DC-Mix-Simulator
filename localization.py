@@ -1,4 +1,4 @@
-# localization.py (v22.0 - Final Recommendation)
+# localization.py (v23.0 - Final Version)
 
 loc_strings = {
     "en": {
@@ -17,7 +17,7 @@ loc_strings = {
         "market_price": "Market Price per 1M Tokens ($)",
         "run_button": "🚀 Run Analysis",
         "initial_prompt": "Set your scenario variables in the sidebar and click 'Run Analysis'.",
-        "section_1_title": "1. Overall Business P&L (Annual)",
+        "section_1_title": "1. Core Business Potential & Cash Flow (Annual)",
         "assumptions_title": "Key Assumptions & Capacity",
         "assump_gpu_mix": "GPU Configuration",
         "assump_utilization": "Utilization Rate",
@@ -33,11 +33,6 @@ loc_strings = {
         "tier_free": "Free Users",
         "tier_standard": "Paid Users",
         "tier_premium": "Premium Users",
-        "payback_title": "Investment Payback Period",
-        "payback_years": "Estimated Payback Years",
-        "unrecoverable": "Unrecoverable",
-        "power_conventional": "Conventional",
-        "power_renewable": "Renewable",
         "narrative_users": "Number of Users",
         "narrative_revenue_per_user": "Usage-Based Revenue",
         "narrative_cost_per_user": "Cost per User",
@@ -50,12 +45,16 @@ loc_strings = {
         "narrative_fixed_fee_revenue": "Fixed-Fee Revenue",
         "narrative_opportunity_cost": "Opportunity Cost (vs. Usage-Based)",
         "narrative_new_profit_per_user": "New Profit (Fixed-Fee)",
-        # [NEW] Final Recommendation Section
-        "section_4_title": "4. Recommended Pricing for 5-Year Payback",
-        "recommendation_intro": "To achieve a 5-year payback for the total investment, the following monthly pricing is recommended:",
+        # [MODIFIED] Final Section
+        "section_4_title": "4. Final Summary & Payback Analysis",
+        "payback_analysis_intro": "Based on the current strategy, the realistic payback period is calculated as follows:",
+        "annual_cash_flow": "Annual Operating Cash Flow (Profit + D&A)",
+        "calculated_payback_period": "Calculated Payback Period (Years)",
+        "recommendation_title": "Reference: Recommended Pricing for 5-Year Target",
+        "recommendation_intro": "To achieve a 5-year payback, the following monthly pricing is recommended:",
         "recommended_standard_fee": "Recommended Standard Fee",
         "recommended_premium_fee": "Recommended Premium Fee",
-        "recommendation_unachievable": "With the current cost structure, achieving a 5-year payback is not feasible. A fundamental review of the hardware or architectural strategy is required.",
+        "recommendation_unachievable": "With the current cost structure, achieving a 5-year payback is not feasible. If the calculated payback period above is longer than your target, a fundamental review of the hardware or architectural strategy is required.",
     },
     "ko": {
         "app_title": "AI 데이터센터 사업성 시뮬레이터",
@@ -73,7 +72,7 @@ loc_strings = {
         "market_price": "토큰당 시장 판매가 ($ / 1M)",
         "run_button": "🚀 분석 실행",
         "initial_prompt": "사이드바에서 시나리오 변수를 설정한 후 '분석 실행' 버튼을 눌러 결과를 확인하세요.",
-        "section_1_title": "1. 전체 사업 손익 (연간 P&L)",
+        "section_1_title": "1. 핵심 사업 잠재력 및 현금흐름 (연간)",
         "assumptions_title": "주요 가정 및 생산량",
         "assump_gpu_mix": "그래픽카드 구성",
         "assump_utilization": "평균 가동률",
@@ -82,18 +81,13 @@ loc_strings = {
         "pnl_cost_of_revenue": "매출원가",
         "pnl_gross_profit": "매출총이익",
         "pnl_sg_and_a": "  - 판매관리비",
-        "pnl_d_and_a": "  - 유형자산상각비 (DC, HW)",
+        "pnl_d_and_a": "  - 감가상각비 (DC, HW)",
         "pnl_rd_amortization": "  - 무형자산상각비 (R&D)",
         "pnl_operating_profit": "영업이익",
         "section_2_title": "2. 고객 그룹별 손익 분석 (인당, 월간)",
         "tier_free": "무료 사용자",
         "tier_standard": "유료 사용자",
         "tier_premium": "프리미엄 사용자",
-        "payback_title": "투자금 회수 기간",
-        "payback_years": "예상 회수 기간 (년)",
-        "unrecoverable": "회수 불가",
-        "power_conventional": "일반 전력망",
-        "power_renewable": "재생에너지",
         "narrative_users": "사용자 수",
         "narrative_revenue_per_user": "사용량 기반 매출",
         "narrative_cost_per_user": "인당 원가",
@@ -106,12 +100,16 @@ loc_strings = {
         "narrative_fixed_fee_revenue": "고정 요금제 매출",
         "narrative_opportunity_cost": "기회비용 (vs 사용량 기반)",
         "narrative_new_profit_per_user": "최종 이익 (고정 요금제)",
-        # [NEW] Final Recommendation Section
-        "section_4_title": "4. 5년 내 투자금 회수를 위한 최적 요금제 제안",
+        # [MODIFIED] Final Section
+        "section_4_title": "4. 최종 요약 및 투자 회수 기간 분석",
+        "payback_analysis_intro": "현재 전략을 기준으로, 현실적인 투자 회수 기간은 다음과 같이 계산됩니다:",
+        "annual_cash_flow": "연간 영업 현금흐름 (영업이익 + 감가상각비)",
+        "calculated_payback_period": "계산된 투자 회수 기간 (년)",
+        "recommendation_title": "참고: '5년 회수' 목표 달성을 위한 권장 요금",
         "recommendation_intro": "총 투자금을 5년 내에 회수하기 위해, 다음과 같은 월간 요금제를 제안합니다:",
         "recommended_standard_fee": "권장 유료 요금",
         "recommended_premium_fee": "권장 프리미엄 요금",
-        "recommendation_unachievable": "현재 비용 구조에서는 5년 내 투자금 회수가 현실적으로 어렵습니다. 하드웨어 또는 아키텍처 전략의 근본적인 재검토가 필요합니다.",
+        "recommendation_unachievable": "현재 비용 구조에서는 5년 내 투자금 회수가 현실적으로 어렵습니다. 위 계산된 회수 기간이 목표보다 길 경우, 하드웨어 또는 아키텍처 전략의 근본적인 재검토가 필요합니다.",
     }
 }
 
