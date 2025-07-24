@@ -1,4 +1,4 @@
-# localization.py (v20.0 - Monthly Report)
+# localization.py (v21.0 - Pricing Strategy)
 
 loc_strings = {
     "en": {
@@ -29,7 +29,6 @@ loc_strings = {
         "pnl_d_and_a": "  - D&A (DC & HW)",
         "pnl_rd_amortization": "  - R&D Amortization",
         "pnl_operating_profit": "Operating Profit",
-        # [MODIFIED]
         "section_2_title": "2. P&L by Customer Segment (Per User, Monthly)",
         "tier_free": "Free Users",
         "tier_standard": "Paid Users",
@@ -40,9 +39,18 @@ loc_strings = {
         "power_conventional": "Conventional",
         "power_renewable": "Renewable",
         "narrative_users": "Number of Users",
-        "narrative_revenue_per_user": "Revenue per User",
+        "narrative_revenue_per_user": "Usage-Based Revenue",
         "narrative_cost_per_user": "Cost per User",
-        "narrative_profit_per_user": "Profit per User",
+        "narrative_profit_per_user": "Usage-Based Profit",
+        # [NEW] Pricing Strategy Section
+        "sidebar_pricing_title": "💰 Pricing Strategy",
+        "pricing_standard_fee": "Standard Tier Monthly Fee ($)",
+        "pricing_premium_fee": "Premium Tier Monthly Fee ($)",
+        "section_3_title": "3. Pricing Strategy Analysis (Per User, Monthly)",
+        "narrative_pricing_title": "Analysis for",
+        "narrative_fixed_fee_revenue": "Fixed-Fee Revenue",
+        "narrative_opportunity_cost": "Opportunity Cost (vs. Usage-Based)",
+        "narrative_new_profit_per_user": "New Profit (Fixed-Fee)",
     },
     "ko": {
         "app_title": "AI 데이터센터 사업성 시뮬레이터",
@@ -72,7 +80,6 @@ loc_strings = {
         "pnl_d_and_a": "  - 유형자산상각비 (DC, HW)",
         "pnl_rd_amortization": "  - 무형자산상각비 (R&D)",
         "pnl_operating_profit": "영업이익",
-        # [MODIFIED]
         "section_2_title": "2. 고객 그룹별 손익 분석 (인당, 월간)",
         "tier_free": "무료 사용자",
         "tier_standard": "유료 사용자",
@@ -83,9 +90,18 @@ loc_strings = {
         "power_conventional": "일반 전력망",
         "power_renewable": "재생에너지",
         "narrative_users": "사용자 수",
-        "narrative_revenue_per_user": "인당 매출",
+        "narrative_revenue_per_user": "사용량 기반 매출",
         "narrative_cost_per_user": "인당 원가",
-        "narrative_profit_per_user": "인당 이익",
+        "narrative_profit_per_user": "사용량 기반 이익",
+        # [NEW] Pricing Strategy Section
+        "sidebar_pricing_title": "💰 요금제 전략 설정",
+        "pricing_standard_fee": "유료 사용자 월 요금 ($)",
+        "pricing_premium_fee": "프리미엄 사용자 월 요금 ($)",
+        "section_3_title": "3. 요금제 전략 분석 (인당, 월간)",
+        "narrative_pricing_title": "분석 대상",
+        "narrative_fixed_fee_revenue": "고정 요금제 매출",
+        "narrative_opportunity_cost": "기회비용 (vs 사용량 기반)",
+        "narrative_new_profit_per_user": "최종 이익 (고정 요금제)",
     }
 }
 
