@@ -1,4 +1,4 @@
-# calculator.py (v7.0 - Narrative First)
+# calculator.py (v8.0 - Monthly Metrics)
 import yaml
 import pandas as pd
 
@@ -39,7 +39,7 @@ def calculate_business_case(
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
     # --- 3. Overall P&L ---
-    revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * (1 - tiers_conf['free']['ratio']) # Free users generate no revenue
+    revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * (1 - tiers_conf['free']['ratio'])
     it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
     total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
     power_cost_kwh_rate = 0.18 if use_clean_power == 'Renewable' else 0.12
@@ -56,7 +56,7 @@ def calculate_business_case(
     gross_profit = revenue - cost_of_revenue
     operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
 
-    # --- 4. [NEW] Per-User Metrics Calculation ---
+    # --- 4. [MODIFIED] Per-User Monthly Metrics Calculation ---
     total_users = model_conf['total_users_for_100mw'] * (dc_size_mw / 100.0)
     total_token_demand_ratio = sum(t['ratio'] * t['monthly_token_usage_m'] for t in tiers_conf.values())
     
@@ -67,20 +67,20 @@ def calculate_business_case(
 
         token_usage_ratio = (tier_info['ratio'] * tier_info['monthly_token_usage_m']) / total_token_demand_ratio if total_token_demand_ratio > 0 else 0
         
-        # Calculate per-user metrics
-        tier_revenue = (serviced_tokens * token_usage_ratio / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
-        tier_cost = total_operating_cost * token_usage_ratio
+        tier_revenue_annual = (serviced_tokens * token_usage_ratio / 1e6) * market_price_per_m_tokens if tier_name != 'free' else 0
+        tier_cost_annual = total_operating_cost * token_usage_ratio
         
-        revenue_per_user = tier_revenue / num_users_in_tier
-        cost_per_user = tier_cost / num_users_in_tier
-        profit_per_user = revenue_per_user - cost_per_user
+        revenue_per_user_annual = tier_revenue_annual / num_users_in_tier
+        cost_per_user_annual = tier_cost_annual / num_users_in_tier
+        profit_per_user_annual = revenue_per_user_annual - cost_per_user_annual
 
         segment_narrative_data.append({
             "tier_name_key": f"tier_{tier_name}",
             "num_users": num_users_in_tier,
-            "revenue_per_user": revenue_per_user,
-            "cost_per_user": cost_per_user,
-            "profit_per_user": profit_per_user,
+            # Divide annual figures by 12 to get monthly metrics
+            "revenue_per_user": revenue_per_user_annual / 12.0,
+            "cost_per_user": cost_per_user_annual / 12.0,
+            "profit_per_user": profit_per_user_annual / 12.0,
         })
 
     # --- 5. Final Results ---
