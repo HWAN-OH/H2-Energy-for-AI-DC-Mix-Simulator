@@ -1,4 +1,4 @@
-# calculator.py (v4.1 - Type Safety Fix)
+# calculator.py (v5.0 - DataFrame First)
 import yaml
 import pandas as pd
 
@@ -56,59 +56,53 @@ def calculate_business_case(
         })
 
     # --- 4. 통합 손익계산서 (P&L) 계산 ---
-    # 4.1. 매출 (Revenue)
     revenue = sum(s['total_revenue'] for s in segment_data)
-
-    # 4.2. 비용 (Costs)
     it_power_consumption_mw = dc_size_mw * (utilization_rate / 100.0)
     total_power_consumption_mw = it_power_consumption_mw * op_conf['pue']
     power_cost_kwh_rate = 0.18 if use_clean_power == 'Renewable' else 0.12
     power_cost = total_power_consumption_mw * HOURS_PER_YEAR * 1000 * power_cost_kwh_rate
-    
     maintenance_cost = op_conf['maintenance_and_cooling_per_mw'] * dc_size_mw
     personnel_cost = op_conf['personnel_and_other_per_mw'] * dc_size_mw
     cost_of_revenue = power_cost + maintenance_cost + personnel_cost
-    
     sg_and_a = revenue * (op_conf['sgna_as_percent_of_revenue'] / 100.0)
     dc_depreciation = dc_construction_cost / inv_conf['amortization_years']['datacenter']
     it_depreciation = it_hw_budget / inv_conf['amortization_years']['it_hardware']
     rd_amortization = (rd_conf['total_model_development_cost'] / rd_conf['global_datacenter_count_for_cost_allocation']) / inv_conf['amortization_years']['research_and_development']
     d_and_a = dc_depreciation + it_depreciation
-    
     total_operating_cost = cost_of_revenue + sg_and_a + d_and_a + rd_amortization
-
-    # 4.3. 이익 (Profit)
     gross_profit = revenue - cost_of_revenue
     operating_profit = gross_profit - sg_and_a - d_and_a - rd_amortization
 
     # --- 5. 그룹별 비용 및 손익 최종 할당 ---
-    pnl_by_segment = []
+    pnl_by_segment_data = []
     for s in segment_data:
         segment_cost = total_operating_cost * s['token_usage_ratio']
         segment_profit = s['total_revenue'] - segment_cost
-        # [FIX] 명시적으로 float 타입으로 변환하여 타입 안정성 확보
-        pnl_by_segment.append({
+        pnl_by_segment_data.append({
             "segment": s['segment'],
-            "total_revenue": float(s['total_revenue']),
-            "total_cost": float(segment_cost),
-            "total_profit": float(segment_profit)
+            "total_revenue": s['total_revenue'],
+            "total_cost": segment_cost,
+            "total_profit": segment_profit
         })
+    
+    # [FINAL FIX] Create a fully typed DataFrame directly in the calculation module.
+    pnl_by_segment_df = pd.DataFrame(pnl_by_segment_data).astype({
+        'segment': 'string',
+        'total_revenue': 'float64',
+        'total_cost': 'float64',
+        'total_profit': 'float64'
+    })
 
     # --- 6. 결과 정리 ---
     pnl_annual = {
-        'revenue': revenue,
-        'cost_of_revenue': cost_of_revenue,
-        'gross_profit': gross_profit,
-        'sg_and_a': sg_and_a,
-        'd_and_a': d_and_a,
-        'it_depreciation': it_depreciation,
-        'rd_amortization': rd_amortization,
-        'operating_profit': operating_profit,
+        'revenue': revenue, 'cost_of_revenue': cost_of_revenue, 'gross_profit': gross_profit,
+        'sg_and_a': sg_and_a, 'd_and_a': d_and_a, 'it_depreciation': it_depreciation,
+        'rd_amortization': rd_amortization, 'operating_profit': operating_profit,
     }
 
     results = {
         "pnl_annual": pnl_annual,
-        "pnl_by_segment": pnl_by_segment,
+        "pnl_by_segment_df": pnl_by_segment_df, # Return the DataFrame object
         "total_investment": total_investment,
         "assumptions": {
             "gpu_mix_string": f"H:{int(num_high_perf_gpus)} / S:{int(num_standard_gpus)}",
