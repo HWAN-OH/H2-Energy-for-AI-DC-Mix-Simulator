@@ -12,6 +12,7 @@ AI 서비스의 현실적인 손익(P&L)과 투자 회수 기간을 분석하여
 
 [**>>> Click to Launch Live App / 라이브 앱 실행하기**](https://h2-energy-for-ai-dc-mix-simulator-lokmn9dwmkrbtmp7ovd3pn.streamlit.app/)
 
+![Simulator's Final UI](https://i.imgur.com/GZqB3sL.png)
 
 ## Overview
 
@@ -50,3 +51,27 @@ AI 데이터센터 사업의 성공은 하드웨어, 전력, 아키텍처, 그�
 3.  **현실적인 투자 회수 기간 분석:** 회계적 이익이 아닌, 감가상각비가 반영된 **실제 현금흐름**을 기반으로 현재 전략 하에서의 현실적인 투자 회수 기간을 계산합니다.
 4.  **'What-If' 요금제 시뮬레이션:** 특정 월간 고정 요금제를 설정했을 경우, 사용량 기반 매출 대비 기회비용과 최종 손익이 어떻게 변하는지 시뮬레이션합니다.
 5.  **최적 요금제 제안:** 설정된 모든 전략 하에서 **'5년 내 투자금 회수'**라는 재무 목표를 달성하기 위해 필요한 최적의 월간 요금제를 시스템이 역으로 계산하여 제안합니다.
+
+---
+
+## Project Philosophy
+
+This tool was developed by **[Oh Sunghwan](https://www.linkedin.com/in/shoh1224/)**, a professional with deep expertise across the energy, manufacturing, and technology sectors. It reflects a core belief: the most pressing challenges of our time can only be solved by bridging the gap between deep industry knowledge and data-driven, systems-level thinking.
+
+---
+
+## 프로젝트 철학
+
+이 도구는 에너지, 제조, 기술 산업 전반에 걸친 깊은 전문성을 보유한 **[오승환 (Oh Sunghwan)](https://www.linkedin.com/in/shoh1224/)**에 의해 개발되었습니다. 이는 우리 시대의 가장 시급한 문제들이, 깊이 있는 산업 지식과 데이터 기반의 시스템적 사고 사이의 간극을 메울 때에만 해결될 수 있다는 핵심 신념을 반영합니다.
+
+---
+
+## License
+
+This project is licensed under the MIT License. Copyright (c) 2025, Oh Sunghwan.
+
+---
+
+## 라이선스
+
+이 프로젝트는 MIT 라이선스를 따릅니다. Copyright (c) 2025, Oh Sunghwan.
