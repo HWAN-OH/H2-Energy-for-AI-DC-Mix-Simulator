@@ -1,20 +1,14 @@
-# config.yml (v14.0)
+# config.yml (v15.0)
 
 # ===============================================
 # 하드웨어 스펙 및 예산
 # ===============================================
 hardware:
-  # 데이터센터 규모(MW)당 IT 하드웨어 총 예산
-  it_budget_per_mw: 7000000 # USD
-  
-  # 고성능 AI 가속기 (예: H100)
+  it_budget_per_mw: 7000000
   high_perf_gpu:
     name: "고성능 AI 가속기"
     cost: 35000
-    # 이 유닛 1개가 1시간에 처리하는 토큰 (백만 개)
     m_tokens_per_hour: 5.0
-
-  # 표준 AI 가속기 (예: A100)
   standard_gpu:
     name: "표준 AI 가속기"
     cost: 10000
@@ -26,20 +20,29 @@ hardware:
 datacenter:
   amortization_years: 5
   capex_per_mw: 10000000
-  opex_per_mw_per_year: 200000 # 유지보수비 등
+  opex_per_mw_per_year: 200000
   power_cost_kwh:
     Conventional: 0.12
     Renewable: 0.18
-  # IT 장비 1W당 소비하는 데이터센터 총 전력 (PUE 반영)
   total_watts_per_it_watt: 1.5
 
 # ===============================================
-# AI 모델 및 사용자 가정
+# AI 모델, 사용자, 및 비즈니스 가정
 # ===============================================
-model_and_users:
+model_and_business:
   # 지능형 아키텍처 적용 시 효율 개선 배수
   intelligent_arch_efficiency: 1.25
   
+  # 연구개발(R&D) 비용 가정
+  research_and_development:
+    total_model_development_cost: 2000000000 # 20억 달러
+    model_amortization_years: 3
+    # R&D 비용을 분담할 전 세계 데이터센터 수
+    global_datacenter_count_for_cost_allocation: 20
+
+  # 판매 및 일반관리비 (매출 대비 비율)
+  sgna_as_percent_of_revenue: 15.0
+
   # 사용자 그룹별 분포 및 월간 토큰 사용량 (백만 개)
   tiers:
     free:
