@@ -1,33 +1,53 @@
-# config.yml (v13.0)
+# config.yml (v14.0)
 
-# 기본 데이터센터 설정
-dc_defaults:
-  size_mw: 100
+# ===============================================
+# 하드웨어 스펙 및 예산
+# ===============================================
+hardware:
+  # 데이터센터 규모(MW)당 IT 하드웨어 총 예산
+  it_budget_per_mw: 7000000 # USD
+  
+  # 고성능 AI 가속기 (예: H100)
+  high_perf_gpu:
+    name: "고성능 AI 가속기"
+    cost: 35000
+    # 이 유닛 1개가 1시간에 처리하는 토큰 (백만 개)
+    m_tokens_per_hour: 5.0
+
+  # 표준 AI 가속기 (예: A100)
+  standard_gpu:
+    name: "표준 AI 가속기"
+    cost: 10000
+    m_tokens_per_hour: 1.5
+
+# ===============================================
+# 데이터센터 기본 설정
+# ===============================================
+datacenter:
   amortization_years: 5
-  capex_per_mw: 1000000         # USD
-  opex_per_mw_per_year: 150000  # USD
+  capex_per_mw: 10000000
+  opex_per_mw_per_year: 200000 # 유지보수비 등
   power_cost_kwh:
-    Conventional: 0.12          # USD
+    Conventional: 0.12
     Renewable: 0.18
+  # IT 장비 1W당 소비하는 데이터센터 총 전력 (PUE 반영)
+  total_watts_per_it_watt: 1.5
 
-# LLM 토큰 처리 효율
-token_processing:
-  token_per_kwh: 2000
+# ===============================================
+# AI 모델 및 사용자 가정
+# ===============================================
+model_and_users:
   # 지능형 아키텍처 적용 시 효율 개선 배수
-  mirrormind_efficiency: 1.25
-
-# 사용자 분포 및 사용량
-tiers:
-  free:
-    ratio: 0.6
-    monthly_token_usage: 30000
-  standard:
-    ratio: 0.3
-    monthly_token_usage: 300000
-  premium:
-    ratio: 0.1
-    monthly_token_usage: 3000000
-
-# 일반 설정
-assumptions:
-  users_total: 1000000
+  intelligent_arch_efficiency: 1.25
+  
+  # 사용자 그룹별 분포 및 월간 토큰 사용량 (백만 개)
+  tiers:
+    free:
+      ratio: 0.6
+      monthly_token_usage_m: 0.5
+    standard:
+      ratio: 0.3
+      monthly_token_usage_m: 5.0
+    premium:
+      ratio: 0.1
+      monthly_token_usage_m: 25.0
