@@ -1,4 +1,4 @@
-# calculator.py (v15.2 - Final P&L Logic Fix)
+# calculator.py (v16.0 - Final Logic Separation)
 import yaml
 import pandas as pd
 
@@ -41,7 +41,7 @@ def calculate_business_case(
     total_token_capacity = (tokens_from_high_perf + tokens_from_standard) * arch_efficiency
     serviced_tokens = total_token_capacity * (utilization_rate / 100.0)
 
-    # --- 3. Calculate TRUE P&L and Cost based on USAGE potential ---
+    # --- 3. Calculate TRUE P&L and Cost based on USAGE potential (for Sections 1, 2, 4) ---
     total_paid_token_usage_ratio = sum(tier_info['ratio'] for tier_name, tier_info in tiers_conf.items() if tier_name != 'free')
     usage_based_revenue = (serviced_tokens / 1e6) * market_price_per_m_tokens * total_paid_token_usage_ratio
 
@@ -82,18 +82,22 @@ def calculate_business_case(
         revenue_per_user_annual = tier_revenue_annual_usage_based / num_users_in_tier if num_users_in_tier > 0 else 0
         cost_per_user_annual = tier_cost_annual / num_users_in_tier if num_users_in_tier > 0 else 0
         
+        # --- 4.1. [LOGIC SEPARATION] Calculate Fixed-Fee Scenario metrics independently ---
         fixed_fee = 0
         if tier_name == 'standard': fixed_fee = standard_fee
         elif tier_name == 'premium': fixed_fee = premium_fee
         
+        # This calculation is now completely independent and only for Section 3
         new_profit_per_user = fixed_fee - (cost_per_user_annual / 12.0)
         opportunity_cost = (revenue_per_user_annual / 12.0) - fixed_fee
 
         segment_narrative_data.append({
             "tier_name_key": f"tier_{tier_name}", "num_users": num_users_in_tier,
-            "revenue_per_user": revenue_per_user_annual / 12.0, "cost_per_user": cost_per_user_annual / 12.0,
+            "revenue_per_user": revenue_per_user_annual / 12.0,
+            "cost_per_user": cost_per_user_annual / 12.0,
             "profit_per_user": (revenue_per_user_annual - cost_per_user_annual) / 12.0,
-            "fixed_fee": fixed_fee, "new_profit_per_user": new_profit_per_user,
+            "fixed_fee": fixed_fee,
+            "new_profit_per_user": new_profit_per_user,
             "opportunity_cost": opportunity_cost,
         })
 
@@ -115,8 +119,6 @@ def calculate_business_case(
     }
 
     # --- 6. Final P&L for Display (Based on the TRUE USAGE-BASED potential) ---
-    # [FINAL LOGIC FIX] The pnl_annual for display MUST be based on the architecture's potential (usage-based),
-    # NOT the what-if fixed fees from the sidebar.
     pnl_annual = {
         'revenue': usage_based_revenue, 
         'cost_of_revenue': cost_of_revenue, 
