@@ -39,7 +39,6 @@ with st.sidebar:
 
     dc_size_mw = st.slider(t("dc_capacity", st.session_state.lang), 10, 300, 100)
     high_perf_gpu_ratio = st.slider(t("high_perf_gpu_ratio", st.session_state.lang), 0, 100, 50, 5)
-    # --- THIS IS THE FIX (1/2) ---
     utilization_rate = st.slider(t("utilization_rate", st.session_state.lang), 40, 100, 60, 5)
     power_option = st.selectbox(t("power_type", st.session_state.lang), [t("power_conventional", st.session_state.lang), t("power_renewable", st.session_state.lang)])
     use_clean_power = "Renewable" if power_option == t("power_renewable", st.session_state.lang) else "Conventional"
@@ -54,7 +53,6 @@ st.markdown(f"<p style='font-size: 1.15rem; color: #4b5563;'>{t('app_subtitle', 
 
 if st.button(t("run_button", st.session_state.lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
-        # --- THIS IS THE FIX (2/2) ---
         st.session_state.results = calculate_business_case(
             dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio, utilization_rate, market_price_per_m_tokens, st.session_state.lang
         )
@@ -67,7 +65,7 @@ if st.session_state.results:
     st.header(t("section_1_title", lang))
     
     st.subheader(t("assumptions_title", lang))
-    cols1 = st.columns(4)
+    cols1 = st.columns(3)
     cols1[0].metric(t("assump_gpu_mix", lang), res["assumptions"]["gpu_mix_string"])
     cols1[1].metric(t("assump_utilization", lang), f"{res['assumptions']['utilization_rate']}%")
     cols1[2].metric(t("assump_tokens", lang), f"{res['assumptions']['serviced_tokens_t']:,.2f}")
@@ -78,14 +76,46 @@ if st.session_state.results:
             <div class="row"><div class="label">{t('pnl_cost_of_revenue', lang)}</div><div class="value">(${pnl['cost_of_revenue']:,.0f})</div></div>
             <div class="row total"><div class="label">{t('pnl_gross_profit', lang)}</div><div class="value">${pnl['gross_profit']:,.0f}</div></div>
             <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_sg_and_a', lang)}</div><div class="value">(${pnl['sg_and_a']:,.0f})</div></div>
-            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl['it_depreciation']:,.0f})</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl['d_and_a']:,.0f})</div></div>
             <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_rd_amortization', lang)}</div><div class="value">(${pnl['rd_amortization']:,.0f})</div></div>
             <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl['operating_profit']:,.0f}</div></div>
         </div>
     """)
     
     st.header(t("section_2_title", lang))
-    # ... (rest of the app remains the same)
+    
+    # 고객 그룹별 손익 데이터프레임 생성 및 표시
+    segment_df = pd.DataFrame(res['pnl_by_segment'])
+    segment_df.columns = [t('col_segment', lang), t('col_total_revenue', lang), t('col_total_cost', lang), t('col_total_profit', lang)]
+    
+    # 티어 이름 번역 적용
+    tier_map = {
+        'Free': t('tier_free', lang),
+        'Standard': t('tier_standard', lang),
+        'Premium': t('tier_premium', lang)
+    }
+    segment_df[t('col_segment', lang)] = segment_df[t('col_segment', lang)].str.title().map(tier_map)
+
+    st.dataframe(
+        segment_df,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            t('col_total_revenue', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
+            t('col_total_cost', lang): st.column_config.NumberColumn(format="$ {:,.0f}"),
+            t('col_total_profit', lang): st.column_config.NumberColumn(format="$ {:,.0f}")
+        }
+    )
+
+    # 투자금 회수 기간 계산 및 표시
+    st.subheader(t('payback_title', lang))
+    operating_profit = res['pnl_annual']['operating_profit']
+    if operating_profit > 0:
+        payback_period = res['total_investment'] / operating_profit
+        payback_text = f"{payback_period:.2f}"
+    else:
+        payback_text = t('unrecoverable', lang)
+    st.metric(label=t('payback_years', lang), value=payback_text)
 
 else:
     st.info(t("initial_prompt", st.session_state.lang))
