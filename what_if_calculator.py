@@ -1,4 +1,4 @@
-# what_if_calculator.py (v2.0 - Standalone P&L Calculation)
+# what_if_calculator.py (v3.0 - UI/UX Improvement)
 # This module is dedicated to the 'What-If' analysis for the fixed-fee pricing scenario.
 
 def analyze_fixed_fee_scenario(core_results, standard_fee, premium_fee):
@@ -35,18 +35,21 @@ def analyze_fixed_fee_scenario(core_results, standard_fee, premium_fee):
             total_users_premium = segment['num_users']
         
         cost_per_user = segment['cost_per_user']
-        usage_based_revenue_per_user = segment['revenue_per_user']
+        # [MODIFIED] The term is now clearer: this is the potential profit
+        potential_profit_per_user = segment['profit_per_user'] 
 
-        new_profit_per_user = fixed_fee - cost_per_user
-        opportunity_cost = usage_based_revenue_per_user - fixed_fee
+        # Calculate the what-if metrics
+        final_profit_per_user = fixed_fee - cost_per_user
+        # The difference is now calculated against the potential profit
+        opportunity_cost = potential_profit_per_user - final_profit_per_user
         
         updated_segment['fixed_fee'] = fixed_fee
-        updated_segment['new_profit_per_user'] = new_profit_per_user
-        updated_segment['opportunity_cost'] = opportunity_cost
+        updated_segment['final_profit_per_user'] = final_profit_per_user
+        updated_segment['opportunity_cost'] = opportunity_cost # This is now the difference in PROFIT
         
         what_if_narratives.append(updated_segment)
         
-    # --- [NEW] Calculate the full annual P&L for this what-if scenario ---
+    # --- Calculate the full annual P&L for this what-if scenario ---
     # Base costs that don't depend on revenue
     cost_of_revenue = pnl_core['cost_of_revenue']
     d_and_a = pnl_core['d_and_a']
@@ -54,7 +57,7 @@ def analyze_fixed_fee_scenario(core_results, standard_fee, premium_fee):
     
     # Revenue-dependent costs
     what_if_revenue = (total_users_standard * standard_fee + total_users_premium * premium_fee) * 12
-    what_if_sg_and_a = what_if_revenue * (pnl_core['sg_and_a'] / pnl_core['revenue'] if pnl_core['revenue'] > 0 else 0) # Use the same SG&A rate
+    what_if_sg_and_a = what_if_revenue * (pnl_core['sg_and_a'] / pnl_core['revenue'] if pnl_core['revenue'] > 0 else 0)
     
     what_if_gross_profit = what_if_revenue - cost_of_revenue
     what_if_operating_profit = what_if_gross_profit - what_if_sg_and_a - d_and_a - rd_amortization
