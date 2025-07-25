@@ -12,7 +12,7 @@ st.set_page_config(page_title="AI Datacenter Business Simulator", page_icon="ðŸ’
 st.markdown("""
 <style>
     .main .block-container { padding: 2rem 5rem; }
-    h1, h2, h3 { font-weight: 700; color: #111827; }
+    h1, h2, h3, h4 { font-weight: 700; color: #111827; }
     h2 { border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; margin-top: 2rem;}
     .stMetric { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem; }
     .footer { position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: #6b7280; text-align: center; padding: 12px; font-size: 0.85rem; border-top: 1px solid #e5e7eb; }
@@ -26,9 +26,7 @@ st.markdown("""
     .recommendation-block { background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 1.5rem; margin-top: 2rem; }
     .clarification-box { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; }
     .explanation-box { background-color: #f3f4f6; border-left: 5px solid #6b7280; padding: 1rem 1.5rem; margin-top: 3rem; }
-    /* [NEW] Style for what-if sections */
-    .what-if-section { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; }
-    .what-if-section h4 { margin-top: 0; color: #4b5563; }
+    .what-if-container { border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -113,54 +111,39 @@ if st.session_state.results:
     st.header(t("section_2_title", lang))
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
-            st.markdown(f"""
-            <div class="narrative-block">
-                <h3>{t(segment['tier_name_key'], lang)}</h3>
-                <ul>
-                    <li><b>{t('narrative_users', lang)}:</b> {segment['num_users']:,.0f}</li>
-                    <li><b>{t('narrative_revenue_per_user', lang)}:</b> ${segment['revenue_per_user']:,.2f}</li>
-                    <li><b>{t('narrative_cost_per_user', lang)}:</b> ${segment['cost_per_user']:,.2f}</li>
-                    <li><b>{t('narrative_profit_per_user', lang)}:</b> ${segment['profit_per_user']:,.2f}</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-            
+            with st.container():
+                st.markdown(f"<h3>{t(segment['tier_name_key'], lang)}</h3>", unsafe_allow_html=True)
+                st.markdown(f"""
+                - **{t('narrative_users', lang)}:** {segment['num_users']:,.0f}
+                - **{t('narrative_revenue_per_user', lang)}:** ${segment['revenue_per_user']:,.2f}
+                - **{t('narrative_cost_per_user', lang)}:** ${segment['cost_per_user']:,.2f}
+                - **{t('narrative_profit_per_user', lang)}:** ${segment['profit_per_user']:,.2f}
+                """)
+    
+    # [MODIFIED] Rebuilt the UI using native Streamlit components
     st.header(t("section_3_title", lang))
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
             if segment['tier_name_key'] in ['tier_standard', 'tier_premium']:
-                profit_color = "red" if segment['final_profit_per_user'] < 0 else "green"
-                
-                st.markdown(f"""
-                <div class="narrative-block">
-                    <h3>{t(segment['tier_name_key'], lang)}</h3>
+                with st.container():
+                    st.markdown(f"<h3>{t(segment['tier_name_key'], lang)}</h3>", unsafe_allow_html=True)
                     
-                    <div class="what-if-section">
-                        <h4>{t('what_if_subtitle_potential', lang)}</h4>
-                        <ul>
-                            <li>{t('what_if_potential_revenue', lang)}: ${segment['revenue_per_user']:,.2f}</li>
-                            <li>{t('what_if_potential_cost', lang)}: ${segment['cost_per_user']:,.2f}</li>
-                            <li>{t('what_if_potential_profit', lang)}: ${segment['profit_per_user']:,.2f}</li>
-                        </ul>
-                    </div>
+                    with st.container(border=True):
+                        st.markdown(f"**{t('what_if_subtitle_potential', lang)}**")
+                        st.markdown(f"- {t('what_if_potential_revenue', lang)}: `${segment['revenue_per_user']:,.2f}`")
+                        st.markdown(f"- {t('what_if_potential_cost', lang)}: `${segment['cost_per_user']:,.2f}`")
+                        st.markdown(f"- {t('what_if_potential_profit', lang)}: `${segment['profit_per_user']:,.2f}`")
 
-                    <div class="what-if-section">
-                        <h4>{t('what_if_subtitle_scenario', lang)}</h4>
-                        <ul>
-                            <li>{t('what_if_set_fee', lang)}: ${segment['fixed_fee']:,.2f}</li>
-                            <li style="font-weight: bold; color:{profit_color};">{t('what_if_final_profit', lang)}: ${segment['final_profit_per_user']:,.2f}</li>
-                        </ul>
-                    </div>
+                    with st.container(border=True):
+                        st.markdown(f"**{t('what_if_subtitle_scenario', lang)}**")
+                        st.markdown(f"- {t('what_if_set_fee', lang)}: `${segment['fixed_fee']:,.2f}`")
+                        profit_color = "red" if segment['final_profit_per_user'] < 0 else "green"
+                        st.markdown(f'- <span style="font-weight: bold; color:{profit_color};">{t("what_if_final_profit", lang)}: ${segment["final_profit_per_user"]:,.2f}</span>', unsafe_allow_html=True)
 
-                    <div class="what-if-section">
-                        <h4>{t('what_if_subtitle_implication', lang)}</h4>
-                        <ul>
-                            <li>{t('what_if_opportunity_cost', lang)}: ${segment['opportunity_cost']:,.2f}</li>
-                        </ul>
-                        <small>{t('what_if_interpretation', lang, opportunity_cost=segment['opportunity_cost'])}</small>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    with st.container(border=True):
+                        st.markdown(f"**{t('what_if_subtitle_implication', lang)}**")
+                        st.markdown(f"- {t('what_if_opportunity_cost', lang)}: `${segment['opportunity_cost']:,.2f}`")
+                        st.caption(t('what_if_interpretation', lang, opportunity_cost=abs(segment['opportunity_cost'])))
         
         if 'pnl_what_if' in res:
             pnl_wi = res['pnl_what_if']
