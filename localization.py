@@ -1,4 +1,4 @@
-# localization.py (v26.0 - Final Fix)
+# localization.py (v27.0 - Final UI/UX Improvement)
 
 loc_strings = {
     "en": {
@@ -43,11 +43,17 @@ loc_strings = {
         "pricing_standard_fee": "Standard Tier Monthly Fee ($)",
         "pricing_premium_fee": "Premium Tier Monthly Fee ($)",
         "section_3_title": "3. 'What-If' Analysis: Fixed-Fee Pricing",
-        "narrative_pricing_title": "Analysis for",
-        "narrative_fixed_fee_revenue": "Fixed-Fee Revenue",
-        "narrative_opportunity_cost": "Opportunity Cost (vs. Usage-Based)",
-        "narrative_new_profit_per_user": "New Profit (Fixed-Fee)",
-        # [NEW]
+        # [MODIFIED] New, clearer terms for the UI
+        "what_if_subtitle_potential": "1. Usage-Based Analysis (Potential)",
+        "what_if_potential_revenue": "Per-User Monthly Revenue (Potential)",
+        "what_if_potential_cost": "Per-User Monthly Cost",
+        "what_if_potential_profit": "Per-User Monthly Profit (Potential)",
+        "what_if_subtitle_scenario": "2. Fixed-Fee Analysis (What-If Scenario)",
+        "what_if_set_fee": "Your Set Monthly Fee",
+        "what_if_final_profit": "Final Monthly Profit",
+        "what_if_subtitle_implication": "3. Strategic Implication",
+        "what_if_opportunity_cost": "Difference from Potential Profit (Opportunity Cost)",
+        "what_if_interpretation": "Interpretation: By applying this fee, you would earn ${opportunity_cost:.2f} less per user each month compared to the maximum potential.",
         "what_if_pnl_title": "Annual P&L under this Fixed-Fee Scenario",
         "section_4_title": "4. Final Summary & Payback Analysis",
         "payback_analysis_intro": "Based on the current strategy, the realistic payback period is calculated as follows:",
@@ -103,11 +109,17 @@ loc_strings = {
         "pricing_standard_fee": "유료 사용자 월 요금 ($)",
         "pricing_premium_fee": "프리미엄 사용자 월 요금 ($)",
         "section_3_title": "3. 'What-If' 분석: 고정 요금제 적용 시",
-        "narrative_pricing_title": "분석 대상",
-        "narrative_fixed_fee_revenue": "고정 요금제 매출",
-        "narrative_opportunity_cost": "기회비용 (vs 사용량 기반)",
-        "narrative_new_profit_per_user": "최종 이익 (고정 요금제)",
-        # [NEW]
+        # [MODIFIED] New, clearer terms for the UI
+        "what_if_subtitle_potential": "1. 사용량 기반 분석 (잠재력)",
+        "what_if_potential_revenue": "인당 월 매출 (잠재력)",
+        "what_if_potential_cost": "인당 월 원가",
+        "what_if_potential_profit": "인당 월 이익 (잠재력)",
+        "what_if_subtitle_scenario": "2. 고정 요금제 분석 (What-If 시나리오)",
+        "what_if_set_fee": "설정한 월 요금",
+        "what_if_final_profit": "최종 월 이익",
+        "what_if_subtitle_implication": "3. 전략적 시사점",
+        "what_if_opportunity_cost": "잠재 이익과의 차이 (기회비용)",
+        "what_if_interpretation": "해석: 이 요금제를 적용하면, 최대 잠재력 대비 사용자 한 명당 매달 ${opportunity_cost:.2f}의 이익을 덜 벌게 됩니다.",
         "what_if_pnl_title": "해당 고정 요금제 적용 시 연간 손익",
         "section_4_title": "4. 최종 요약 및 투자 회수 기간 분석",
         "payback_analysis_intro": "현재 전략을 기준으로, 현실적인 투자 회수 기간은 다음과 같이 계산됩니다:",
