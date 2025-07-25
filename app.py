@@ -26,6 +26,9 @@ st.markdown("""
     .recommendation-block { background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 1.5rem; margin-top: 2rem; }
     .clarification-box { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; }
     .explanation-box { background-color: #f3f4f6; border-left: 5px solid #6b7280; padding: 1rem 1.5rem; margin-top: 3rem; }
+    /* [NEW] Style for what-if sections */
+    .what-if-section { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; }
+    .what-if-section h4 { margin-top: 0; color: #4b5563; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -73,27 +76,24 @@ st.markdown(f"<div class='clarification-box'>{t('model_clarification', lang)}</d
 
 if st.button(t("run_button", lang), use_container_width=True, type="primary"):
     with st.spinner('Analyzing...'):
-        # Step 1: Calculate the core business potential
         core_results = calculate_core_business_case(
             dc_size_mw, use_clean_power, apply_mirrormind, high_perf_gpu_ratio,
             utilization_rate, market_price_per_m_tokens
         )
         
-        # Step 2: Run the separate 'What-If' analysis for the fixed-fee scenario
         what_if_narratives, pnl_what_if = analyze_fixed_fee_scenario(
-            core_results, # Pass the full core results
+            core_results,
             standard_fee,
             premium_fee
         )
         
-        # Step 3: Combine the results for display
         core_results['segment_narratives'] = what_if_narratives
-        core_results['pnl_what_if'] = pnl_what_if # Add the new P&L to the results
+        core_results['pnl_what_if'] = pnl_what_if
         st.session_state.results = core_results
 
 if st.session_state.results:
     res = st.session_state.results
-    pnl = res['pnl_annual'] # This is the core, usage-based P&L
+    pnl = res['pnl_annual']
     
     st.header(t("section_1_title", lang))
     st.subheader(t("assumptions_title", lang))
@@ -129,20 +129,39 @@ if st.session_state.results:
     if 'segment_narratives' in res:
         for segment in res['segment_narratives']:
             if segment['tier_name_key'] in ['tier_standard', 'tier_premium']:
-                profit_color = "red" if segment['new_profit_per_user'] < 0 else "green"
+                profit_color = "red" if segment['final_profit_per_user'] < 0 else "green"
                 
                 st.markdown(f"""
                 <div class="narrative-block">
-                    <h3>{t('narrative_pricing_title', lang)}: {t(segment['tier_name_key'], lang)}</h3>
-                    <ul>
-                        <li><b>{t('narrative_fixed_fee_revenue', lang)}:</b> ${segment['fixed_fee']:,.2f}</li>
-                        <li><b>{t('narrative_opportunity_cost', lang)}:</b> ${segment['opportunity_cost']:,.2f}</li>
-                        <li style="color:{profit_color};"><b>{t('narrative_new_profit_per_user', lang)}:</b> ${segment['new_profit_per_user']:,.2f}</li>
-                    </ul>
+                    <h3>{t(segment['tier_name_key'], lang)}</h3>
+                    
+                    <div class="what-if-section">
+                        <h4>{t('what_if_subtitle_potential', lang)}</h4>
+                        <ul>
+                            <li>{t('what_if_potential_revenue', lang)}: ${segment['revenue_per_user']:,.2f}</li>
+                            <li>{t('what_if_potential_cost', lang)}: ${segment['cost_per_user']:,.2f}</li>
+                            <li>{t('what_if_potential_profit', lang)}: ${segment['profit_per_user']:,.2f}</li>
+                        </ul>
+                    </div>
+
+                    <div class="what-if-section">
+                        <h4>{t('what_if_subtitle_scenario', lang)}</h4>
+                        <ul>
+                            <li>{t('what_if_set_fee', lang)}: ${segment['fixed_fee']:,.2f}</li>
+                            <li style="font-weight: bold; color:{profit_color};">{t('what_if_final_profit', lang)}: ${segment['final_profit_per_user']:,.2f}</li>
+                        </ul>
+                    </div>
+
+                    <div class="what-if-section">
+                        <h4>{t('what_if_subtitle_implication', lang)}</h4>
+                        <ul>
+                            <li>{t('what_if_opportunity_cost', lang)}: ${segment['opportunity_cost']:,.2f}</li>
+                        </ul>
+                        <small>{t('what_if_interpretation', lang, opportunity_cost=segment['opportunity_cost'])}</small>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
         
-        # [NEW] Display the P&L for the what-if scenario
         if 'pnl_what_if' in res:
             pnl_wi = res['pnl_what_if']
             st.subheader(t('what_if_pnl_title', lang))
@@ -158,12 +177,10 @@ if st.session_state.results:
                 </div>
             """)
 
-
     st.header(t("section_4_title", lang))
     if 'recommendation' in res:
         st.markdown(f'<div class="recommendation-block">', unsafe_allow_html=True)
         st.write(t('payback_analysis_intro', lang))
-        # Payback period is always based on the core potential (usage-based)
         cash_flow = pnl.get('annual_cash_flow', 0)
         payback_period = res['total_investment'] / cash_flow if cash_flow > 0 else 0
         p_cols = st.columns(2)
