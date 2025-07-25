@@ -85,45 +85,58 @@ if st.button(t("run_button", lang), use_container_width=True, type="primary"):
             premium_fee
         )
         
-        core_results['segment_narratives'] = what_if_narratives
+        core_results['what_if_narratives'] = what_if_narratives
         core_results['pnl_what_if'] = pnl_what_if
         st.session_state.results = core_results
 
 if st.session_state.results:
     res = st.session_state.results
-    pnl = res['pnl_annual']
+    pnl_core = res['pnl_annual'] # This is ALWAYS the usage-based P&L
     
+    # --- [SECTION 1] ---
     st.header(t("section_1_title", lang))
     st.subheader(t("assumptions_title", lang))
+    # ... (Assumption metrics are unchanged)
     
     st.html(f"""
         <div class="pnl-table">
-            <div class="row"><div class="label">{t('pnl_revenue', lang)}</div><div class="value">${pnl['revenue']:,.0f}</div></div>
-            <div class="row"><div class="label">{t('pnl_cost_of_revenue', lang)}</div><div class="value">(${pnl['cost_of_revenue']:,.0f})</div></div>
-            <div class="row total"><div class="label">{t('pnl_gross_profit', lang)}</div><div class="value">${pnl['gross_profit']:,.0f}</div></div>
-            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_sg_and_a', lang)}</div><div class="value">(${pnl['sg_and_a']:,.0f})</div></div>
-            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl['d_and_a']:,.0f})</div></div>
-            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_rd_amortization', lang)}</div><div class="value">(${pnl['rd_amortization']:,.0f})</div></div>
-            <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl['operating_profit']:,.0f}</div></div>
+            <div class="row"><div class="label">{t('pnl_revenue', lang)}</div><div class="value">${pnl_core['revenue']:,.0f}</div></div>
+            <div class="row"><div class="label">{t('pnl_cost_of_revenue', lang)}</div><div class="value">(${pnl_core['cost_of_revenue']:,.0f})</div></div>
+            <div class="row total"><div class="label">{t('pnl_gross_profit', lang)}</div><div class="value">${pnl_core['gross_profit']:,.0f}</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_sg_and_a', lang)}</div><div class="value">(${pnl_core['sg_and_a']:,.0f})</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl_core['d_and_a']:,.0f})</div></div>
+            <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_rd_amortization', lang)}</div><div class="value">(${pnl_core['rd_amortization']:,.0f})</div></div>
+            <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl_core['operating_profit']:,.0f}</div></div>
         </div>
     """)
     
+    # --- [SECTION 2] ---
     st.header(t("section_2_title", lang))
-    if 'segment_narratives' in res:
-        for segment in res['segment_narratives']:
-            with st.container():
-                st.markdown(f"<h3>{t(segment['tier_name_key'], lang)}</h3>", unsafe_allow_html=True)
-                st.markdown(f"""
-                - **{t('narrative_users', lang)}:** {segment['num_users']:,.0f}
-                - **{t('narrative_revenue_per_user', lang)}:** ${segment['revenue_per_user']:,.2f}
-                - **{t('narrative_cost_per_user', lang)}:** ${segment['cost_per_user']:,.2f}
-                - **{t('narrative_profit_per_user', lang)}:** ${segment['profit_per_user']:,.2f}
-                """)
-    
-    # [MODIFIED] Rebuilt the UI using native Streamlit components
+    if 'recommendation' in res:
+        st.markdown(f'<div class="recommendation-block">', unsafe_allow_html=True)
+        st.write(t('payback_analysis_intro', lang))
+        # Payback period is ALWAYS based on the core potential (usage-based)
+        cash_flow = pnl_core.get('annual_cash_flow', 0)
+        payback_period = res['total_investment'] / cash_flow if cash_flow > 0 else 0
+        p_cols = st.columns(2)
+        p_cols[0].metric(label=t('annual_cash_flow', lang), value=f"${cash_flow:,.0f}")
+        p_cols[1].metric(label=t('calculated_payback_period', lang), value=f"{payback_period:.2f}" if payback_period > 0 else "N/A")
+        st.markdown("---")
+        st.write(f"**{t('recommendation_title', lang)}**")
+        reco = res['recommendation']
+        if reco['is_achievable']:
+            st.write(t('recommendation_intro', lang))
+            r_cols = st.columns(2)
+            r_cols[0].metric(label=t('recommended_standard_fee', lang), value=f"${reco['standard_fee']:.2f}")
+            r_cols[1].metric(label=t('recommended_premium_fee', lang), value=f"${reco['premium_fee']:.2f}")
+        else:
+            st.warning(t('recommendation_unachievable', lang))
+        st.markdown(f'</div>', unsafe_allow_html=True)
+
+    # --- [SECTION 3] ---
     st.header(t("section_3_title", lang))
-    if 'segment_narratives' in res:
-        for segment in res['segment_narratives']:
+    if 'what_if_narratives' in res:
+        for segment in res['what_if_narratives']:
             if segment['tier_name_key'] in ['tier_standard', 'tier_premium']:
                 with st.container():
                     st.markdown(f"<h3>{t(segment['tier_name_key'], lang)}</h3>", unsafe_allow_html=True)
@@ -160,27 +173,6 @@ if st.session_state.results:
                 </div>
             """)
 
-    st.header(t("section_4_title", lang))
-    if 'recommendation' in res:
-        st.markdown(f'<div class="recommendation-block">', unsafe_allow_html=True)
-        st.write(t('payback_analysis_intro', lang))
-        cash_flow = pnl.get('annual_cash_flow', 0)
-        payback_period = res['total_investment'] / cash_flow if cash_flow > 0 else 0
-        p_cols = st.columns(2)
-        p_cols[0].metric(label=t('annual_cash_flow', lang), value=f"${cash_flow:,.0f}")
-        p_cols[1].metric(label=t('calculated_payback_period', lang), value=f"{payback_period:.2f}" if payback_period > 0 else t('unrecoverable', lang))
-        st.markdown("---")
-        st.write(f"**{t('recommendation_title', lang)}**")
-        reco = res['recommendation']
-        if reco['is_achievable']:
-            st.write(t('recommendation_intro', lang))
-            r_cols = st.columns(2)
-            r_cols[0].metric(label=t('recommended_standard_fee', lang), value=f"${reco['standard_fee']:.2f}")
-            r_cols[1].metric(label=t('recommended_premium_fee', lang), value=f"${reco['premium_fee']:.2f}")
-        else:
-            st.warning(t('recommendation_unachievable', lang))
-        st.markdown(f'</div>', unsafe_allow_html=True)
-        
     st.markdown(f"""
     <div class="explanation-box">
         <h4>{t('arch_explanation_title', lang)}</h4>
