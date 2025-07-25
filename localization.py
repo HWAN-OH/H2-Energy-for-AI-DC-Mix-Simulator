@@ -1,4 +1,4 @@
-# localization.py (v25.0 - Final Version with Explanations)
+# localization.py (v26.0 - Final Fix)
 
 loc_strings = {
     "en": {
@@ -14,7 +14,6 @@ loc_strings = {
         "high_perf_gpu_ratio": "High-Performance GPU Budget Ratio (%)",
         "utilization_rate": "Datacenter Average Utilization Rate (%)",
         "power_type": "Power Source",
-        # [MODIFIED]
         "apply_mirrormind_label": "Apply Intelligent Architecture (e.g., MirrorMind)",
         "apply_mirrormind_help": "This technology applies a superior control architecture to the LLM, achieving higher token processing efficiency (increased throughput) with the same hardware. This boosts the potential for total revenue and profit, enabling investment recovery with a more competitive (lower) recommended pricing.",
         "market_price": "Market Price per 1M Tokens ($)",
@@ -48,6 +47,8 @@ loc_strings = {
         "narrative_fixed_fee_revenue": "Fixed-Fee Revenue",
         "narrative_opportunity_cost": "Opportunity Cost (vs. Usage-Based)",
         "narrative_new_profit_per_user": "New Profit (Fixed-Fee)",
+        # [NEW]
+        "what_if_pnl_title": "Annual P&L under this Fixed-Fee Scenario",
         "section_4_title": "4. Final Summary & Payback Analysis",
         "payback_analysis_intro": "Based on the current strategy, the realistic payback period is calculated as follows:",
         "annual_cash_flow": "Annual Operating Cash Flow (Profit + D&A)",
@@ -57,7 +58,6 @@ loc_strings = {
         "recommended_standard_fee": "Recommended Standard Fee",
         "recommended_premium_fee": "Recommended Premium Fee",
         "recommendation_unachievable": "With the current cost structure, achieving a 5-year payback is not feasible. If the calculated payback period above is longer than your target, a fundamental review of the hardware or architectural strategy is required.",
-        # [NEW]
         "arch_explanation_title": "What is an Intelligent Architecture?",
         "arch_explanation_text": "It's an approach that maximizes performance-to-cost by designing a superior system to efficiently control and utilize the LLM, rather than simply increasing the LLM model's size. The efficiency gains in this simulator are based on the mathematical proof of the **MirrorMind architecture**.\\n\\n- [View MirrorMind Efficiency Proof Paper](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/blob/main/paper/A%20Mathematical%20Proof%20of%20the%20Computational%20and%20Energy%20Efficiency%20of%20the%20MirrorMind%20Architecture.pdf)"
     },
@@ -74,7 +74,6 @@ loc_strings = {
         "high_perf_gpu_ratio": "고성능 GPU 예산 비중 (%)",
         "utilization_rate": "데이터센터 평균 가동률 (%)",
         "power_type": "전력 종류",
-        # [MODIFIED]
         "apply_mirrormind_label": "지능형 아키텍처 적용 (예: MirrorMind)",
         "apply_mirrormind_help": "LLM을 제어하는 상위 아키텍처를 적용하여, 동일 하드웨어에서 더 높은 토큰 처리 효율(처리량 증가)을 달성하는 기술입니다. 이는 총 매출 및 이익 잠재력을 높이고, 더 낮은 권장 요금으로도 투자 회수가 가능하게 만듭니다.",
         "market_price": "토큰당 시장 판매가 ($ / 1M)",
@@ -108,6 +107,8 @@ loc_strings = {
         "narrative_fixed_fee_revenue": "고정 요금제 매출",
         "narrative_opportunity_cost": "기회비용 (vs 사용량 기반)",
         "narrative_new_profit_per_user": "최종 이익 (고정 요금제)",
+        # [NEW]
+        "what_if_pnl_title": "해당 고정 요금제 적용 시 연간 손익",
         "section_4_title": "4. 최종 요약 및 투자 회수 기간 분석",
         "payback_analysis_intro": "현재 전략을 기준으로, 현실적인 투자 회수 기간은 다음과 같이 계산됩니다:",
         "annual_cash_flow": "연간 영업 현금흐름 (영업이익 + 감가상각비)",
@@ -117,7 +118,6 @@ loc_strings = {
         "recommended_standard_fee": "권장 유료 요금",
         "recommended_premium_fee": "권장 프리미엄 요금",
         "recommendation_unachievable": "현재 비용 구조에서는 5년 내 투자금 회수가 현실적으로 어렵습니다. 위 계산된 회수 기간이 목표보다 길 경우, 하드웨어 또는 아키텍처 전략의 근본적인 재검토가 필요합니다.",
-        # [NEW]
         "arch_explanation_title": "지능형 아키텍처(Intelligent Architecture)란?",
         "arch_explanation_text": "단순히 LLM 모델의 크기를 키우는 대신, LLM을 효율적으로 제어하고 활용하는 상위 시스템을 설계하여 비용 대비 성능을 극대화하는 접근 방식입니다. 이 시뮬레이터의 효율성 증가는 **MirrorMind 아키텍처**의 수학적 증명에 기반합니다.\\n\\n- [MirrorMind 효율성 증명 논문 보기](https://github.com/HWAN-OH/H2-Energy-for-AI-DC-Mix-Simulator/blob/main/paper/A%20Mathematical%20Proof%20of%20the%20Computational%20and%20Energy%20Efficiency%20of%20the%20MirrorMind%20Architecture.pdf)"
     }
