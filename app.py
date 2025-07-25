@@ -80,19 +80,20 @@ if st.button(t("run_button", lang), use_container_width=True, type="primary"):
         )
         
         # Step 2: Run the separate 'What-If' analysis for the fixed-fee scenario
-        what_if_narratives = analyze_fixed_fee_scenario(
-            core_results['segment_narratives'],
+        what_if_narratives, pnl_what_if = analyze_fixed_fee_scenario(
+            core_results, # Pass the full core results
             standard_fee,
             premium_fee
         )
         
         # Step 3: Combine the results for display
         core_results['segment_narratives'] = what_if_narratives
+        core_results['pnl_what_if'] = pnl_what_if # Add the new P&L to the results
         st.session_state.results = core_results
 
 if st.session_state.results:
     res = st.session_state.results
-    pnl = res['pnl_annual']
+    pnl = res['pnl_annual'] # This is the core, usage-based P&L
     
     st.header(t("section_1_title", lang))
     st.subheader(t("assumptions_title", lang))
@@ -140,11 +141,29 @@ if st.session_state.results:
                     </ul>
                 </div>
                 """, unsafe_allow_html=True)
+        
+        # [NEW] Display the P&L for the what-if scenario
+        if 'pnl_what_if' in res:
+            pnl_wi = res['pnl_what_if']
+            st.subheader(t('what_if_pnl_title', lang))
+            st.html(f"""
+                <div class="pnl-table">
+                    <div class="row"><div class="label">{t('pnl_revenue', lang)}</div><div class="value">${pnl_wi['revenue']:,.0f}</div></div>
+                    <div class="row"><div class="label">{t('pnl_cost_of_revenue', lang)}</div><div class="value">(${pnl_wi['cost_of_revenue']:,.0f})</div></div>
+                    <div class="row total"><div class="label">{t('pnl_gross_profit', lang)}</div><div class="value">${pnl_wi['gross_profit']:,.0f}</div></div>
+                    <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_sg_and_a', lang)}</div><div class="value">(${pnl_wi['sg_and_a']:,.0f})</div></div>
+                    <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_d_and_a', lang)}</div><div class="value">(${pnl_wi['d_and_a']:,.0f})</div></div>
+                    <div class="row"><div class="label" style="padding-left: 1rem;">{t('pnl_rd_amortization', lang)}</div><div class="value">(${pnl_wi['rd_amortization']:,.0f})</div></div>
+                    <div class="row total"><div class="label">{t('pnl_operating_profit', lang)}</div><div class="value">${pnl_wi['operating_profit']:,.0f}</div></div>
+                </div>
+            """)
+
 
     st.header(t("section_4_title", lang))
     if 'recommendation' in res:
         st.markdown(f'<div class="recommendation-block">', unsafe_allow_html=True)
         st.write(t('payback_analysis_intro', lang))
+        # Payback period is always based on the core potential (usage-based)
         cash_flow = pnl.get('annual_cash_flow', 0)
         payback_period = res['total_investment'] / cash_flow if cash_flow > 0 else 0
         p_cols = st.columns(2)
